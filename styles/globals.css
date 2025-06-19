@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  /* Add transition for smooth layout changes when chat opens/closes */
+  transition: all 0.3s ease;
+}
+
+/* Chat open state - adjusts layout to make room for chat panel */
+body.chat-open .activePlayerContainer {
+  width: calc(75% - 300px) !important;
+  margin-right: 300px !important;
+}
+
+body.chat-open .inActivePlayerContainer {
+  right: 320px !important;
+}
