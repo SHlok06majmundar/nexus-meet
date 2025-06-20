@@ -13,19 +13,33 @@ export const SocketProvider = (props) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const connection = io();
-    console.log("socket connection", connection);
-    setSocket(connection);
+    const initializeSocket = async () => {
+      // Make sure the socket server is running
+      await fetch('/api/socket');
+      
+      const connection = io();
+      console.log("socket connection", connection);
+      setSocket(connection);
+    };
+    
+    initializeSocket();
+  }, []);
+  
+  useEffect(() => {
+    if (!socket) return;
     
     // Event listeners for screen sharing
     const handleScreenShare = (event) => {
       const { stream, videoTrack } = event.detail;
-      if (connection && videoTrack) {
+      if (socket && videoTrack) {
+        // Get the room ID from the URL
+        const roomId = window.location.pathname.substring(1);
+        
         // Inform other participants about screen sharing
-        connection.emit('screen-share', { 
+        socket.emit('screen-share', { 
           sharing: true, 
-          userId: connection.id 
-        });
+          userId: socket.id 
+        }, roomId);
         
         // You would need to replace the video track in your peer connections here
         // This is a placeholder for actual WebRTC implementation
@@ -36,11 +50,14 @@ export const SocketProvider = (props) => {
     // Event listener for reactions
     const handleReaction = (event) => {
       const { emoji } = event.detail;
-      if (connection && emoji) {
-        connection.emit('reaction', {
+      if (socket && emoji) {
+        // Get the room ID from the URL
+        const roomId = window.location.pathname.substring(1);
+        
+        socket.emit('reaction', {
           emoji,
-          userId: connection.id
-        });
+          userId: socket.id
+        }, roomId);
       }
     };
     
@@ -48,12 +65,36 @@ export const SocketProvider = (props) => {
     window.addEventListener('screen-share-started', handleScreenShare);
     window.addEventListener('send-reaction', handleReaction);
     
+    // Set up socket event listeners for debugging
+    socket.on('connect', () => {
+      console.log('Socket connected with ID:', socket.id);
+    });
+    
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
+    
+    socket.on('user-connected', (userId, userName) => {
+      console.log(`Socket event: user-connected - ${userName || userId}`);
+    });
+    
+    socket.on('user-leave', (userId) => {
+      console.log(`Socket event: user-leave - ${userId}`);
+    });
+    
     // Cleanup
     return () => {
       window.removeEventListener('screen-share-started', handleScreenShare);
       window.removeEventListener('send-reaction', handleReaction);
+      
+      if (socket) {
+        socket.off('connect');
+        socket.off('disconnect');
+        socket.off('user-connected');
+        socket.off('user-leave');
+      }
     };
-  }, []);
+  }, [socket]);
 
   socket?.on('connect_error', async (err) => {
     console.log("Error establishing socket", err);

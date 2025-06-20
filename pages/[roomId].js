@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cloneDeep } from "lodash";
 import { motion } from "framer-motion";
 
@@ -8,6 +8,7 @@ import useMediaStream from "@/hooks/useMediaStream";
 import usePlayer from "@/hooks/usePlayer";
 import { useUser } from "@clerk/nextjs";
 import ReactionsContainer from "@/component/Reaction/ReactionsContainer";
+import NotificationSystem from "@/component/Notification";
 
 import Player from "@/component/Player";
 import Bottom from "@/component/Bottom";
@@ -20,8 +21,10 @@ import { useRouter } from "next/router";
 const Room = () => {
   const router = useRouter();
   const socket = useSocket();
-  const { roomId } = router.query;  const { peer, myId } = usePeer();
-  const { stream, toggleVideoTrack } = useMediaStream();  const {
+  const { roomId } = router.query;  
+  const { peer, myId } = usePeer();
+  const { stream, toggleVideoTrack, initializeStream } = useMediaStream();
+  const {
     players,
     setPlayers,
     playerHighlighted,
@@ -31,25 +34,67 @@ const Room = () => {
     leaveRoom,
     userName
   } = usePlayer(myId, roomId, peer);
-    // Enhanced toggleVideo function that also controls the media track
-  const toggleVideo = () => {
+  
+  // Track last toggle time to prevent rapid toggling
+  const lastToggleTime = useRef(0);
+  
+  // Enhanced toggleVideo function that also controls the media track
+  const toggleVideo = async () => {
+    // Debounce to prevent rapid toggling which can cause issues
+    const now = Date.now();
+    if (now - lastToggleTime.current < 1000) {
+      console.log("Toggling too quickly, ignoring request");
+      return;
+    }
+    lastToggleTime.current = now;
+    
     // Get the new state (opposite of current state)
     const newVideoState = playerHighlighted ? !playerHighlighted.playing : false;
     
     console.log(`Toggling video to: ${newVideoState} - Current state: ${playerHighlighted?.playing}`);
     
-    // Update the track directly
-    toggleVideoTrack(newVideoState);
-    
-    // Call the original toggle function to update state and emit socket event
-    originalToggleVideo();
+    try {
+      // First update the UI state through the original toggle function
+      originalToggleVideo();
+      
+      // Then try to toggle the actual video track
+      const success = await toggleVideoTrack(newVideoState);
+      
+      if (!success && newVideoState) {
+        console.log("Failed to toggle video track, attempting to reinitialize stream");
+        // If toggling on failed, try to reinitialize the stream
+        const newStream = await initializeStream();
+        if (newStream) {
+          console.log("Successfully reinitialized stream");
+          
+          // Update the players to reflect the new stream
+          setPlayers((prev) => {
+            if (prev[myId]) {
+              const copy = cloneDeep(prev);
+              copy[myId].url = newStream;
+              copy[myId].playing = true;
+              return { ...copy };
+            }
+            return prev;
+          });
+        } else {
+          console.error("Failed to reinitialize stream");
+          alert("Could not turn on camera. Please check your device permissions.");
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling video:", error);
+      alert("Could not toggle camera. Please check your device permissions.");
+    }
   };
+  
   const [users, setUsers] = useState([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const { isSignedIn, isLoaded, user } = useUser();
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   
+  // Handle auth redirection
   useEffect(() => {
     if (isLoaded) {
       setIsLoadingAuth(false);
@@ -63,28 +108,38 @@ const Room = () => {
     }
   }, [isLoaded, isSignedIn, router, roomId]);
 
+  // Effect to handle room joining and user connection
   useEffect(() => {
     if (!socket || !peer || !stream) return;
     
     // Join the room with user name from Clerk
     if (roomId && myId && userName) {
       socket.emit("join-room", roomId, myId, userName);
+      
+      // Dispatch join notification for ourselves
+      setTimeout(() => {
+        const joinEvent = new CustomEvent("user-join-notification", {
+          detail: { userName: userName }
+        });
+        window.dispatchEvent(joinEvent);
+      }, 1000);
     }
     
     const handleUserConnected = (newUser, newUserName) => {
-      console.log(`user ${newUserName || newUser} connected in room`);
+      const displayName = newUserName || `User ${newUser.substring(0, 5)}`;
+      console.log(`user ${displayName} connected in room`);
 
       const call = peer.call(newUser, stream);
 
       call.on("stream", (incomingStream) => {
-        console.log(`incoming stream from ${newUserName || newUser}`);
+        console.log(`incoming stream from ${displayName}`);
         setPlayers((prev) => ({
           ...prev,
           [newUser]: {
             url: incomingStream,
             muted: true,
             playing: true,
-            userName: newUserName || `User ${newUser.substring(0, 5)}`,
+            userName: displayName,
           },
         }));
 
@@ -92,6 +147,12 @@ const Room = () => {
           ...prev,
           [newUser]: call
         }));
+        
+        // Dispatch join notification event
+        const joinEvent = new CustomEvent("user-join-notification", {
+          detail: { userName: displayName }
+        });
+        window.dispatchEvent(joinEvent);
       });
     };
     
@@ -102,6 +163,7 @@ const Room = () => {
     };
   }, [peer, setPlayers, socket, stream, roomId, myId, userName]);
   
+  // Effect to handle various socket events (toggle audio, video, user leave, etc.)
   useEffect(() => {
     if (!socket) return;
     
@@ -112,7 +174,9 @@ const Room = () => {
         copy[userId].muted = !copy[userId].muted;
         return { ...copy };
       });
-    };    const handleToggleVideo = (userId, videoState) => {
+    };
+    
+    const handleToggleVideo = (userId, videoState) => {
       console.log(`user with id ${userId} toggled video to ${videoState}`);
       setPlayers((prev) => {
         const copy = cloneDeep(prev);
@@ -123,11 +187,20 @@ const Room = () => {
     };
     
     const handleUserLeave = (userId) => {
-      console.log(`user ${userId} is leaving the room`);
+      // Get the user's name before removing them
+      const leavingUserName = players[userId]?.userName || `User ${userId.substring(0, 5)}`;
+      console.log(`user ${leavingUserName} (${userId}) is leaving the room`);
+      
       users[userId]?.close();
       const playersCopy = cloneDeep(players);
       delete playersCopy[userId];
       setPlayers(playersCopy);
+      
+      // Dispatch leave notification event
+      const leaveEvent = new CustomEvent("user-leave-notification", {
+        detail: { userName: leavingUserName }
+      });
+      window.dispatchEvent(leaveEvent);
     };
 
     const handleNewMessage = (message) => {
@@ -160,6 +233,7 @@ const Room = () => {
     };
   }, [players, setPlayers, socket, users, isChatOpen]);
 
+  // Handle incoming calls
   useEffect(() => {
     if (!peer || !stream) return;
     peer.on("call", (call) => {
@@ -181,6 +255,7 @@ const Room = () => {
     });
   }, [peer, stream, setPlayers]);
 
+  // Effect to manage chat
   const toggleChat = () => {
     setIsChatOpen(prev => !prev);
     if (!isChatOpen) {
@@ -252,13 +327,20 @@ const Room = () => {
         </motion.div>
       </div>
     );
-  }  
+  }
   
+  // The main room UI
   return (
     <div className={styles.roomContainer}>
+      {/* Notification System - Prominently positioned */}
+      <NotificationSystem />
+      
       {/* Futuristic grid overlay */}
       <div className={styles.gridOverlay}></div>
       <div className={styles.horizontalLines}></div>
+      
+      {/* Reactions container for displaying emojis */}
+      <ReactionsContainer />
       
       {/* Active player container with animation */}
       <motion.div 
@@ -333,9 +415,6 @@ const Room = () => {
         visible={isChatOpen}
         onClose={toggleChat}
       />
-      
-      {/* Reactions Container */}
-      <ReactionsContainer roomId={roomId} />
     </div>
   );
 };

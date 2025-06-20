@@ -11,9 +11,6 @@ const usePlayer = (myId, roomId, peer) => {
     const { user } = useUser();
     const userName = user?.fullName || user?.firstName || user?.username || `User ${myId.substring(0, 5)}`;
     
-    // Reference to toggleVideoTrack function - will be set by Room component
-    let videoTrackController = null;
-    
     const playersCopy = cloneDeep(players)
 
     const playerHighlighted = playersCopy[myId]
@@ -36,7 +33,8 @@ const usePlayer = (myId, roomId, peer) => {
             return {...copy}        })
         socket.emit('user-toggle-audio', myId, roomId)
     }
-      const toggleVideo = () => {
+    
+    const toggleVideo = () => {
         console.log("I toggled my video")
         
         // Update local state first
@@ -44,13 +42,18 @@ const usePlayer = (myId, roomId, peer) => {
         
         setPlayers((prev) => {
             const copy = cloneDeep(prev)
+            // Calculate new state
             newVideoState = !copy[myId].playing
             copy[myId].playing = newVideoState
             return {...copy}
         })
         
         // Emit to other users with explicit video state
+        console.log(`Emitting video state: ${newVideoState}`)
         socket.emit('user-toggle-video', myId, roomId, newVideoState)
+        
+        // Return the new state for external reference
+        return newVideoState
     }
 
     return {

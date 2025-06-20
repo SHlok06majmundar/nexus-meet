@@ -2,6 +2,7 @@ import ReactPlayer from "react-player";
 import cx from "classnames";
 import { Mic, MicOff, User, Hexagon } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
 
 import styles from "@/component/Player/index.module.css";
 
@@ -9,6 +10,21 @@ const Player = (props) => {
   const { url, muted, playing, isActive, userName } = props;
   // Use the provided userName or a default value
   const displayName = userName || "User";
+  
+  // Track when player is ready and if there were any errors
+  const [isPlayerReady, setPlayerReady] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const playerRef = useRef(null);
+  
+  // Reset error state whenever url or playing changes
+  useEffect(() => {
+    setHasError(false);
+  }, [url, playing]);
+  
+  // Log player state changes for debugging
+  useEffect(() => {
+    console.log(`Player state: ${displayName} - playing: ${playing}, muted: ${muted}`);
+  }, [playing, muted, displayName]);
   
   return (
     <div
@@ -18,15 +34,38 @@ const Player = (props) => {
         [styles.notPlaying]: !playing,
       })}
     >
-      {/* Always render ReactPlayer for audio but hide it when video is off */}
-      <ReactPlayer
-        url={url}
-        muted={muted}
-        playing={true}  // Always keep playing for audio
-        width="100%"
-        height="100%"
-        style={{ display: playing ? 'block' : 'none' }}  // Hide video when not playing
-      />
+      {/* Only render ReactPlayer when we have a URL */}
+      {url && (
+        <ReactPlayer
+          ref={playerRef}
+          url={url}
+          muted={muted}
+          playing={true}  // Always keep playing for audio
+          width="100%"
+          height="100%"
+          style={{ display: playing ? 'block' : 'none' }}  // Hide video when not playing
+          onReady={() => {
+            console.log(`Player ready: ${displayName}`);
+            setPlayerReady(true);
+          }}
+          onError={(err) => {
+            console.error(`Player error: ${displayName}`, err);
+            setHasError(true);
+          }}
+          config={{
+            file: {
+              forceVideo: playing, // Force video when playing is true
+              forceAudio: true,    // Always force audio
+              attributes: {
+                // Improve performance and force hardware acceleration
+                style: {
+                  objectFit: 'cover'
+                }
+              }
+            }
+          }}
+        />
+      )}
       
       {/* User name display */}
       <div className={styles.nameTag}>
@@ -34,8 +73,8 @@ const Player = (props) => {
         {muted && <MicOff className={styles.nameTagIcon} size={14} />}
       </div>
       
-      {/* Show futuristic user icon when video is off */}
-      {!playing && (
+      {/* Show futuristic user icon when video is off or on error */}
+      {(!playing || hasError) && (
         <div className={styles.userIconContainer}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -88,9 +127,6 @@ const Player = (props) => {
                 style={{
                   left: `${20 + Math.random() * 60}%`,
                   top: `${20 + Math.random() * 60}%`,
-                  width: `${5 + Math.random() * 10}px`,
-                  height: `${5 + Math.random() * 10}px`,
-                  backgroundColor: `rgba(${180 + Math.random() * 75}, ${90 + Math.random() * 110}, ${200 + Math.random() * 55}, 0.6)`
                 }}
               />
             ))}
@@ -98,31 +134,26 @@ const Player = (props) => {
         </div>
       )}
       
-      {/* Mic status indicator */}
-      <div className={styles.icon}>
-        {muted ? (
-          <MicOff className={styles.micIcon} size={16} />
-        ) : (
-          <Mic className={styles.micIcon} size={16} />
-        )}
-      </div>
-      
-      {/* Active participant indicator for active speaker */}
-      {isActive && (
-        <div className={styles.activeIndicator}>
-          <motion.div 
-            className={styles.activeIndicatorDot}
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.7, 1, 0.7]
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          <span>Active</span>
+      {/* Audio indicator when muted is false */}
+      {!muted && (
+        <div className={styles.audioIndicatorContainer}>
+          <div className={styles.audioIndicator}>
+            <motion.div 
+              className={styles.audioBar} 
+              animate={{ height: ["20%", "80%", "40%", "60%", "20%"] }}
+              transition={{ duration: 1.5, repeat: Infinity, repeatType: "loop" }}
+            />
+            <motion.div 
+              className={styles.audioBar} 
+              animate={{ height: ["40%", "20%", "60%", "30%", "40%"] }}
+              transition={{ duration: 1.2, repeat: Infinity, repeatType: "loop", delay: 0.2 }}
+            />
+            <motion.div 
+              className={styles.audioBar} 
+              animate={{ height: ["60%", "40%", "80%", "20%", "60%"] }}
+              transition={{ duration: 1.8, repeat: Infinity, repeatType: "loop", delay: 0.4 }}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSocket } from "@/context/socket";
 import { v4 as uuidv4 } from 'uuid';
-import Reaction from './index';
+import Reaction from './Reaction';
 import styles from "./index.module.css";
 
 const ReactionsContainer = ({ roomId }) => {

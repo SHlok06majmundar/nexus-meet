@@ -13,6 +13,11 @@ const SocketHandler = (req, res) => {
 
             socket.on('join-room', (roomId, userId, userName) => {
                 console.log(`a new user ${userName || userId} joined room ${roomId}`)
+                // Store the user name in the socket object for later reference
+                socket.userName = userName
+                socket.userId = userId
+                socket.roomId = roomId
+                
                 socket.join(roomId)
                 // Send the join notification with userName
                 socket.broadcast.to(roomId).emit('user-connected', userId, userName)
@@ -23,7 +28,8 @@ const SocketHandler = (req, res) => {
                     senderId: 'system',
                     senderName: 'System',
                     timestamp: new Date().toISOString(),
-                    isSystemMessage: true                }
+                    isSystemMessage: true                
+                }
                 io.to(roomId).emit('new-message', systemMessage)
             })
             
@@ -34,23 +40,50 @@ const SocketHandler = (req, res) => {
             
             socket.on('user-toggle-video', (userId, roomId, videoState) => {
                 socket.join(roomId)
+                // Always pass the explicit videoState in the event
+                console.log(`Broadcasting video toggle: userId=${userId}, videoState=${videoState}`)
                 socket.broadcast.to(roomId).emit('user-toggle-video', userId, videoState)
             })
             
             socket.on('user-leave', (userId, roomId, userName) => {
                 socket.join(roomId)
+                // Use the stored userName if available and not provided
+                const userDisplayName = userName || socket.userName || `User ${userId.substring(0, 5)}`
                 socket.broadcast.to(roomId).emit('user-leave', userId)
                 
                 // Send a system message for user leaving
                 const systemMessage = {
-                    content: `${userName || 'A user'} has left the meeting`,
+                    content: `${userDisplayName} has left the meeting`,
                     senderId: 'system',
                     senderName: 'System',
                     timestamp: new Date().toISOString(),
                     isSystemMessage: true
                 }
                 io.to(roomId).emit('new-message', systemMessage)
-            })            // Chat functionality
+            })
+            
+            // Handle disconnection properly
+            socket.on('disconnect', () => {
+                if (socket.userId && socket.roomId) {
+                    const userDisplayName = socket.userName || `User ${socket.userId.substring(0, 5)}`
+                    console.log(`User ${userDisplayName} disconnected from room ${socket.roomId}`)
+                    
+                    // Notify others about the leave
+                    socket.broadcast.to(socket.roomId).emit('user-leave', socket.userId)
+                    
+                    // Send system message about disconnection
+                    const systemMessage = {
+                        content: `${userDisplayName} has left the meeting (disconnected)`,
+                        senderId: 'system',
+                        senderName: 'System',
+                        timestamp: new Date().toISOString(),
+                        isSystemMessage: true
+                    }
+                    io.to(socket.roomId).emit('new-message', systemMessage)
+                }
+            })
+            
+            // Chat functionality
             socket.on('send-message', (message, roomId) => {
                 console.log(`Message in room ${roomId} from ${message.senderName || message.senderId}: ${message.content}`)
                 socket.join(roomId)
@@ -88,7 +121,6 @@ const SocketHandler = (req, res) => {
     }
     res.end();
 }
-
 
 export default SocketHandler;
 

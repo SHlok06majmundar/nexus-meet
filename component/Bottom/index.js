@@ -16,6 +16,10 @@ import styles from "@/component/Bottom/index.module.css";
 
 const Bottom = (props) => {
   const { muted, playing, toggleAudio, toggleVideo, leaveRoom } = props;
+  // Debounce flags for controls to prevent rapid clicking
+  const [isVideoButtonDisabled, setVideoButtonDisabled] = useState(false);
+  const [isAudioButtonDisabled, setAudioButtonDisabled] = useState(false);
+  
   // Function to share the current screen
   const shareScreen = () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
@@ -55,6 +59,31 @@ const Bottom = (props) => {
     window.dispatchEvent(reactionEvent);
     setShowReactions(false);
   };
+  
+  // Debounced toggle functions to prevent rapid clicking
+  const handleVideoToggle = () => {
+    if (isVideoButtonDisabled) return;
+    
+    setVideoButtonDisabled(true);
+    toggleVideo();
+    
+    // Re-enable after a short delay
+    setTimeout(() => {
+      setVideoButtonDisabled(false);
+    }, 1500);
+  };
+  
+  const handleAudioToggle = () => {
+    if (isAudioButtonDisabled) return;
+    
+    setAudioButtonDisabled(true);
+    toggleAudio();
+    
+    // Re-enable after a short delay
+    setTimeout(() => {
+      setAudioButtonDisabled(false);
+    }, 500);
+  };
 
   return (
     <motion.div 
@@ -74,14 +103,14 @@ const Bottom = (props) => {
           <MicOff
             className={cx(styles.icon, styles.active)}
             size={24}
-            onClick={toggleAudio}
+            onClick={handleAudioToggle}
             strokeWidth={1.5}
           />
         ) : (
           <Mic 
             className={styles.icon} 
             size={24} 
-            onClick={toggleAudio}
+            onClick={handleAudioToggle}
             strokeWidth={1.5} 
           />
         )}
@@ -98,14 +127,14 @@ const Bottom = (props) => {
           <Video 
             className={styles.icon} 
             size={24} 
-            onClick={toggleVideo}
+            onClick={handleVideoToggle}
             strokeWidth={1.5}
           />
         ) : (
           <VideoOff
             className={cx(styles.icon, styles.active)}
             size={24}
-            onClick={toggleVideo}
+            onClick={handleVideoToggle}
             strokeWidth={1.5}
           />
         )}
