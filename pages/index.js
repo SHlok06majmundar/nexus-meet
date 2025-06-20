@@ -55,7 +55,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#20004A] via-[#30005A] to-[#50007A]">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Animated background elements */}
@@ -83,7 +83,7 @@ export default function Home() {
               transition={{ duration: 0.5 }}
             >
               <div className="flex items-center gap-2 mb-6">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center">
                   <Video size={20} className="text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-white">Nexus Meet</h2>
@@ -91,7 +91,7 @@ export default function Home() {
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
                 <span className="block">Seamless Video Conferencing</span>
-                <span className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                <span className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-pink-400">
                   For Everyone
                 </span>
               </h1>
@@ -103,7 +103,7 @@ export default function Home() {
               
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <SignUpButton mode="modal">
-                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:from-blue-700 hover:to-purple-700 transition-all">
+                  <button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg shadow-purple-900/30">
                     Get Started Free
                     <ChevronRight size={18} />
                   </button>
@@ -119,7 +119,7 @@ export default function Home() {
               <div className="mt-8 flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className={`h-8 w-8 rounded-full border-2 border-blue-900 bg-gradient-to-br from-blue-${(i+4)*100} to-purple-${(i+4)*100}`}></div>
+                    <div key={i} className={`h-8 w-8 rounded-full border-2 border-purple-900 bg-gradient-to-br from-purple-${(i+4)*100} to-pink-${(i+4)*100}`}></div>
                   ))}
                 </div>
                 <p className="text-sm text-blue-200">Join thousands of users worldwide</p>
@@ -214,7 +214,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center">
                 <Video size={16} className="text-white" />
               </div>
               <span className="text-lg font-semibold text-white">Nexus Meet</span>

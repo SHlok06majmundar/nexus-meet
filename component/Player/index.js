@@ -27,19 +27,15 @@ const Player = (props) => {
       
       {/* Show futuristic user icon when video is off */}
       {!playing && (
-        <div className={styles.userIconContainer}>
-          <motion.div
+        <div className={styles.userIconContainer}>          <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ 
               opacity: 1, 
               scale: 1,
-              rotate: [0, 10, 0, -10, 0],
             }}
             transition={{ 
-              duration: 3,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut"
+              duration: 2,
+              ease: "easeOut"
             }}
             className={styles.userIconWrapper}
           >
@@ -52,14 +48,18 @@ const Player = (props) => {
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             />
-            
-            <motion.div 
+              <motion.div 
               className={styles.pulseRing}
               animate={{ 
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.6, 0.3],
+                scale: 1.2,
+                opacity: 0.6,
               }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                repeatType: "reverse", 
+                ease: "easeInOut" 
+              }}
             />
           </motion.div>
           
@@ -68,11 +68,10 @@ const Player = (props) => {
             {Array(5).fill(0).map((_, i) => (
               <motion.div 
                 key={i}
-                className={styles.glowOrb}
-                animate={{
+                className={styles.glowOrb}                animate={{
                   x: Math.random() * 40 - 20,
                   y: Math.random() * 40 - 20,
-                  opacity: [0.4, 0.8, 0.4]
+                  opacity: 0.8
                 }}
                 transition={{ 
                   duration: 3 + Math.random() * 2, 

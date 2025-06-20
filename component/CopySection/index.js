@@ -47,16 +47,14 @@ const CopySection = (props) => {
           <motion.button 
             className={styles.copyButton}
             whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.1 }}
-            animate={copied ? { 
-              boxShadow: ["0 0 10px rgba(200, 90, 255, 0.4)", "0 0 20px rgba(0, 255, 170, 0.7)", "0 0 10px rgba(200, 90, 255, 0.4)"],
+            whileHover={{ scale: 1.1 }}            animate={copied ? { 
+              boxShadow: "0 0 20px rgba(0, 255, 170, 0.7)",
             } : {}}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.5 }}
           >
-            {copied ? (
-              <motion.div
+            {copied ? (              <motion.div
                 initial={{ scale: 0 }}
-                animate={{ scale: 1, rotate: [0, 10, 0] }}
+                animate={{ scale: 1, rotate: 10 }}
                 transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
                 <CheckCircle2 size={18} className={styles.checkIcon} />

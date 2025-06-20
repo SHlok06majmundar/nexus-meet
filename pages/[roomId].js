@@ -201,22 +201,16 @@ const Room = () => {
             className={styles.spinnerMiddle}
             animate={{ rotate: -360 }}
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          ></motion.div>
-          <motion.div 
+          ></motion.div>          <motion.div 
             className={styles.spinnerInner}
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            animate={{ scale: 1.2 }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
           ></motion.div>
           <motion.div 
-            className={styles.spinnerCore}
-            animate={{ 
-              boxShadow: [
-                "0 0 20px rgba(200, 90, 255, 0.8)",
-                "0 0 30px rgba(255, 90, 200, 0.8)", 
-                "0 0 20px rgba(200, 90, 255, 0.8)"
-              ]
+            className={styles.spinnerCore}            animate={{ 
+              boxShadow: "0 0 30px rgba(255, 90, 200, 0.8)"
             }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
           ></motion.div>
           <div className={styles.spinnerDots}>
             <div className={styles.spinnerDot}></div>

@@ -30,13 +30,20 @@
   gap: 0.5rem;
   font-weight: 500;
   transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(180, 90, 255, 0.3);
+  box-shadow: 0 0 15px rgba(200, 90, 255, 0.3);
   cursor: pointer;
+  border: 1px solid rgba(200, 90, 255, 0.4);
 }
 
 .homeContainer button:hover {
   background: linear-gradient(to right, #7e22ce, #be185d);
-  box-shadow: 0 0 25px rgba(180, 90, 255, 0.5);
+  box-shadow: 0 0 25px rgba(200, 90, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.homeContainer button:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 15px rgba(200, 90, 255, 0.2);
 }
 
 .homeContainer .enterRoom {
@@ -48,13 +55,27 @@
 }
 
 .homeContainer .enterRoom input {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(180, 90, 255, 0.3);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  color: white;
   width: 100%;
-  margin-bottom: 0.75rem;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;  background-color: rgba(40, 0, 80, 0.3);
+  color: white;
+  border: 1px solid rgba(200, 90, 255, 0.4);
+  box-shadow: 0 0 15px rgba(200, 90, 255, 0.2);
+  transition: all 0.3s ease;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.homeContainer .enterRoom input:focus {
+  outline: none;
+  border-color: rgba(200, 90, 255, 0.8);
+  box-shadow: 0 0 20px rgba(200, 90, 255, 0.4);
+}
+
+.homeContainer .enterRoom input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .homeContainer .separatorText {

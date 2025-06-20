@@ -60,13 +60,13 @@ const OnboardingPage = () => {
   };
 
   if (!isLoaded) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900">
+    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#20004A] via-[#30005A] to-[#50007A]">
       <div className="animate-pulse text-white text-xl">Loading...</div>
     </div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#20004A] via-[#30005A] to-[#50007A] flex flex-col items-center justify-center p-4">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
