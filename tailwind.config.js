@@ -2,7 +2,7 @@
 module.exports = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './component/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
@@ -13,9 +13,15 @@ module.exports = {
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
       colors: {
-        prime: '#212529',
-        secondary: '#343a40',
-        buttonPrimary: '#d90429'
+        prime: '#0a0f16',
+        secondary: '#172033',
+        buttonPrimary: '#4f46e5',
+        accent: '#7c3aed',
+        accentLight: '#8b5cf6',
+        highlight: '#10b981',
+        danger: '#ef4444',
+        darkText: '#1e293b',
+        lightText: '#e2e8f0'
       }
     },
   },

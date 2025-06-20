@@ -1,27 +1,36 @@
 .playerContainer {
-  @apply relative overflow-hidden mb-5 h-full;
+  @apply relative overflow-hidden mb-5 h-full transition-all duration-300;
 }
 
 .active {
-  @apply rounded-lg;
+  @apply rounded-xl bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 shadow-lg;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .notActive {
-  @apply rounded-md h-min;
+  @apply rounded-lg h-min relative bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 shadow-lg;
   width: 200px;
-  -webkit-box-shadow: 0px 0px 11px -1px rgba(0, 0, 0, 0.75);
-  -moz-box-shadow: 0px 0px 11px -1px rgba(0, 0, 0, 0.75);
-  box-shadow: 0px 0px 11px -1px rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.notActive:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .icon {
-  @apply text-white absolute right-2 bottom-2;
+  @apply absolute right-2 bottom-2 p-1.5 bg-black bg-opacity-50 rounded-full;
 }
 
 .user {
-  @apply text-white;
+  @apply text-accent opacity-80;
 }
 
 .notPlaying {
-  @apply flex items-center justify-center;
+  @apply flex items-center justify-center bg-secondary bg-opacity-60;
+}
+
+.playerName {
+  @apply absolute top-2 left-2 text-sm font-medium text-white bg-black bg-opacity-40 px-2 py-1 rounded-md;
 }

@@ -6,8 +6,7 @@ const SocketHandler = (req, res) => {
         console.log("socket already running")
     } else {        const io = new Server(res.socket.server)
         res.socket.server.io = io
-        
-        io.on('connection', (socket) => {
+          io.on('connection', (socket) => {
             console.log("server is connected")
             
             socket.on('join-room', (roomId, userId) => {
@@ -28,6 +27,17 @@ const SocketHandler = (req, res) => {
                     timestamp: new Date().toISOString()
                 })
             })
+            
+            // Handle requests for video state
+            socket.on('request-video-state', ({userId, targetId, roomId}) => {
+                console.log(`User ${userId} requesting video state from ${targetId} in room ${roomId}`);
+                
+                // Forward the request to the target user
+                socket.to(roomId).emit('video-state-requested', {
+                    requesterId: userId,
+                    roomId: roomId
+                });
+            })
 
             socket.on('user-toggle-audio', (userId, roomId) => {
                 socket.join(roomId)
@@ -37,6 +47,29 @@ const SocketHandler = (req, res) => {
             socket.on('user-toggle-video', (userId, roomId) => {
                 socket.join(roomId)
                 socket.broadcast.to(roomId).emit('user-toggle-video', userId)
+            })
+              // Handle direct video state updates
+            socket.on('user-video-state', ({userId, roomId, playing}) => {
+                console.log(`User ${userId} sending video state: playing=${playing}`)
+                socket.join(roomId)
+                
+                // Broadcast the video state to everyone in the room
+                socket.broadcast.to(roomId).emit('user-video-state', {
+                    userId: userId,
+                    playing: playing
+                })
+            })
+            
+            // Keep for backward compatibility
+            socket.on('initial-state', ({userId, roomId, playing}) => {
+                console.log(`User ${userId} sending initial state: playing=${playing}`)
+                socket.join(roomId)
+                
+                // Broadcast the initial state to everyone in the room
+                socket.broadcast.to(roomId).emit('user-video-state', {
+                    userId: userId,
+                    playing: playing
+                })
             })
 
             socket.on('user-leave', (userId, roomId) => {

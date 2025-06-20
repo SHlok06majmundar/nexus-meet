@@ -1,16 +1,27 @@
 .copyContainer {
-  @apply flex flex-col absolute text-white border border-white rounded p-2;
-  left: 30px;
-  bottom: 100px;
+  @apply fixed flex items-center bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 shadow-lg text-lightText p-3 px-4 rounded-full;
+  left: 20px;
+  top: 20px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-  hr {
-    @apply my-1;
-  }
-  .copyHeading {
-    @apply text-base;
-  }
+.copyHeading {
+  @apply text-sm font-medium mr-3;
+}
 
-  .copyDescription {
-    @apply flex items-center text-sm;
-  }
+.copyDescription {
+  @apply flex items-center text-sm;
+}
+
+.roomIdText {
+  @apply font-mono text-accent bg-secondary bg-opacity-70 py-1 px-3 rounded-md mr-2;
+}
+
+.copyButton {
+  @apply p-1.5 bg-secondary hover:bg-gray-700 rounded-full transition-all cursor-pointer;
+}
+
+.copyButton:hover {
+  transform: scale(1.1);
 }

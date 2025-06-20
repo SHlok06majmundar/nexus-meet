@@ -1,13 +1,45 @@
 .bottomMenu {
-  @apply absolute flex justify-between bottom-5 left-0 right-0 mx-auto;
-  width: 300px;
-  .icon {
-    @apply p-4 rounded-full text-white cursor-pointer;
-    background-color: theme("colors.secondary");
+  @apply fixed flex justify-center gap-2 bottom-5 left-0 right-0 mx-auto z-10;
+  width: fit-content;
+}
 
-    &:hover,
-    &.active {
-      background-color: theme("colors.buttonPrimary");
-    }
-  }
+.controlsWrapper {
+  @apply bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 shadow-lg flex items-center justify-center gap-3 px-4 py-3 rounded-full;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.icon {
+  @apply p-3 rounded-full text-white cursor-pointer transition-all;
+}
+
+.icon:hover {
+  transform: scale(1.1);
+}
+
+.audioIcon {
+  @apply bg-accent hover:bg-accentLight;
+}
+
+.audioIcon.muted {
+  @apply bg-danger hover:bg-red-600;
+}
+
+.videoIcon {
+  @apply bg-accent hover:bg-accentLight;
+}
+
+.videoIcon.off {
+  @apply bg-danger hover:bg-red-600;
+}
+
+.chatIcon {
+  @apply bg-secondary hover:bg-gray-700;
+}
+
+.chatIcon.active {
+  @apply bg-highlight hover:bg-green-600;
+}
+
+.leaveIcon {
+  @apply bg-danger hover:bg-red-600;
 }

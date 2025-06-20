@@ -3,29 +3,61 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+  --foreground-rgb: 226, 232, 240;
+  --background-start-rgb: 10, 15, 22;
+  --background-end-rgb: 23, 32, 51;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
+  background: radial-gradient(
+      ellipse at top left,
+      rgba(124, 58, 237, 0.2),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at bottom right,
+      rgba(79, 70, 229, 0.2),
+      transparent 50%
+    ),
+    linear-gradient(
+      to bottom right,
+      rgb(var(--background-start-rgb)),
       rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  /* Add transition for smooth layout changes when chat opens/closes */
+    );
+  background-attachment: fixed;
+  min-height: 100vh;
   transition: all 0.3s ease;
+}
+
+@layer components {
+  .btn {
+    @apply py-2 px-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-buttonPrimary text-white hover:bg-indigo-600 focus:ring-indigo-500;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-lightText hover:bg-gray-700 focus:ring-gray-500;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-red-600 focus:ring-red-500;
+  }
+
+  .btn-success {
+    @apply bg-highlight text-white hover:bg-green-600 focus:ring-green-500;
+  }
+  
+  .glass-effect {
+    @apply bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 shadow-lg;
+  }
+  
+  .input-field {
+    @apply bg-secondary bg-opacity-70 border-2 border-gray-600 focus:border-accent text-lightText rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-1 focus:ring-accent transition duration-300;
+  }
 }
 
 /* Chat open state - adjusts layout to make room for chat panel */

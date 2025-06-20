@@ -1,5 +1,5 @@
 {
-  "name": "goggle-meet-clone",
+  "name": "nexus-meet",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,14 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^4.29.0",
+    "@prisma/client": "^5.7.0",
     "classnames": "^2.3.2",
+    "framer-motion": "^10.16.16",
     "lodash": "^4.17.21",
     "lucide-react": "^0.294.0",
     "next": "13.5.6",
     "peerjs": "^1.5.1",
+    "prisma": "^5.7.0",
     "react": "^18",
     "react-copy-to-clipboard": "^5.1.0",
     "react-dom": "^18",
+    "react-hot-toast": "^2.4.1",
     "react-player": "^2.13.0",
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2",

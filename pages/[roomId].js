@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { cloneDeep } from "lodash";
+import { useUser } from "@clerk/nextjs";
+import { motion } from "framer-motion";
+import Head from "next/head";
+import toast from "react-hot-toast";
 
 import { useSocket } from "@/context/socket";
 import usePeer from "@/hooks/usePeer";
@@ -16,9 +20,11 @@ import { useRouter } from "next/router";
 
 const Room = () => {
   const socket = useSocket();
-  const { roomId } = useRouter().query;
+  const router = useRouter();
+  const { roomId } = router.query;
   const { peer, myId } = usePeer();
   const { stream } = useMediaStream();
+  const { user, isLoaded } = useUser();
   const {
     players,
     setPlayers,
@@ -31,6 +37,8 @@ const Room = () => {
 
   const [users, setUsers] = useState([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true);
+  
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
     // Toggle a class on the body to adjust layout
@@ -40,6 +48,16 @@ const Room = () => {
       document.body.classList.remove('chat-open');
     }
   };
+  
+  // Add a user joined notification
+  useEffect(() => {
+    if (stream && peer && myId) {
+      setTimeout(() => {
+        setIsConnecting(false);
+        toast.success('You joined the meeting!');
+      }, 2000);
+    }
+  }, [stream, peer, myId]);
   useEffect(() => {
     if (!socket || !peer || !stream) return;
     
@@ -118,42 +136,85 @@ const Room = () => {
   useEffect(() => {
     if (!peer || !stream) return;
     peer.on("call", (call) => {
-      const { peer: callerId } = call;
-      call.answer(stream);
-
-      call.on("stream", (incomingStream) => {
+      const { peer: callerId } = call;      call.answer(stream);      call.on("stream", (incomingStream) => {
         console.log(`incoming stream from ${callerId}`);
         setPlayers((prev) => ({
           ...prev,
           [callerId]: {
             url: incomingStream,
             muted: true,
-            playing: true,
+            playing: true, // Default to true, will be updated if needed by socket events
           },
         }));
 
         setUsers((prev) => ({
           ...prev,
           [callerId]: call
-        }))
+        }));
+        
+        // After receiving the stream, request the user's video state
+        if (socket) {
+          console.log('Requesting video state from new peer');
+          // Small delay to ensure everything is set up
+          setTimeout(() => {
+            socket.emit('request-video-state', {
+              userId: myId,
+              targetId: callerId,
+              roomId: roomId
+            });
+          }, 1500);
+        }
       });
     });
-  }, [peer, setPlayers, stream]);
-
-  useEffect(() => {
+  }, [peer, setPlayers, stream, socket, myId, roomId]);useEffect(() => {
     if (!stream || !myId) return;
-    console.log(`setting my stream ${myId}`);
+    console.log(`Setting my stream ${myId}`);
     setPlayers((prev) => ({
       ...prev,
       [myId]: {
         url: stream,
         muted: true,
-        playing: true,
+        playing: true, // Default to video on initially
       },
     }));
-  }, [myId, setPlayers, stream]);
+    
+    // If socket exists, broadcast our initial video state
+    if (socket) {
+      console.log('Broadcasting initial video state: true');
+      socket.emit('user-video-state', {
+        userId: myId,
+        roomId: roomId,
+        playing: true
+      });
+    }
+  }, [myId, setPlayers, stream, socket, roomId]);// Show loading state while connecting
+  if (isConnecting) {
+    return (
+      <>
+        <Head>
+          <title>Joining Meeting | Nexus Meet</title>
+        </Head>
+        <div className="min-h-screen flex flex-col items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            className="glass-effect rounded-xl p-8 flex flex-col items-center"
+          >
+            <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mb-6"></div>
+            <h2 className="text-2xl font-medium text-lightText mb-2">Connecting to meeting...</h2>
+            <p className="text-lightText opacity-70">Setting up your audio and video</p>
+          </motion.div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
+      <Head>
+        <title>Nexus Meet - Active Meeting</title>
+      </Head>
+      
       <div className={styles.activePlayerContainer}>
         {playerHighlighted && (
           <Player
@@ -164,6 +225,7 @@ const Room = () => {
           />
         )}
       </div>
+      
       <div className={styles.inActivePlayerContainer}>
         {Object.keys(nonHighlightedPlayers).map((playerId) => {
           const { url, muted, playing } = nonHighlightedPlayers[playerId];
@@ -178,7 +240,15 @@ const Room = () => {
           );
         })}
       </div>
-      <CopySection roomId={roomId}/>
+      
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <CopySection roomId={roomId}/>
+      </motion.div>
+      
       <Bottom
         muted={playerHighlighted?.muted}
         playing={playerHighlighted?.playing}
@@ -187,11 +257,14 @@ const Room = () => {
         leaveRoom={leaveRoom}
         toggleChat={toggleChat}
         isChatOpen={isChatOpen}
-      />      {socket && (
+      />
+      
+      {socket && (
         <Chat 
           socket={socket} 
           roomId={roomId} 
-          userId={myId} 
+          userId={myId}
+          userName={user?.firstName || "Anonymous"} 
           isOpen={isChatOpen} 
           onClose={toggleChat}
         />
