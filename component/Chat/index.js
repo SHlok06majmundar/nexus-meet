@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './index.module.css';
 import { X, Send, MessageSquare } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Chat = ({ socket, roomId, myId, players, visible, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -26,8 +27,8 @@ const Chat = ({ socket, roomId, myId, players, visible, onClose }) => {
 
     const handleNewMessage = (message) => {
       setMessages(prev => [...prev, message]);
-      // Increment unread count only if chat is not visible
-      if (!visible) {
+      // Increment unread count only if chat is not visible and it's not a system message
+      if (!visible && !message.isSystemMessage) {
         setUnreadCount(prev => prev + 1);
       }
     };
@@ -47,76 +48,106 @@ const Chat = ({ socket, roomId, myId, players, visible, onClose }) => {
       content: newMessage,
       senderId: myId,
       timestamp: new Date().toISOString(),
-      senderName: `User ${myId.substring(0, 5)}` // Use a shorter ID as name
+      senderName: players[myId]?.userName || `User ${myId.substring(0, 5)}`
     };
 
+    // Add to local state immediately
+    setMessages(prev => [...prev, messageData]);
+    
+    // Send to others
     socket.emit('send-message', messageData, roomId);
     
-    // Add message to local state immediately
-    setMessages(prev => [...prev, messageData]);
+    // Clear input
     setNewMessage('');
   };
 
-  const getSenderName = (senderId) => {
-    return senderId === myId ? 'You' : `User ${senderId.substring(0, 5)}`;
+  // Format timestamp as HH:MM
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  if (!visible) return null;
+
   return (
-    <div className={`${styles.chatContainer} ${visible ? styles.visible : ''}`}>
-      <div className={styles.header}>
-        <h3>Chat</h3>
-        <button onClick={onClose} className={styles.closeButton}>
-          <X size={20} />
-        </button>
+    <motion.div 
+      className={styles.chatContainer}
+      initial={{ opacity: 0, x: 300 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 300 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className={styles.chatHeader}>
+        <h3>Meeting Chat</h3>
+        <button onClick={onClose} className={styles.closeButton}><X size={20} /></button>
       </div>
       
-      <div className={styles.messageList}>
-        {messages.length === 0 ? (
-          <div className={styles.noMessages}>No messages yet</div>
-        ) : (
-          messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`${styles.message} ${msg.senderId === myId ? styles.sent : styles.received}`}
-            >
+      <div className={styles.messagesList}>
+        {messages.map((message, index) => (
+          <div 
+            key={index}
+            className={`${styles.messageItem} ${
+              message.isSystemMessage 
+                ? styles.systemMessage 
+                : message.senderId === myId 
+                  ? styles.myMessage 
+                  : styles.otherMessage
+            }`}
+          >
+            {!message.isSystemMessage && (
               <div className={styles.messageHeader}>
-                <span className={styles.sender}>{getSenderName(msg.senderId)}</span>
-                <span className={styles.time}>
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <span className={styles.senderName}>
+                  {message.senderId === myId ? 'You' : message.senderName || `User ${message.senderId.substring(0, 5)}`}
                 </span>
+                <span className={styles.timestamp}>{formatTime(message.timestamp)}</span>
               </div>
-              <div className={styles.messageContent}>
-                {msg.content}
-              </div>
+            )}
+            <div className={styles.messageContent}>
+              {message.content}
             </div>
-          ))
-        )}
+          </div>
+        ))}
         <div ref={messagesEndRef} />
       </div>
       
-      <form onSubmit={sendMessage} className={styles.inputContainer}>
-        <input
-          type="text"
+      <form onSubmit={sendMessage} className={styles.messageForm}>
+        <input 
+          type="text" 
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a message..."
-          className={styles.input}
+          placeholder="Type a message..." 
+          className={styles.messageInput}
         />
-        <button type="submit" className={styles.sendButton} disabled={!newMessage.trim()}>
-          <Send size={20} />
+        <button type="submit" className={styles.sendButton}>
+          <Send size={18} />
         </button>
       </form>
-    </div>
+    </motion.div>
+  );
+};
+
+// Chat button component
+export const ChatButton = ({ onClick, visible, unreadCount }) => {
+  if (!visible) return null;
+  
+  return (
+    <motion.button 
+      className={styles.chatButton}
+      onClick={onClick}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <MessageSquare size={24} />
+      {unreadCount > 0 && (
+        <span className={styles.unreadBadge}>
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      )}
+    </motion.button>
   );
 };
 
 export default Chat;
-
-export const ChatButton = ({ visible, unreadCount, onClick }) => {
-  return (
-    <button onClick={onClick} className={styles.chatButton}>
-      <MessageSquare size={24} />
-      {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-    </button>
-  );
-};

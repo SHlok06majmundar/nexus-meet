@@ -1,0 +1,41 @@
+.reaction {
+  position: absolute;
+  font-size: 36px;
+  z-index: 50;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(200, 90, 255, 0.5));
+}
+
+@keyframes floatAndFade {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.2);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-80px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-120px) scale(0.8);
+  }
+}
+
+.reactionsContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.reactionWrapper {
+  position: absolute;
+}

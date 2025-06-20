@@ -2,11 +2,18 @@ import {useState} from 'react'
 import { cloneDeep } from 'lodash'
 import { useSocket } from '@/context/socket'
 import { useRouter } from 'next/router'
+import { useUser } from "@clerk/nextjs";
 
 const usePlayer = (myId, roomId, peer) => {
     const socket = useSocket()
     const [players, setPlayers] = useState({})
     const router = useRouter()
+    const { user } = useUser();
+    const userName = user?.fullName || user?.firstName || user?.username || `User ${myId.substring(0, 5)}`;
+    
+    // Reference to toggleVideoTrack function - will be set by Room component
+    let videoTrackController = null;
+    
     const playersCopy = cloneDeep(players)
 
     const playerHighlighted = playersCopy[myId]
@@ -15,7 +22,7 @@ const usePlayer = (myId, roomId, peer) => {
     const nonHighlightedPlayers = playersCopy
 
     const leaveRoom = () => {
-        socket.emit('user-leave', myId, roomId)
+        socket.emit('user-leave', myId, roomId, userName)
         console.log("leaving room", roomId)
         peer?.disconnect();
         router.push('/')
@@ -26,22 +33,36 @@ const usePlayer = (myId, roomId, peer) => {
         setPlayers((prev) => {
             const copy = cloneDeep(prev)
             copy[myId].muted = !copy[myId].muted
-            return {...copy}
-        })
+            return {...copy}        })
         socket.emit('user-toggle-audio', myId, roomId)
     }
-
-    const toggleVideo = () => {
+      const toggleVideo = () => {
         console.log("I toggled my video")
+        
+        // Update local state first
+        let newVideoState = false
+        
         setPlayers((prev) => {
             const copy = cloneDeep(prev)
-            copy[myId].playing = !copy[myId].playing
+            newVideoState = !copy[myId].playing
+            copy[myId].playing = newVideoState
             return {...copy}
         })
-        socket.emit('user-toggle-video', myId, roomId)
+        
+        // Emit to other users with explicit video state
+        socket.emit('user-toggle-video', myId, roomId, newVideoState)
     }
 
-    return {players, setPlayers, playerHighlighted, nonHighlightedPlayers, toggleAudio, toggleVideo, leaveRoom}
+    return {
+        players, 
+        setPlayers, 
+        playerHighlighted, 
+        nonHighlightedPlayers, 
+        toggleAudio, 
+        toggleVideo, 
+        leaveRoom,
+        userName
+    }
 }
 
 export default usePlayer;

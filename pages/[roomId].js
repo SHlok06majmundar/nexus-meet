@@ -7,6 +7,7 @@ import usePeer from "@/hooks/usePeer";
 import useMediaStream from "@/hooks/useMediaStream";
 import usePlayer from "@/hooks/usePlayer";
 import { useUser } from "@clerk/nextjs";
+import ReactionsContainer from "@/component/Reaction/ReactionsContainer";
 
 import Player from "@/component/Player";
 import Bottom from "@/component/Bottom";
@@ -19,18 +20,30 @@ import { useRouter } from "next/router";
 const Room = () => {
   const router = useRouter();
   const socket = useSocket();
-  const { roomId } = router.query;
-  const { peer, myId } = usePeer();
-  const { stream } = useMediaStream();
-  const {
+  const { roomId } = router.query;  const { peer, myId } = usePeer();
+  const { stream, toggleVideoTrack } = useMediaStream();  const {
     players,
     setPlayers,
     playerHighlighted,
     nonHighlightedPlayers,
     toggleAudio,
-    toggleVideo,
-    leaveRoom
+    toggleVideo: originalToggleVideo,
+    leaveRoom,
+    userName
   } = usePlayer(myId, roomId, peer);
+    // Enhanced toggleVideo function that also controls the media track
+  const toggleVideo = () => {
+    // Get the new state (opposite of current state)
+    const newVideoState = playerHighlighted ? !playerHighlighted.playing : false;
+    
+    console.log(`Toggling video to: ${newVideoState} - Current state: ${playerHighlighted?.playing}`);
+    
+    // Update the track directly
+    toggleVideoTrack(newVideoState);
+    
+    // Call the original toggle function to update state and emit socket event
+    originalToggleVideo();
+  };
   const [users, setUsers] = useState([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -52,19 +65,26 @@ const Room = () => {
 
   useEffect(() => {
     if (!socket || !peer || !stream) return;
-    const handleUserConnected = (newUser) => {
-      console.log(`user connected in room with userId ${newUser}`);
+    
+    // Join the room with user name from Clerk
+    if (roomId && myId && userName) {
+      socket.emit("join-room", roomId, myId, userName);
+    }
+    
+    const handleUserConnected = (newUser, newUserName) => {
+      console.log(`user ${newUserName || newUser} connected in room`);
 
       const call = peer.call(newUser, stream);
 
       call.on("stream", (incomingStream) => {
-        console.log(`incoming stream from ${newUser}`);
+        console.log(`incoming stream from ${newUserName || newUser}`);
         setPlayers((prev) => ({
           ...prev,
           [newUser]: {
             url: incomingStream,
             muted: true,
             playing: true,
+            userName: newUserName || `User ${newUser.substring(0, 5)}`,
           },
         }));
 
@@ -74,15 +94,17 @@ const Room = () => {
         }));
       });
     };
+    
     socket.on("user-connected", handleUserConnected);
 
     return () => {
       socket.off("user-connected", handleUserConnected);
     };
-  }, [peer, setPlayers, socket, stream]);
+  }, [peer, setPlayers, socket, stream, roomId, myId, userName]);
   
   useEffect(() => {
     if (!socket) return;
+    
     const handleToggleAudio = (userId) => {
       console.log(`user with id ${userId} toggled audio`);
       setPlayers((prev) => {
@@ -90,16 +112,17 @@ const Room = () => {
         copy[userId].muted = !copy[userId].muted;
         return { ...copy };
       });
-    };
-
-    const handleToggleVideo = (userId) => {
-      console.log(`user with id ${userId} toggled video`);
+    };    const handleToggleVideo = (userId, videoState) => {
+      console.log(`user with id ${userId} toggled video to ${videoState}`);
       setPlayers((prev) => {
         const copy = cloneDeep(prev);
-        copy[userId].playing = !copy[userId].playing;
+        // Use the videoState value sent from the server instead of toggling
+        copy[userId].playing = videoState !== undefined ? videoState : !copy[userId].playing;
         return { ...copy };
       });
-    };    const handleUserLeave = (userId) => {
+    };
+    
+    const handleUserLeave = (userId) => {
       console.log(`user ${userId} is leaving the room`);
       users[userId]?.close();
       const playersCopy = cloneDeep(players);
@@ -109,14 +132,15 @@ const Room = () => {
 
     const handleNewMessage = (message) => {
       console.log(`New message received from ${message.senderId}: ${message.content}`);
-      // Only increment unread count if chat is closed
-      if (!isChatOpen) {
+      // Only increment unread count if chat is closed and it's not a system message
+      if (!isChatOpen && !message.isSystemMessage) {
         setUnreadMessages(prev => prev + 1);
         
         // Show a notification
         if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("New message", {
-            body: `${message.senderId.substring(0, 5)}: ${message.content}`,
+          const senderName = message.senderName || `User ${message.senderId.substring(0, 5)}`;
+          new Notification(`New message from ${senderName}`, {
+            body: message.content,
             icon: "/favicon.ico"
           });
         }
@@ -150,120 +174,86 @@ const Room = () => {
             url: incomingStream,
             muted: true,
             playing: true,
+            userName: `User ${callerId.substring(0, 5)}` // Default name until we get the real one
           },
-        }));
-
-        setUsers((prev) => ({
-          ...prev,
-          [callerId]: call
         }));
       });
     });
-  }, [peer, setPlayers, stream]);
-  
-  useEffect(() => {
-    if (!stream || !myId) return;
-    console.log(`setting my stream ${myId}`);
-    setPlayers((prev) => ({
-      ...prev,
-      [myId]: {
-        url: stream,
-        muted: true,
-        playing: true,
-      },
-    }));
-  }, [myId, setPlayers, stream]);
-  
-  // Request notification permission when joining the room
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
-    }
-  }, []);
-  
+  }, [peer, stream, setPlayers]);
+
   const toggleChat = () => {
-    setIsChatOpen(!isChatOpen);
+    setIsChatOpen(prev => !prev);
     if (!isChatOpen) {
       setUnreadMessages(0);
     }
   };
-  
-  // Show loading state while waiting for resources
-  if (!socket || !peer || !stream || isLoadingAuth) {
+
+  // Initialize notification permission
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Add our own name to the players object when we join
+  useEffect(() => {
+    if (myId && stream && userName) {
+      setPlayers((prev) => {
+        if (prev[myId]) return prev; // Only set once
+        return {
+          ...prev,
+          [myId]: {
+            url: stream,
+            muted: true,
+            playing: true,
+            userName: userName,
+          }
+        };
+      });
+    }
+  }, [myId, stream, setPlayers, userName]);
+
+  // Effect to ensure video track state stays consistent with the UI state
+  useEffect(() => {
+    if (playerHighlighted && stream) {
+      // Make sure the video track enabled state matches the UI
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack && videoTrack.enabled !== playerHighlighted.playing) {
+        console.log(`Enforcing video track state: ${playerHighlighted.playing}`);
+        videoTrack.enabled = playerHighlighted.playing;
+      }
+    }
+  }, [playerHighlighted, stream]);
+
+  // Show loading screen while auth is being loaded
+  if (isLoadingAuth) {
     return (
       <div className={styles.loadingContainer}>
-        <div className={styles.spinner}>
-          <motion.div 
-            className={styles.spinnerOuter}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          ></motion.div>          <motion.div 
-            className={styles.spinnerMiddle}
-            animate={{ rotate: -360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          ></motion.div>          <motion.div 
-            className={styles.spinnerInner}
-            animate={{ scale: 1.2 }}
-            transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
-          ></motion.div>
-          <motion.div 
-            className={styles.spinnerCore}            animate={{ 
-              boxShadow: "0 0 30px rgba(255, 90, 200, 0.8)"
-            }}
-            transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-          ></motion.div>
-          <div className={styles.spinnerDots}>
-            <div className={styles.spinnerDot}></div>
-            <div className={styles.spinnerDot}></div>
-            <div className={styles.spinnerDot}></div>
-            <div className={styles.spinnerDot}></div>
-          </div>
-        </div>
-        
-        <motion.h2 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}          
-          transition={{ delay: 0.2 }}
-          className="text-2xl font-medium mb-3 text-white text-glow"
-        >
-          Initializing Secure Connection...
-        </motion.h2>
-        
-        <motion.div 
-          className={styles.loadingText}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          Preparing your virtual meeting space
-        </motion.div>
-        
+        <div className={styles.loadingSpinner}></div>
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-xl font-medium mb-3 text-white text-glow"
+          transition={{ delay: 0.2 }}
+          className={styles.loadingText}
         >
           Setting up your meeting...
         </motion.h2>
-        
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
           className="flex flex-col items-center"
         >
-          <p className="text-blue-300 text-base mb-4">Preparing your secure connection</p>
-          <div className="flex items-center space-x-2">
-            <div className="h-2 w-2 bg-indigo-400 rounded-full animate-pulse"></div>
-            <div className="h-2 w-2 bg-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-            <div className="h-2 w-2 bg-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          <div className={styles.loadingDots}>
+            <div className={styles.dot}></div>
+            <div className={styles.dot}></div>
+            <div className={styles.dot}></div>
           </div>
         </motion.div>
       </div>
     );
-  }
-
+  }  
+  
   return (
     <div className={styles.roomContainer}>
       {/* Futuristic grid overlay */}
@@ -282,6 +272,7 @@ const Room = () => {
             url={playerHighlighted.url}
             muted={playerHighlighted.muted}
             playing={playerHighlighted.playing}
+            userName={playerHighlighted.userName}
             isActive
           />
         )}
@@ -295,7 +286,7 @@ const Room = () => {
         className={styles.inActivePlayerContainer}
       >
         {Object.keys(nonHighlightedPlayers).map((playerId, index) => {
-          const { url, muted, playing } = nonHighlightedPlayers[playerId];
+          const { url, muted, playing, userName } = nonHighlightedPlayers[playerId];
           return (
             <motion.div
               key={playerId}
@@ -307,6 +298,7 @@ const Room = () => {
                 url={url}
                 muted={muted}
                 playing={playing}
+                userName={userName}
                 isActive={false}
               />
             </motion.div>
@@ -326,14 +318,13 @@ const Room = () => {
         leaveRoom={leaveRoom}
       />
       
-      {/* Chat Button */}
-      <ChatButton 
+      {/* Chat Button */}      <ChatButton 
         visible={!isChatOpen}
         unreadCount={unreadMessages}
         onClick={toggleChat} 
       />
       
-      {/* Chat Component */}
+      {/* Chat Component */}      
       <Chat 
         socket={socket}
         roomId={roomId}
@@ -342,6 +333,9 @@ const Room = () => {
         visible={isChatOpen}
         onClose={toggleChat}
       />
+      
+      {/* Reactions Container */}
+      <ReactionsContainer roomId={roomId} />
     </div>
   );
 };

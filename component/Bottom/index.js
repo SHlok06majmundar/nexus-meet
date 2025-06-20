@@ -1,3 +1,4 @@
+import { useState } from "react";
 import cx from "classnames";
 import { 
   Mic, 
@@ -5,7 +6,7 @@ import {
   PhoneOff, 
   MicOff, 
   VideoOff, 
-  MessageSquare, 
+  Smile, 
   ScreenShare, 
   Shield
 } from "lucide-react";
@@ -15,16 +16,44 @@ import styles from "@/component/Bottom/index.module.css";
 
 const Bottom = (props) => {
   const { muted, playing, toggleAudio, toggleVideo, leaveRoom } = props;
-
-  // Function to share the current screen (could be integrated with meeting functionality)
+  // Function to share the current screen
   const shareScreen = () => {
-    // This is a placeholder - you would implement actual screen sharing logic
-    alert("Screen sharing functionality would be implemented here");
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+      navigator.mediaDevices.getDisplayMedia({ video: true })
+        .then((stream) => {
+          // Find the existing video track and replace it
+          const videoTrack = stream.getVideoTracks()[0];
+          
+          // Dispatch an event that the socket context can listen to
+          const screenShareEvent = new CustomEvent('screen-share-started', { 
+            detail: { stream, videoTrack } 
+          });
+          window.dispatchEvent(screenShareEvent);
+        })
+        .catch((err) => {
+          console.error("Error sharing screen:", err);
+          alert("Could not share screen: " + err.message);
+        });
+    } else {
+      alert("Your browser doesn't support screen sharing");
+    }
   };
   
-  // Function to open chat (placeholder)
-  const openChat = () => {
-    alert("Chat functionality would be implemented here");
+  // Function to show emoji reactions
+  const [showReactions, setShowReactions] = useState(false);
+  
+  const toggleReactions = () => {
+    setShowReactions(!showReactions);
+  };
+  
+  // Function to send a reaction
+  const sendReaction = (emoji) => {
+    // Create a custom event that the socket context can handle
+    const reactionEvent = new CustomEvent('send-reaction', { 
+      detail: { emoji } 
+    });
+    window.dispatchEvent(reactionEvent);
+    setShowReactions(false);
   };
 
   return (
@@ -81,20 +110,80 @@ const Bottom = (props) => {
           />
         )}
       </motion.div>
-      
-      {/* Chat Button with tooltip */}
+        {/* Reactions Button with tooltip */}
       <motion.div
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         className={styles.buttonWrapper}
       >
-        <div className={styles.tooltip}>Open Chat</div>
-        <MessageSquare 
+        <div className={styles.tooltip}>Reactions</div>
+        <Smile 
           className={styles.icon} 
           size={24} 
-          onClick={openChat}
+          onClick={toggleReactions}
           strokeWidth={1.5}
         />
+        
+        {/* Reactions Panel */}
+        {showReactions && (
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className={styles.reactionsPanel}
+          >
+            <div className={styles.reactionsTitle}>Quick Reactions</div>
+            <div className={styles.reactionsList}>
+              <motion.div 
+                whileHover={{ scale: 1.2 }} 
+                whileTap={{ scale: 0.9 }}
+                className={styles.reactionButton} 
+                onClick={() => sendReaction('👍')}
+              >
+                👍
+              </motion.div>
+              <motion.div 
+                whileHover={{ scale: 1.2 }} 
+                whileTap={{ scale: 0.9 }}
+                className={styles.reactionButton} 
+                onClick={() => sendReaction('👏')}
+              >
+                👏
+              </motion.div>
+              <motion.div 
+                whileHover={{ scale: 1.2 }} 
+                whileTap={{ scale: 0.9 }}
+                className={styles.reactionButton} 
+                onClick={() => sendReaction('❤️')}
+              >
+                ❤️
+              </motion.div>
+              <motion.div 
+                whileHover={{ scale: 1.2 }} 
+                whileTap={{ scale: 0.9 }}
+                className={styles.reactionButton} 
+                onClick={() => sendReaction('🎉')}
+              >
+                🎉
+              </motion.div>
+              <motion.div 
+                whileHover={{ scale: 1.2 }} 
+                whileTap={{ scale: 0.9 }}
+                className={styles.reactionButton} 
+                onClick={() => sendReaction('😂')}
+              >
+                😂
+              </motion.div>
+              <motion.div 
+                whileHover={{ scale: 1.2 }} 
+                whileTap={{ scale: 0.9 }}
+                className={styles.reactionButton} 
+                onClick={() => sendReaction('🙌')}
+              >
+                🙌
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
       
       {/* Share Screen Button with tooltip */}

@@ -187,6 +187,77 @@
   border-color: rgba(255, 90, 120, 0.4);
 }
 
+.reactionsPanel {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(40, 0, 80, 0.9);
+  border: 2px solid rgba(200, 90, 255, 0.4);
+  border-radius: 16px;
+  padding: 16px;
+  width: 240px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(200, 90, 255, 0.3);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  z-index: 200;
+}
+
+.reactionsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(255, 210, 255);
+  text-align: center;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(255, 90, 200, 0.5);
+}
+
+.reactionsList {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.reactionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(200, 90, 255, 0.2);
+  border: 1px solid rgba(200, 90, 255, 0.4);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(200, 90, 255, 0.2);
+}
+
+.reactionButton:hover {
+  background: rgba(200, 90, 255, 0.3);
+  box-shadow: 0 0 15px rgba(200, 90, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Animation for reactions when they appear in the meeting */
+@keyframes floatUp {
+  0% { 
+    transform: translateY(0) scale(0.5);
+    opacity: 0; 
+  }
+  20% { 
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1; 
+  }
+  80% { 
+    transform: translateY(-80px) scale(1);
+    opacity: 0.8; 
+  }
+  100% { 
+    transform: translateY(-100px) scale(0.8);
+    opacity: 0; 
+  }
+}
+
 @media screen and (max-width: 768px) {
   .bottomMenu {
     padding: 12px 18px;

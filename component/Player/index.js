@@ -1,12 +1,15 @@
 import ReactPlayer from "react-player";
 import cx from "classnames";
-import { Mic, MicOff, User, GitBranch, Hexagon } from "lucide-react";
+import { Mic, MicOff, User, Hexagon } from "lucide-react";
 import { motion } from "framer-motion";
 
 import styles from "@/component/Player/index.module.css";
 
 const Player = (props) => {
-  const { url, muted, playing, isActive } = props;
+  const { url, muted, playing, isActive, userName } = props;
+  // Use the provided userName or a default value
+  const displayName = userName || "User";
+  
   return (
     <div
       className={cx(styles.playerContainer, {
@@ -25,9 +28,16 @@ const Player = (props) => {
         style={{ display: playing ? 'block' : 'none' }}  // Hide video when not playing
       />
       
+      {/* User name display */}
+      <div className={styles.nameTag}>
+        {displayName}
+        {muted && <MicOff className={styles.nameTagIcon} size={14} />}
+      </div>
+      
       {/* Show futuristic user icon when video is off */}
       {!playing && (
-        <div className={styles.userIconContainer}>          <motion.div
+        <div className={styles.userIconContainer}>
+          <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ 
               opacity: 1, 
@@ -48,18 +58,14 @@ const Player = (props) => {
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             />
-              <motion.div 
+            
+            <motion.div 
               className={styles.pulseRing}
               animate={{ 
-                scale: 1.2,
-                opacity: 0.6,
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.6, 0.3],
               }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity, 
-                repeatType: "reverse", 
-                ease: "easeInOut" 
-              }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>
           
@@ -68,10 +74,11 @@ const Player = (props) => {
             {Array(5).fill(0).map((_, i) => (
               <motion.div 
                 key={i}
-                className={styles.glowOrb}                animate={{
+                className={styles.glowOrb}
+                animate={{
                   x: Math.random() * 40 - 20,
                   y: Math.random() * 40 - 20,
-                  opacity: 0.8
+                  opacity: [0.4, 0.8, 0.4]
                 }}
                 transition={{ 
                   duration: 3 + Math.random() * 2, 
