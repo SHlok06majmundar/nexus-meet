@@ -1,14 +1,338 @@
+.roomContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(140deg, rgba(25, 0, 60, 1) 0%, rgba(45, 0, 85, 1) 50%, rgba(65, 0, 120, 0.9) 100%);
+  color: white;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Grid overlay for futuristic look */
+.gridOverlay {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(200, 90, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(200, 90, 255, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 1;
+  opacity: 0.5;
+  pointer-events: none;
+  animation: pulse-grid 8s infinite alternate ease-in-out;
+}
+
+/* Horizontal lines for additional futuristic effect */
+.horizontalLines {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to bottom, 
+      transparent 40%, 
+      rgba(200, 90, 255, 0.1) 42%,
+      rgba(200, 90, 255, 0.1) 58%,
+      transparent 60%);
+  opacity: 0.7;
+  z-index: 1;
+  pointer-events: none;
+  animation: scan-lines 10s infinite linear;
+}
+
+@keyframes scan-lines {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 40px;
+  }
+}
+
+@keyframes pulse-grid {
+  0% {
+    opacity: 0.3;
+    background-size: 40px 40px;
+  }
+  50% {
+    opacity: 0.5;
+    background-size: 42px 42px;
+  }
+  100% {
+    opacity: 0.3;
+    background-size: 38px 38px;
+  }
+}
+
+/* Animated background elements */
+.roomContainer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(200, 90, 255, 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255, 90, 200, 0.4) 0%, transparent 40%);
+  opacity: 0.15;
+  filter: blur(80px);
+  animation: pulse-bg 15s infinite alternate ease-in-out;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes pulse-bg {
+  0% { opacity: 0.1; filter: blur(80px); }
+  50% { opacity: 0.15; filter: blur(100px); }
+  100% { opacity: 0.2; filter: blur(120px); }
+}
+
+/* Animated light spots */
+.lightSpot1, 
+.lightSpot2 {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.2;
+  filter: blur(100px);
+  animation: float 20s infinite ease-in-out alternate;
+  pointer-events: none;
+}
+
+.lightSpot1 {
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(200, 90, 255, 0.8) 0%, rgba(130, 30, 255, 0) 70%);
+  top: -200px;
+  right: -200px;
+}
+
+.lightSpot2 {
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(255, 90, 200, 0.8) 0%, rgba(130, 30, 255, 0) 70%);
+  bottom: -200px;
+  left: -200px;
+  animation-delay: -10s;
+}
+
+@keyframes float {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(50px, -30px) scale(1.1); }
+  100% { transform: translate(10px, 40px) scale(0.9); }
+}
+
 .activePlayerContainer {
-  @apply absolute w-9/12 left-0 right-0 mx-auto;
-  top: 20px;
-  bottom: 50px;
-  height: calc(100vh - 20px - 100px);
+  position: absolute;
+  width: 75%;
+  left: 0;
+  right: 0;
+  top: 100px;
+  bottom: 100px;
+  margin: auto;
+  z-index: 10;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.secondaryPlayerContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  position: absolute;
+  bottom: 120px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  z-index: 10;
+  width: fit-content;
 }
 
 .inActivePlayerContainer {
-  @apply absolute flex flex-col overflow-y-auto;
-  width: 200px;
-  height: calc(100vh - 20px);
-  right: 20px;
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  max-width: 1200px;
+  top: auto;
+  bottom: 120px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  z-index: 10;
+  width: fit-content;
+  pointer-events: all;
+}
+
+/* HUD-style loading spinner */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  background: linear-gradient(140deg, rgba(25, 0, 60, 1) 0%, rgba(45, 0, 85, 1) 50%, rgba(65, 0, 120, 0.9) 100%);
+  z-index: 1000;
+}
+
+/* Grid background for loading screen */
+.loadingContainer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(200, 90, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(200, 90, 255, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+/* Enhanced spinner with more details */
+.spinner {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 30px;
+}
+
+.spinnerOuter {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-top-color: rgba(200, 90, 255, 0.8);
+  border-right-color: rgba(255, 90, 200, 0.8);
+  border-radius: 50%;
+  animation: spin 3s linear infinite;
+}
+
+.spinnerMiddle {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+  border: 2px dashed transparent;
+  border-bottom-color: rgba(0, 255, 170, 0.8);
+  border-left-color: rgba(200, 90, 255, 0.8);
+  border-radius: 50%;
+  animation: spin 3s linear infinite reverse;
+}
+
+.spinnerInner {
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  top: 20%;
+  left: 20%;
+  border: 2px dotted rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  animation: spin 1.5s ease-in-out infinite;
+}
+
+.spinnerCore {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: calc(50% - 10px);
+  left: calc(50% - 10px);
+  background: rgba(200, 90, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(200, 90, 255, 0.8);
+  animation: pulse 2s infinite alternate;
+}
+
+/* Spinner decorative elements */
+.spinnerDots {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  animation: spin 10s linear infinite;
+}
+
+.spinnerDot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(200, 90, 255, 0.8);
+}
+
+.spinnerDot:nth-child(1) { top: 0; left: calc(50% - 3px); }
+.spinnerDot:nth-child(2) { top: calc(50% - 3px); right: 0; }
+.spinnerDot:nth-child(3) { bottom: 0; left: calc(50% - 3px); }
+.spinnerDot:nth-child(4) { top: calc(50% - 3px); left: 0; }
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.2); opacity: 1; }
+}
+
+.loadingText {
+  margin: 15px 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 10px rgba(200, 90, 255, 0.5);
+  position: relative;
+  letter-spacing: 0.5px;
+  animation: pulse-text 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-text {
+  0% { opacity: 0.7; text-shadow: 0 0 10px rgba(200, 90, 255, 0.5); }
+  100% { opacity: 1; text-shadow: 0 0 15px rgba(200, 90, 255, 0.8); }
+}
+
+/* HUD design elements */
+.hudElement {
+  position: absolute;
+  border: 1px solid rgba(200, 90, 255, 0.3);
+  padding: 10px;  background: rgba(40, 0, 80, 0.4);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 12px;
+  border-radius: 4px;
+  z-index: 5;
+}
+
+.topLeftHud {
   top: 20px;
+  left: 20px;
+}
+
+.bottomRightHud {
+  bottom: 120px;
+  right: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .activePlayerContainer {
+    width: 100%;
+    height: calc(100vh - 160px);
+    top: 10px;
+    bottom: 160px;
+    padding: 10px;
+  }
+  
+  .inActivePlayerContainer {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    top: auto;
+    bottom: 100px;
+    right: 0;
+    justify-content: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 10px;
+  }
 }

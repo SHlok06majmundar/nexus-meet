@@ -1,23 +1,228 @@
 .homeContainer {
-  @apply w-4/12 mx-auto p-2 border border-white rounded mt-8 text-white flex flex-col items-center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-  h1 {
-    @apply text-xl text-center;
+.homeContainer h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  background: linear-gradient(to right, #d8b4fe, #f5d0fe, #d8b4fe);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 25px rgba(180, 90, 255, 0.5);
+}
+
+.homeContainer button {
+  background: linear-gradient(to right, #9333ea, #db2777);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(180, 90, 255, 0.3);
+  cursor: pointer;
+}
+
+.homeContainer button:hover {
+  background: linear-gradient(to right, #7e22ce, #be185d);
+  box-shadow: 0 0 25px rgba(180, 90, 255, 0.5);
+}
+
+.homeContainer .enterRoom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.homeContainer .enterRoom input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(180, 90, 255, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.homeContainer .separatorText {
+  margin: 0.75rem 0;
+  font-size: 1.2rem;
+  color: #d8b4fe;
+}
+
+.heroContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  margin: 2rem 0;
+}
+
+.heroTitle {
+  font-size: 2.5rem;
+  font-weight: bold;
+  background: linear-gradient(to right, #d8b4fe, #f5d0fe, #d8b4fe);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 25px rgba(180, 90, 255, 0.5);
+}
+
+.heroSubtitle {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: #e9d5ff;
+  max-width: 36rem;
+  text-shadow: 0 0 10px rgba(180, 90, 255, 0.3);
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 28rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(180, 90, 255, 0.3);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 0 30px rgba(180, 90, 255, 0.2);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .inputGroup {
+    flex-direction: row;
   }
+}
 
-  button {
-    @apply bg-buttonPrimary py-2 px-4 rounded;
+.input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(180, 90, 255, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: rgba(180, 90, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(180, 90, 255, 0.25);
+}
+
+.button {
+  background: linear-gradient(to right, #9333ea, #db2777);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(180, 90, 255, 0.3);
+}
+
+.button:hover {
+  background: linear-gradient(to right, #7e22ce, #be185d);
+  box-shadow: 0 0 25px rgba(180, 90, 255, 0.5);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  width: 100%;
+}
+
+.dividerLine {
+  flex: 1;
+  border-top: 1px solid rgba(180, 90, 255, 0.3);
+}
+
+.dividerText {
+  margin: 0 1rem;
+  color: #d8b4fe;
+  font-weight: 500;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .featureGrid {
+    grid-template-columns: 1fr 1fr;
   }
+}
 
-  .enterRoom {
-    @apply flex flex-col items-center mt-3 w-full;
-
-    input {
-      @apply text-black text-lg p-1 rounded w-9/12 mb-3;
-    }
+@media (min-width: 1024px) {
+  .featureGrid {
+    grid-template-columns: 1fr 1fr 1fr;
   }
+}
 
-  .separatorText {
-    @apply my-3 text-xl;
-  }
+.featureCard {
+  background-color: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(180, 90, 255, 0.3);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(180, 90, 255, 0.1);
+}
+
+.featureCard:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 25px rgba(180, 90, 255, 0.2);
+  transform: translateY(-5px);
+}
+
+.featureIcon {
+  padding: 0.75rem;
+  border-radius: 9999px;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  background: linear-gradient(135deg, rgba(180, 90, 255, 0.2), rgba(255, 90, 180, 0.2));
+  box-shadow: 0 0 15px rgba(180, 90, 255, 0.2);
+}
+
+.featureTitle {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #e9d5ff;
+}
+
+.featureDescription {
+  color: rgba(221, 214, 254, 0.9);
 }

@@ -1,27 +1,208 @@
 .playerContainer {
-  @apply relative overflow-hidden mb-5 h-full;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  height: 100%;
+  background-color: rgba(45, 10, 80, 0.7);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .active {
-  @apply rounded-lg;
+  border-radius: 1rem;
+  border: 3px solid rgba(200, 90, 255, 0.5);
+  box-shadow: 0 0 40px rgba(200, 90, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 1.25rem;
+  border: 2px solid rgba(255, 90, 200, 0.4);
+  box-shadow: inset 0 0 20px rgba(255, 90, 200, 0.2);
+  pointer-events: none;
+}
+
+.active::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    transparent, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent, 
+    transparent
+  );
+  transform: rotate(45deg);
+  animation: sheen 8s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes sheen {
+  0%, 100% { top: -50%; left: -50%; }
+  50% { top: 0%; left: 0%; }
 }
 
 .notActive {
-  @apply rounded-md h-min;
-  width: 200px;
-  -webkit-box-shadow: 0px 0px 11px -1px rgba(0, 0, 0, 0.75);
-  -moz-box-shadow: 0px 0px 11px -1px rgba(0, 0, 0, 0.75);
-  box-shadow: 0px 0px 11px -1px rgba(0, 0, 0, 0.75);
+  border-radius: 0.75rem;
+  height: min-content;
+  width: 220px;
+  border: 2px solid rgba(200, 90, 255, 0.4);
+  background-color: rgba(40, 0, 80, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(200, 90, 255, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.notActive:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 25px rgba(200, 90, 255, 0.4);
+  border-color: rgba(255, 90, 200, 0.6);
 }
 
 .icon {
-  @apply text-white absolute right-2 bottom-2;
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  color: white;
+  background-color: rgba(40, 0, 80, 0.8);
+  padding: 8px;
+  border-radius: 50%;
+  border: 2px solid rgba(200, 90, 255, 0.4);
+  box-shadow: 0 0 15px rgba(200, 90, 255, 0.4);
+  z-index: 10;
+}
+
+.micIcon {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
 }
 
 .user {
-  @apply text-white;
+  color: rgba(255, 210, 255, 1);
+  filter: drop-shadow(0 0 15px rgba(255, 90, 200, 0.8));
 }
 
 .notPlaying {
-  @apply flex items-center justify-center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, 
+    rgba(45, 0, 85, 0.9),
+    rgba(90, 0, 170, 0.4));
+  position: relative;
+  overflow: hidden;
+}
+
+.notPlaying::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(200, 90, 255, 0.2),
+    transparent 70%
+  );
+  z-index: 1;
+}
+
+.userIconContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.userIconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.userBg {
+  color: rgba(200, 90, 255, 0.3);
+  filter: drop-shadow(0 0 20px rgba(200, 90, 255, 0.4));
+}
+
+/* New elements for futuristic appearance */
+.orbitRing {
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.pulseRing {
+  position: absolute;
+  width: 130%;
+  height: 130%;
+  border: 2px solid rgba(200, 90, 255, 0.2);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.glowOrbs {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.glowOrb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(3px);
+  z-index: 1;
+}
+
+.activeIndicator {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background-color: rgba(40, 0, 80, 0.8);
+  border: 1px solid rgba(200, 90, 255, 0.4);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(255, 210, 255);
+  z-index: 10;
+}
+
+.activeIndicatorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(0, 255, 170);
+  box-shadow: 0 0 8px rgba(0, 255, 170, 0.8);
+}
+
+/* Overlay grid effect for futuristic look */
+.notPlaying::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(200, 90, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(200, 90, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  z-index: 1;
+  opacity: 0.4;
 }
