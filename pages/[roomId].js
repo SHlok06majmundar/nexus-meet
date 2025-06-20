@@ -9,6 +9,7 @@ import usePlayer from "@/hooks/usePlayer";
 import { useUser } from "@clerk/nextjs";
 import ReactionsContainer from "@/component/Reaction/ReactionsContainer";
 import NotificationSystem from "@/component/Notification";
+import { setViewportHeight } from "@/utils/responsiveUtils";
 
 import Player from "@/component/Player";
 import Bottom from "@/component/Bottom";
@@ -300,6 +301,25 @@ const Room = () => {
     }
   }, [playerHighlighted, stream]);
 
+  // Add viewport height fix for mobile
+  useEffect(() => {
+    // Set the viewport height correctly for mobile
+    setViewportHeight();
+    
+    // Update on resize
+    const handleResize = () => {
+      setViewportHeight();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   // Show loading screen while auth is being loaded
   if (isLoadingAuth) {
     return (
@@ -342,56 +362,58 @@ const Room = () => {
       {/* Reactions container for displaying emojis */}
       <ReactionsContainer />
       
-      {/* Active player container with animation */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className={styles.activePlayerContainer}
-      >
-        {playerHighlighted && (
-          <Player
-            url={playerHighlighted.url}
-            muted={playerHighlighted.muted}
-            playing={playerHighlighted.playing}
-            userName={playerHighlighted.userName}
-            isActive
-          />
-        )}
-      </motion.div>
+      {/* Main content area with proper scrolling */}
+      <div className={styles.mainContent}>
+        {/* Active player container with animation */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className={styles.activePlayerContainer}
+        >
+          {playerHighlighted && (
+            <Player
+              url={playerHighlighted.url}
+              muted={playerHighlighted.muted}
+              playing={playerHighlighted.playing}
+              userName={playerHighlighted.userName}
+              isActive
+            />
+          )}
+        </motion.div>
+        
+        {/* Room info and copy link section */}
+        <CopySection roomId={roomId} />
+        
+        {/* Grid of other participants with animations */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className={styles.nonActivePlayersContainer}
+        >
+          {Object.keys(nonHighlightedPlayers).map((playerId, index) => {
+            const { url, muted, playing, userName } = nonHighlightedPlayers[playerId];
+            return (
+              <motion.div
+                key={playerId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+              >
+                <Player
+                  url={url}
+                  muted={muted}
+                  playing={playing}
+                  userName={userName}
+                />
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
       
-      {/* Grid of other participants with animations */}
-      <motion.div 
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className={styles.inActivePlayerContainer}
-      >
-        {Object.keys(nonHighlightedPlayers).map((playerId, index) => {
-          const { url, muted, playing, userName } = nonHighlightedPlayers[playerId];
-          return (
-            <motion.div
-              key={playerId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index }}
-            >
-              <Player
-                url={url}
-                muted={muted}
-                playing={playing}
-                userName={userName}
-                isActive={false}
-              />
-            </motion.div>
-          );
-        })}
-      </motion.div>
-      
-      {/* Meeting ID display with animation */}
-      <CopySection roomId={roomId}/>
-      
-      {/* Controls with animation */}
+      {/* Bottom controls */}
       <Bottom
         muted={playerHighlighted?.muted}
         playing={playerHighlighted?.playing}

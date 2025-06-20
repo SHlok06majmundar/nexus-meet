@@ -8,7 +8,7 @@
   z-index: 1000;
   pointer-events: none; /* Allow clicking through to elements behind */
   max-width: 350px;
-  width: 100%;
+  width: calc(100% - 40px); /* Responsive width with padding */
 }
 
 .notification {
@@ -27,6 +27,7 @@
   transition: all 0.3s ease;
   transform-origin: right;
   overflow: hidden;
+  word-break: break-word;
 }
 
 .notification:hover {
@@ -115,5 +116,41 @@
   100% {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
                 0 0 10px rgba(148, 0, 255, 0.2);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .notificationContainer {
+    top: 15px;
+    right: 15px;
+    max-width: 300px;
+    width: calc(100% - 30px);
+  }
+  
+  .notification {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notificationContainer {
+    top: 10px;
+    right: 10px;
+    max-width: 280px;
+    width: calc(100% - 20px);
+    gap: 8px;
+  }
+  
+  .notification {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+  
+  .message::before {
+    width: 6px;
+    height: 6px;
   }
 }

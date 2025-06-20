@@ -8,6 +8,7 @@
   right: 0;
   margin: 0 auto;
   width: fit-content;
+  max-width: 95vw; /* Prevent overflow on small screens */
   padding: 16px 32px;
   border-radius: 50px;
   background-color: rgba(40, 0, 80, 0.8);
@@ -18,6 +19,8 @@
   box-shadow: 0 0 25px rgba(200, 90, 255, 0.4), 0 10px 20px rgba(0, 0, 0, 0.5);
   animation: glow 3s infinite alternate;
   transform-origin: center bottom;
+  overflow: hidden; /* Ensure border radius is maintained */
+  flex-wrap: wrap; /* Allow wrapping on very small screens */
 }
 
 @keyframes glow {
@@ -95,6 +98,35 @@
   box-shadow: 0 0 15px rgba(150, 0, 255, 0.3);
   position: relative;
   border: 1px solid rgba(200, 90, 255, 0.4);
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+  .bottomMenu {
+    padding: 12px 24px;
+    gap: 16px;
+  }
+  
+  .icon {
+    width: 48px;
+    height: 48px;
+    padding: 13px;
+  }
+}
+
+/* Even smaller screens */
+@media (max-width: 480px) {
+  .bottomMenu {
+    padding: 10px 16px;
+    gap: 12px;
+    border-radius: 35px;
+  }
+  
+  .icon {
+    width: 42px;
+    height: 42px;
+    padding: 11px;
+  }
 }
 
 .icon::before {
@@ -189,18 +221,26 @@
 
 .reactionsPanel {
   position: absolute;
-  bottom: 70px;
+  top: -200px;
   left: 50%;
   transform: translateX(-50%);
+  width: 300px;
   background-color: rgba(40, 0, 80, 0.9);
-  border: 2px solid rgba(200, 90, 255, 0.4);
   border-radius: 16px;
   padding: 16px;
-  width: 240px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(200, 90, 255, 0.3);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+  border: 2px solid rgba(200, 90, 255, 0.4);
+  box-shadow: 0 0 25px rgba(200, 90, 255, 0.5);
   z-index: 200;
+}
+
+@media (max-width: 480px) {
+  .reactionsPanel {
+    width: 280px;
+    padding: 12px;
+    top: -180px;
+  }
 }
 
 .reactionsTitle {
@@ -255,21 +295,5 @@
   100% { 
     transform: translateY(-100px) scale(0.8);
     opacity: 0; 
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .bottomMenu {
-    padding: 12px 18px;
-    gap: 15px;
-    bottom: 15px;
-  }
-  
-  .icon {
-    padding: 10px;
-  }
-  
-  .tooltip {
-    display: none;
   }
 }

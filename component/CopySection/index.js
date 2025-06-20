@@ -15,58 +15,58 @@ const CopySection = (props) => {
   };
 
   return (
-    <div className="absolute top-6 left-6 z-50">
+    <motion.div 
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={styles.copyContainer}
+    >
       <motion.div 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className={styles.copyContainer}
+        className={styles.shareIcon}
+        whileHover={{ rotate: 15, scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <motion.div 
-          className={styles.shareIcon}
-          whileHover={{ rotate: 15, scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <GitBranch className={styles.branchIcon} size={18} />
-          <Share2 size={18} />
-        </motion.div>
-
-        <div className={styles.meetingInfoWrapper}>
-          <div className={styles.idLabel}>Meeting ID:</div>
-          <motion.div 
-            className={styles.roomId}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            {roomId}
-          </motion.div>
-        </div>
-
-        <CopyToClipboard text={roomId} onCopy={handleCopy}>
-          <motion.button 
-            className={styles.copyButton}
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.1 }}            animate={copied ? { 
-              boxShadow: "0 0 20px rgba(0, 255, 170, 0.7)",
-            } : {}}
-            transition={{ duration: 0.5 }}
-          >
-            {copied ? (              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1, rotate: 10 }}
-                transition={{ type: "spring", stiffness: 300, damping: 10 }}
-              >
-                <CheckCircle2 size={18} className={styles.checkIcon} />
-              </motion.div>
-            ) : (
-              <Copy size={18} className={styles.copyIcon} />
-            )}
-            <span className={styles.buttonText}>{copied ? "Copied" : "Copy"}</span>
-          </motion.button>
-        </CopyToClipboard>
+        <GitBranch className={styles.branchIcon} size={18} />
+        <Share2 size={18} />
       </motion.div>
-    </div>
+
+      <div className={styles.meetingInfoWrapper}>
+        <div className={styles.idLabel}>Meeting ID:</div>
+        <motion.div 
+          className={styles.roomId}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
+          {roomId}
+        </motion.div>
+      </div>
+
+      <CopyToClipboard text={roomId} onCopy={handleCopy}>
+        <motion.button 
+          className={styles.copyButton}
+          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.1 }}            
+          animate={copied ? { 
+            boxShadow: "0 0 20px rgba(0, 255, 170, 0.7)",
+          } : {}}
+          transition={{ duration: 0.5 }}
+        >
+          {copied ? (              
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1, rotate: 10 }}
+              transition={{ type: "spring", stiffness: 300, damping: 10 }}
+            >
+              <CheckCircle2 size={18} className={styles.checkIcon} />
+            </motion.div>
+          ) : (
+            <Copy size={18} className={styles.copyIcon} />
+          )}
+          <span className={styles.copyButtonText}>{copied ? "Copied" : "Copy"}</span>
+        </motion.button>
+      </CopyToClipboard>
+    </motion.div>
   );
 };
 

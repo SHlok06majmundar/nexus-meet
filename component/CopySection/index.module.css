@@ -10,6 +10,10 @@
   border: 2px solid rgba(200, 90, 255, 0.4);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(200, 90, 255, 0.3);
   position: relative;
+  margin: 0 auto 1.5rem auto;
+  max-width: 95%;
+  width: fit-content;
+  flex-wrap: wrap; /* Allow wrapping on very small screens */
 }
 
 .copyContainer::before {
@@ -52,6 +56,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1; /* Take up available space */
+  min-width: 0; /* Allow text truncation */
 }
 
 .idLabel {
@@ -70,6 +76,9 @@
   color: white;
   letter-spacing: 0.05em;
   position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .roomId::after {
@@ -100,38 +109,37 @@
   overflow: hidden;
 }
 
-.copyButton::after {
-  content: '';
-  position: absolute;
-  top: -100%;
-  left: -100%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transform: rotate(45deg);
-  transition: all 0.3s ease;
+/* Responsive styles */
+@media (max-width: 768px) {
+  .copyContainer {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  
+  .copyButton {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .roomId {
+    font-size: 0.9rem;
+  }
 }
 
-.copyButton:hover::after {
-  top: -20%;
-  left: -20%;
-  transition: all 0.5s ease;
-}
-
-.copyButton:hover {
-  background: rgba(200, 90, 255, 0.4);
-  box-shadow: 0 0 15px rgba(200, 90, 255, 0.6);
-  border-color: rgba(255, 90, 200, 0.6);
-}
-
-.checkIcon {
-  color: rgb(0, 255, 170);
-  filter: drop-shadow(0 0 5px rgba(0, 255, 170, 0.5));
-}
-
-.buttonText {
-  position: relative;
-  z-index: 1;
+@media (max-width: 480px) {
+  .copyContainer {
+    padding: 10px 14px;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .copyButtonText {
+    display: none; /* Hide copy text on very small screens */
+  }
+  
+  .meetingInfoWrapper {
+    flex: 0 1 auto;
+  }
 }
 
 /* Small decorative grid in the background for futuristic look */
@@ -147,23 +155,4 @@
   opacity: 0.3;
   z-index: -1;
   pointer-events: none;
-}
-
-@media screen and (max-width: 768px) {
-  .copyContainer {
-    padding: 10px 14px;
-    gap: 8px;
-  }
-  
-  .shareIcon {
-    padding: 6px;
-  }
-  
-  .idLabel {
-    font-size: 0.75rem;
-  }
-  
-  .roomId {
-    font-size: 0.875rem;
-  }
 }
