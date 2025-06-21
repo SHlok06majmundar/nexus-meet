@@ -587,13 +587,13 @@ const Room = () => {
               Object.keys(nonHighlightedPlayers).length > 0 && viewMode === 'spotlight' 
                 ? styles.activeSpeakerTile 
                 : ''
-            }`}>
-              <Player
+            }`}>              <Player
                 url={playerHighlighted.url}
                 muted={playerHighlighted.muted}
                 playing={playerHighlighted.playing}
                 userName={playerHighlighted.userName}
                 handRaised={raisedHands[myId]}
+                isLocal={myId === Object.keys(players).find(id => players[id] === playerHighlighted)}
                 isActive
               />
             </div>
@@ -776,7 +776,7 @@ const Room = () => {
                 <FaHandPaper className={styles.activityIcon} />
                 <span>{raisedHands[myId] ? 'Lower hand' : 'Raise hand'}</span>
               </div>
-              <div className={styles.activityItem}>
+              <div className={styles.activityItem}> 
                 <MdOndemandVideo className={styles.activityIcon} />
                 <span>Record meeting</span>
               </div>
@@ -784,7 +784,7 @@ const Room = () => {
           )}
         </div>
       </div>
-    </div>
+    </div>  
   );
 };
 

@@ -120,7 +120,7 @@ const Bottom = (props) => {
             </>
           )}
         </motion.button>
-        
+
         {/* Video Button */}
         <motion.button
           variants={controlButtonVariants}

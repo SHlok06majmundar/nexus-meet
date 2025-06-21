@@ -49,6 +49,27 @@
   z-index: 2;
 }
 
+/* Remove mirror effect to show correct left/right orientation */
+.localParticipant video {
+  transform: none !important;
+}
+
+.localParticipant .avatarOverlay {
+  transform: none;
+}
+
+/* No mirroring for ReactPlayer */
+.localParticipant > div,
+.localParticipant > div > div {
+  transform: none;
+}
+
+/* No need to counter-flip text elements anymore */
+.localParticipant .playerNameOverlay,
+.localParticipant .playerControls {
+  transform: none;
+}
+
 /* Pinned participant */
 .pinned {
   box-shadow: 0 0 0 2px #8ab4f8, 0 4px 12px rgba(0, 0, 0, 0.3);
