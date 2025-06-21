@@ -34,3 +34,45 @@ export function handleVirtualKeyboard() {
     });
   }
 }
+
+// Function to detect if device is in portrait mode
+export function isPortraitMode() {
+  return window.innerHeight > window.innerWidth || window.matchMedia('(orientation: portrait)').matches;
+}
+
+// Function to determine grid classes based on number of participants
+export function getGridClasses(count) {
+  const isMobile = isMobileDevice();
+  const isPortrait = isPortraitMode();
+  
+  if (isMobile && isPortrait) {
+    // Mobile portrait mode
+    return count <= 2 ? 'grid2Mobile' : 
+           count <= 4 ? 'grid4Mobile' :
+           count <= 6 ? 'grid6Mobile' : 'gridManyMobile';
+  } else if (isMobile) {
+    // Mobile landscape mode
+    return count <= 2 ? 'grid2MobileLandscape' :
+           count <= 4 ? 'grid4MobileLandscape' : 
+           'gridManyMobileLandscape';
+  } else {
+    // Desktop layout
+    return count === 2 ? 'grid2' :
+           count <= 4 ? 'grid4' :
+           count <= 9 ? 'grid9' : 'gridMany';
+  }
+}
+
+// Setup responsive listeners for mobile orientation changes
+export function setupResponsiveListeners() {
+  setViewportHeight();
+  
+  window.addEventListener('resize', () => {
+    setViewportHeight();
+  });
+  
+  window.addEventListener('orientationchange', () => {
+    // Small delay to ensure dimensions are updated
+    setTimeout(() => setViewportHeight(), 100);
+  });
+}

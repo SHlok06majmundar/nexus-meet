@@ -1,15 +1,15 @@
+/* Main container - Google Meet Layout */
 .roomContainer {
   display: flex;
   flex-direction: column;
   height: 100vh;
   height: calc(var(--vh, 1vh) * 100); /* Dynamic viewport height calculation */
-  width: 100%;
+  width: 100vw;
   position: relative;
-  overflow-x: hidden; /* Allow vertical scrolling only */
-  overflow-y: auto;
-  background: linear-gradient(140deg, rgba(25, 0, 60, 1) 0%, rgba(45, 0, 85, 1) 50%, rgba(65, 0, 120, 0.9) 100%);
+  overflow: hidden;
+  background: #202124; /* Google Meet dark background */
   color: white;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Google Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Grid overlay for futuristic look */
@@ -121,78 +121,593 @@
   100% { transform: translate(10px, 40px) scale(0.9); }
 }
 
-/* Main content container */
-.mainContent {
-  flex: 1;
-  padding: 1rem;
-  position: relative;
-  z-index: 10;
+/* 3. Header/Top Bar - Google Meet Style - Height: 56px */
+.roomHeader {
+  height: 56px; /* Google Meet header height */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;  background: rgba(32, 33, 36, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.headerCenter {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.meetingInfo {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 500;
+  gap: 12px;
+}
+
+.meetingTime {
+  font-size: 14px;
+  color: #e8eaed;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.headerButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.headerButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.iconButton {
+  font-size: 20px;
+  color: #e8eaed;
+  cursor: pointer;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #8ab4f8;
+  color: #202124;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+/* Room info panel */
+.roomInfoPanel {
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  width: 360px;
+  background: rgba(32, 33, 36, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease;  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.roomInfoPanel h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.roomInfoPanel .closeInfoPanel {
+  background: transparent;
+  border: none;
+  color: #e8eaed;
+  font-size: 16px;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.roomInfoPanel .closeInfoPanel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.roomIdContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #8ab4f8;
+  border: none;
+  color: #202124;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.copyButton:hover {
+  background: #a1c4ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.joinInfo {
+  font-size: 13px;
+  color: #e8eaed;
+  margin-top: 16px;
+}
+
+.joinInfo p {
+  margin-bottom: 12px;
+}
+
+.securityNote {
+  display: flex;
+  align-items: center;
+  background: rgba(138, 180, 248, 0.05);
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 3px solid #8ab4f8;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+/* 4. Main Content Area - Video Grid - Position between header and control bar */
+.mainContentArea {
+  position: fixed;
+  top: 56px; /* Below header - Google Meet spec */
+  bottom: 72px; /* Above control bar - Google Meet spec */
+  left: 0;
+  width: 100%;
+  overflow: auto;
+  padding: 16px;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.sidebarOpen .mainContentArea {
+  right: 320px; /* Adjust space for sidebar - Google Meet spec */
+  width: auto;
+}
+
+/* Google Meet video grid layouts */
+.videoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+  grid-auto-rows: minmax(150px, auto); /* Minimum tile height */
+  gap: 16px; /* Spacing between tiles - Google Meet spec */
+  height: 100%;
+}
+
+/* Spotlight view (active speaker layout) */
+.spotlightGrid {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 16px;
+}
+
+/* Sidebar view */
+.sidebarGrid {
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: minmax(150px, auto);
+  gap: 8px;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+/* Tiled view */
+.tiledGrid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-auto-rows: minmax(150px, auto);
+  gap: 16px;
+  align-items: center;
+}
+
+/* 5. Bottom Control Bar - Height: 72px - Google Meet spec */
+.controlBar {  height: 72px; /* Google Meet control bar height */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(32, 33, 36, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 24px;
+  transition: all 0.3s ease;
+}
+
+.sidebarOpen .controlBar {
+  right: 320px; /* Adjust for sidebar width */
+  width: auto;
+}
+
+.controlsLeft {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  left: 24px;
+}
+
+.controlsCenter {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.controlsRight {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  right: 24px;
+  gap: 16px;
+}
+
+.controlButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.controlButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 6. Right Sidebar Panel - Width: 320px - Google Meet spec */
+.rightSidebar {
+  width: 320px; /* Google Meet sidebar width */
+  position: fixed;
+  right: 0;
+  top: 56px; /* Below header */
+  bottom: 72px; /* Above control bar */
+  background: #1e1f21; /* Google Meet sidebar color */
+  z-index: 999;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 1800px;
-  margin: 0 auto;
-  overflow-x: hidden;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
 }
 
-@media (min-width: 768px) {
-  .mainContent {
-    padding: 1.5rem;
-  }
+.rightSidebarClosed {
+  transform: translateX(100%);
 }
 
-/* Responsive layout for players */
-.playersContainer {
+.sidebarTabs {
+  height: 48px; /* Google Meet tabs height */
   display: flex;
-  flex-wrap: wrap; /* Allow wrapping for smaller screens */
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 5rem; /* Space for controls at bottom */
-  width: 100%;
-  padding-bottom: 2rem; /* Space for bottom menu */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
-.activePlayerContainer {
-  width: 100%;
-  max-height: 60vh;
-  margin-bottom: 1.5rem;
-}
-
-.nonActivePlayersContainer {
+.sidebarTab {
+  flex: 1;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: 1rem;
+  color: #e8eaed;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.sidebarTab:hover {
+  color: #8ab4f8;
+}
+
+.activeTab {
+  color: #8ab4f8;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
   width: 100%;
+  height: 3px;
+  background: #8ab4f8;
 }
 
-/* Mobile specific styles */
-@media (max-width: 768px) {
-  .playersContainer {
-    margin-bottom: 6rem; /* Extra space for controls on mobile */
-  }
-  
-  .activePlayerContainer {
-    max-height: 40vh;
-  }
-  
-  .nonActivePlayersContainer {
-    gap: 0.5rem;
-  }
+.closeSidebar {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #e8eaed;
+  font-size: 16px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 10;
+  transition: all 0.2s ease;
 }
 
-/* Small mobile adjustments */
-@media (max-width: 480px) {
-  .playersContainer {
-    margin-bottom: 7rem;
-  }
-  
-  .activePlayerContainer {
-    max-height: 35vh;
-  }
+.closeSidebar:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
-/* HUD-style loading spinner */
+.sidebarContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* 7. Floating Elements */
+/* Self View Tile - Google Meet spec */
+.selfViewTile {
+  position: absolute;
+  bottom: 88px; /* Above control bar */
+  right: 24px;
+  width: 160px;
+  height: 120px;
+  z-index: 900;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.sidebarOpen .selfViewTile {
+  right: 340px; /* Adjust for sidebar */
+}
+
+/* Video tiles */
+.videoTile {
+  position: relative;
+  background: #3c4043; /* Google Meet tile background */
+  border-radius: 8px; /* Google Meet rounded corners */
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  aspect-ratio: 16/9; /* Google Meet default aspect ratio */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.activeSpeakerTile {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  height: calc(100% - 150px - 16px);
+  min-height: 240px;
+}
+
+.participantTiles {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.participantTile {
+  flex: 0 0 auto;
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* People list in sidebar */
+.peopleList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.participantItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s;
+}
+
+.participantItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.participantAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #5f6368;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  margin-right: 12px;
+}
+
+.participantName {
+  flex: 1;
+  font-size: 14px;
+}
+
+.participantControls {
+  display: flex;
+  gap: 8px;
+}
+
+.participantMicActive {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #8ab4f8;
+}
+
+.participantVideoOff {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #f28b82;
+}
+
+.participantHandRaised {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #FFC107;
+  animation: pulse 2s infinite;
+}
+
+/* Activities panel */
+.activitiesPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.activityItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.activeActivity {
+  background: rgba(138, 180, 248, 0.15);
+  border-left: 3px solid #8ab4f8;
+}
+
+.activeActivity:hover {
+  background: rgba(138, 180, 248, 0.2);
+}
+
+.activityIcon {
+  font-size: 20px;
+  margin-right: 12px;
+  color: #8ab4f8;
+}
+
+/* View Mode Specific Layouts */
+.spotlightMode .videoGrid {
+  display: flex;
+  flex-direction: column;
+}
+
+.spotlightMode .activeSpeakerTile {
+  flex: 1;
+}
+
+.spotlightMode .participantTiles {
+  height: 150px;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.sidebarMode .mainContentArea {
+  display: flex;
+  right: 320px;
+}
+
+/* Special layouts for two participants */
+.twoParticipantsLayout .videoGrid {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: 1fr;
+}
+
+.twoParticipantsLayout .videoTile {
+  height: 100%;
+}
+
+/* Loading screen */
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -200,169 +715,224 @@
   justify-content: center;
   height: 100vh;
   width: 100vw;
-  position: relative;
-  background: linear-gradient(140deg, rgba(25, 0, 60, 1) 0%, rgba(45, 0, 85, 1) 50%, rgba(65, 0, 120, 0.9) 100%);
-  z-index: 1000;
+  background: #202124;
 }
 
-/* Grid background for loading screen */
-.loadingContainer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(to right, rgba(200, 90, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(200, 90, 255, 0.1) 1px, transparent 1px);
-  background-size: 40px 40px;
-  z-index: -1;
-  opacity: 0.3;
-}
-
-/* Enhanced spinner with more details */
-.spinner {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  margin-bottom: 30px;
-}
-
-.spinnerOuter {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 4px solid transparent;
-  border-top-color: rgba(200, 90, 255, 0.8);
-  border-right-color: rgba(255, 90, 200, 0.8);
+.loadingSpinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: #8ab4f8;
   border-radius: 50%;
-  animation: spin 3s linear infinite;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
 }
-
-.spinnerMiddle {
-  position: absolute;
-  width: 80%;
-  height: 80%;
-  top: 10%;
-  left: 10%;
-  border: 2px dashed transparent;
-  border-bottom-color: rgba(0, 255, 170, 0.8);
-  border-left-color: rgba(200, 90, 255, 0.8);
-  border-radius: 50%;
-  animation: spin 3s linear infinite reverse;
-}
-
-.spinnerInner {
-  position: absolute;
-  width: 60%;
-  height: 60%;
-  top: 20%;
-  left: 20%;
-  border: 2px dotted rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  animation: spin 1.5s ease-in-out infinite;
-}
-
-.spinnerCore {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  top: calc(50% - 10px);
-  left: calc(50% - 10px);
-  background: rgba(200, 90, 255, 0.8);
-  border-radius: 50%;
-  box-shadow: 0 0 20px rgba(200, 90, 255, 0.8);
-  animation: pulse 2s infinite alternate;
-}
-
-/* Spinner decorative elements */
-.spinnerDots {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  animation: spin 10s linear infinite;
-}
-
-.spinnerDot {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(200, 90, 255, 0.8);
-}
-
-.spinnerDot:nth-child(1) { top: 0; left: calc(50% - 3px); }
-.spinnerDot:nth-child(2) { top: calc(50% - 3px); right: 0; }
-.spinnerDot:nth-child(3) { bottom: 0; left: calc(50% - 3px); }
-.spinnerDot:nth-child(4) { top: calc(50% - 3px); left: 0; }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0% { transform: scale(0.8); opacity: 0.5; }
-  100% { transform: scale(1.2); opacity: 1; }
+  to { transform: rotate(360deg); }
 }
 
 .loadingText {
-  margin: 15px 0;
-  font-size: 18px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-  text-shadow: 0 0 10px rgba(200, 90, 255, 0.5);
-  position: relative;
-  letter-spacing: 0.5px;
-  animation: pulse-text 2s infinite alternate ease-in-out;
-}
-
-@keyframes pulse-text {
-  0% { opacity: 0.7; text-shadow: 0 0 10px rgba(200, 90, 255, 0.5); }
-  100% { opacity: 1; text-shadow: 0 0 15px rgba(200, 90, 255, 0.8); }
-}
-
-/* HUD design elements */
-.hudElement {
-  position: absolute;
-  border: 1px solid rgba(200, 90, 255, 0.3);
-  padding: 10px;  background: rgba(40, 0, 80, 0.4);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   color: white;
-  font-size: 12px;
-  border-radius: 4px;
-  z-index: 5;
+  font-size: 24px;
+  margin-bottom: 16px;
 }
 
-.topLeftHud {
-  top: 20px;
-  left: 20px;
+.loadingDots {
+  display: flex;
+  gap: 8px;
 }
 
-.bottomRightHud {
-  bottom: 120px;
-  right: 20px;
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #8ab4f8;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: pulse 1.5s infinite ease-in-out;
 }
 
-@media screen and (max-width: 768px) {
-  .activePlayerContainer {
-    width: 100%;
-    height: calc(100vh - 160px);
-    top: 10px;
-    bottom: 160px;
-    padding: 10px;
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 1200px) {
+  .videoGrid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .rightSidebar {
+    width: 280px;
   }
   
-  .inActivePlayerContainer {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    top: auto;
-    bottom: 100px;
-    right: 0;
-    justify-content: center;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0 10px;
+  .sidebarOpen .mainContentArea,
+  .sidebarOpen .controlBar {
+    right: 280px;
   }
+  
+  .videoGrid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+/* Mobile landscape and portrait mode adjustments */
+@media (max-width: 768px) {
+  .roomHeader {
+    padding: 0 8px;
+    height: 48px;
+  }
+  
+  .headerCenter {
+    display: none;
+  }
+  
+  .controlsLeft {
+    display: none;
+  }
+  
+  .controlBar {
+    padding: 0 8px;
+    height: 64px;
+    justify-content: center;
+  }
+  
+  .controlsRight {
+    position: relative;
+    right: 0;
+    gap: 8px;
+  }
+  
+  .mainContentArea {
+    top: 48px;
+    bottom: 64px;
+    padding: 4px;
+  }
+  
+  .rightSidebar {
+    width: 100%;
+    top: 48px;
+    bottom: 64px;
+  }
+    .sidebarOpen .mainContentArea {
+    visibility: hidden;
+  }
+  
+  .roomInfoPanel {
+    width: calc(100% - 16px);
+    max-width: 360px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .selfViewTile {
+    width: 120px;
+    height: 90px;
+    bottom: 72px;
+    right: 8px;
+  }
+  
+  .videoGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+}
+
+/* Portrait mode specific */
+@media (max-width: 480px) {
+  .roomHeader {
+    height: 44px;
+    padding: 0 6px;
+  }
+  
+  .mainContentArea {
+    top: 44px;
+    bottom: 60px;
+    padding: 4px;
+  }
+  
+  .controlBar {
+    height: 60px;
+    padding: 0 6px;
+  }
+  
+  .moreOptionsMenu {
+    right: 0;
+    bottom: 68px;
+    width: 220px;
+  }
+  
+  .selfViewTile {
+    width: 100px;
+    height: 75px;
+    bottom: 68px;
+    right: 8px;
+  }
+  
+  .videoGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 4px;
+  }
+  
+  .videoTile {
+    min-height: 120px;
+  }
+  
+  .participantItem {
+    padding: 8px 6px;
+  }
+  
+  .sidebarTab {
+    font-size: 13px;
+  }
+  
+  .optionItem {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .roomInfoPanel {
+    top: 50px;
+    width: 90%;
+    padding: 12px;
+  }
+}
+
+/* Special handling for very small screens */
+@media (max-width: 360px) {
+  .videoGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .selfViewTile {
+    width: 80px;
+    height: 60px;
+    bottom: 66px;
+  }
+}
+
+/* Animation for menus and popups */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.activeOption {
+  background: rgba(138, 180, 248, 0.2);
+  border-left: 3px solid #8ab4f8;
+}
+
+.activeOption:hover {
+  background: rgba(138, 180, 248, 0.25);
 }

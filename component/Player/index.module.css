@@ -1,266 +1,239 @@
 .playerContainer {
   position: relative;
   overflow: hidden;
-  margin-bottom: 1.25rem;
   height: 100%;
-  background-color: rgba(45, 10, 80, 0.7);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  width: 100%; /* Full width by default */
+  background-color: #3c4043; /* Google Meet background */
+  transition: all 0.3s ease;
+  width: 100%;
+  border-radius: 8px;
+  aspect-ratio: 16/9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Active player styles - for the main speaker view */
 .active {
-  border-radius: 1rem;
-  border: 3px solid rgba(200, 90, 255, 0.5);
-  box-shadow: 0 0 40px rgba(200, 90, 255, 0.3);
   position: relative;
   overflow: hidden;
-  aspect-ratio: 16/9; /* Maintain video aspect ratio */
-  max-height: 60vh; /* Limit height on large screens */
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Highlight for active speaker */
 .active::before {
   content: '';
   position: absolute;
-  inset: -4px;
-  border-radius: 1.25rem;
-  border: 2px solid rgba(255, 90, 200, 0.4);
-  box-shadow: inset 0 0 20px rgba(255, 90, 200, 0.2);
+  inset: -2px;
+  border-radius: 10px;
+  border: 2px solid #8ab4f8;
   pointer-events: none;
+  z-index: 2;
+  opacity: 0.6;
 }
 
-.active::after {
+/* Local participant (self view) */
+.localParticipant {
+  position: relative;
+}
+
+.localParticipant::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    to bottom right,
-    transparent, 
-    transparent, 
-    rgba(255, 255, 255, 0.1), 
-    transparent, 
-    transparent
-  );
-  transform: rotate(45deg);
-  animation: sheen 8s infinite ease-in-out;
+  inset: 0;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   pointer-events: none;
+  z-index: 2;
 }
 
-@keyframes sheen {
-  0%, 100% { top: -50%; left: -50%; }
-  50% { top: 0%; left: 0%; }
+/* Pinned participant */
+.pinned {
+  box-shadow: 0 0 0 2px #8ab4f8, 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.notActive {
-  border-radius: 0.75rem;
-  width: 220px; /* Default width */
-  max-width: 100%; /* Prevent overflow */
-  border: 2px solid rgba(200, 90, 255, 0.4);
-  background-color: rgba(40, 0, 80, 0.8);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(200, 90, 255, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.notActive:hover {
-  transform: translateY(-8px) scale(1.03);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 25px rgba(200, 90, 255, 0.4);
-  border-color: rgba(255, 90, 200, 0.6);
-}
-
-.icon {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  color: white;
-  background-color: rgba(40, 0, 80, 0.8);
-  padding: 8px;
-  border-radius: 50%;
-  border: 2px solid rgba(200, 90, 255, 0.4);
-  box-shadow: 0 0 15px rgba(200, 90, 255, 0.4);
-  z-index: 10;
-}
-
-.micIcon {
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
-}
-
-.user {
-  color: rgba(255, 210, 255, 1);
-  filter: drop-shadow(0 0 15px rgba(255, 90, 200, 0.8));
-}
-
+/* When video is not playing (camera off) */
 .notPlaying {
+  background-color: #3c4043;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, 
-    rgba(45, 0, 85, 0.9),
-    rgba(90, 0, 170, 0.4));
-  position: relative;
-  aspect-ratio: 16/9; /* Maintain consistent aspect ratio for video placeholders */
+}
+
+/* Avatar shown when video is off - Google Meet style */
+.avatarOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3c4043;
+  z-index: 1;
+}
+
+.avatarCircle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #5f6368;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 500;
+}
+
+/* Bottom info bar - Google Meet style */
+.playerInfoBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: white;
+  font-size: 12px;
+  z-index: 3;
+}
+
+.micStatus {
+  display: flex;
+  align-items: center;
+  margin-right: 6px;
+}
+
+.micIcon {
+  color: white;
+}
+
+.participantName {
+  flex: 1;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
 }
 
-/* Video element */
-.video {
-  width: 100%;
+/* Video controls that appear on hover */
+.videoControls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.controlButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controlButton:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.controlIcon {
+  color: white;
+}
+
+.controlIcon.active {
+  color: #8ab4f8;
+}
+
+/* Audio meter visualization when participant is speaking */
+.audioMeterContainer {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  overflow: hidden;
+  z-index: 3;
+}
+
+.audioMeter {
   height: 100%;
-  object-fit: cover;
+  background: #8ab4f8;
+  width: 30%;
+  animation: pulseMeter 2s infinite;
 }
 
-/* Responsive styles */
+@keyframes pulseMeter {
+  0% { width: 0%; opacity: 0.7; }
+  50% { width: 30%; opacity: 1; }
+  100% { width: 0%; opacity: 0.7; }
+}
+
+/* Hand raised indicator */
+.handRaisedIndicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFC107;
+  z-index: 5;
+  animation: pulse 2s infinite;
+}
+
+.handIcon {
+  font-size: 18px;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .active {
-    max-height: 40vh;
-    border-radius: 0.75rem;
+  .avatarCircle {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
   }
   
-  .notActive {
-    width: 180px;
-    border-radius: 0.5rem;
+  .playerInfoBar {
+    height: 24px;
+    font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
-  .active {
-    max-height: 35vh;
-    border-width: 2px;
+  .avatarCircle {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
   }
   
-  .notActive {
-    width: 150px;
+  .videoControls {
+    top: 4px;
+    right: 4px;
+    gap: 4px;
   }
   
-  .icon {
-    padding: 6px;
-    right: 0.5rem;
-    bottom: 0.5rem;
+  .controlButton {
+    width: 28px;
+    height: 28px;
   }
-  
-  .userName {
-    font-size: 0.9rem;
-    padding: 0.25rem 0.75rem;
-  }
-}
-
-/* Username display */
-.userName {
-  position: absolute;
-  left: 0.75rem;
-  bottom: 0.75rem;
-  padding: 0.35rem 0.85rem;
-  background-color: rgba(40, 0, 80, 0.8);
-  color: white;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  z-index: 10;
-  border: 1px solid rgba(200, 90, 255, 0.4);
-  box-shadow: 0 0 10px rgba(200, 90, 255, 0.3);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  max-width: calc(100% - 50px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* New elements for futuristic appearance */
-.orbitRing {
-  position: absolute;
-  width: 120%;
-  height: 120%;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  z-index: -1;
-}
-
-.pulseRing {
-  position: absolute;
-  width: 130%;
-  height: 130%;
-  border: 2px solid rgba(200, 90, 255, 0.2);
-  border-radius: 50%;
-  z-index: -1;
-}
-
-.glowOrbs {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-}
-
-.glowOrb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(3px);
-  z-index: 1;
-}
-
-.activeIndicator {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background-color: rgba(40, 0, 80, 0.8);
-  border: 1px solid rgba(200, 90, 255, 0.4);
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgb(255, 210, 255);
-  z-index: 10;
-}
-
-.activeIndicatorDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgb(0, 255, 170);
-  box-shadow: 0 0 8px rgba(0, 255, 170, 0.8);
-}
-
-/* Overlay grid effect for futuristic look */
-.notPlaying::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(to right, rgba(200, 90, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(200, 90, 255, 0.1) 1px, transparent 1px);
-  background-size: 20px 20px;
-  z-index: 1;
-  opacity: 0.4;
-}
-
-.nameTag {
-  position: absolute;
-  bottom: 0.75rem;
-  left: 0.75rem;
-  background-color: rgba(40, 0, 80, 0.8);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 10;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(200, 90, 255, 0.4);
-  box-shadow: 0 0 10px rgba(200, 90, 255, 0.3);
-}
-
-.nameTagIcon {
-  color: #ff5555;
-  filter: drop-shadow(0 0 3px rgba(255, 0, 60, 0.6));
 }

@@ -61,9 +61,36 @@ export const SocketProvider = (props) => {
       }
     };
     
-    // Add event listeners
+    // Event listener for raise hand
+    const handleRaiseHand = (event) => {
+      if (socket) {
+        // Get the room ID from the URL
+        const roomId = window.location.pathname.substring(1);
+        const { userName } = event.detail || {};
+        
+        socket.emit('raise-hand', {
+          userId: socket.id,
+          userName: userName || 'User'
+        }, roomId);
+      }
+    };
+    
+    // Event listener for lower hand
+    const handleLowerHand = (event) => {
+      if (socket) {
+        // Get the room ID from the URL
+        const roomId = window.location.pathname.substring(1);
+        
+        socket.emit('lower-hand', {
+          userId: socket.id
+        }, roomId);
+      }
+    };
+      // Add event listeners
     window.addEventListener('screen-share-started', handleScreenShare);
     window.addEventListener('send-reaction', handleReaction);
+    window.addEventListener('raise-hand', handleRaiseHand);
+    window.addEventListener('lower-hand', handleLowerHand);
     
     // Set up socket event listeners for debugging
     socket.on('connect', () => {
@@ -81,11 +108,12 @@ export const SocketProvider = (props) => {
     socket.on('user-leave', (userId) => {
       console.log(`Socket event: user-leave - ${userId}`);
     });
-    
-    // Cleanup
+      // Cleanup
     return () => {
       window.removeEventListener('screen-share-started', handleScreenShare);
       window.removeEventListener('send-reaction', handleReaction);
+      window.removeEventListener('raise-hand', handleRaiseHand);
+      window.removeEventListener('lower-hand', handleLowerHand);
       
       if (socket) {
         socket.off('connect');

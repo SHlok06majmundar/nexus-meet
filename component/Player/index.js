@@ -1,19 +1,28 @@
 import ReactPlayer from "react-player";
 import cx from "classnames";
-import { Mic, MicOff, User, Hexagon } from "lucide-react";
+import { Mic, MicOff, User, Pin, Fullscreen, MoreVertical } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
+import { FaHandPaper } from "react-icons/fa";
 
 import styles from "@/component/Player/index.module.css";
 
 const Player = (props) => {
-  const { url, muted, playing, isActive, userName } = props;
-  // Use the provided userName or a default value
-  const displayName = userName || "User";
+  const { url, muted, playing, isActive, userName, isLocal, handRaised } = props;// Format username to handle both strings and user IDs
+  const formatDisplayName = (name) => {
+    if (!name) return "User";
+    // If name looks like a user ID (contains numbers and special chars), use "User" instead
+    if (/^[a-z0-9-]+$/.test(name) && name.length > 10) return "User";
+    return name;
+  };
+  
+  const displayName = formatDisplayName(userName);
   
   // Track when player is ready and if there were any errors
   const [isPlayerReady, setPlayerReady] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isControlsVisible, setControlsVisible] = useState(false);
   const playerRef = useRef(null);
   
   // Reset error state whenever url or playing changes
@@ -21,18 +30,46 @@ const Player = (props) => {
     setHasError(false);
   }, [url, playing]);
   
+  // Generate initial avatar letter
+  const getInitial = () => {
+    return displayName.charAt(0).toUpperCase();
+  };
+  
   // Log player state changes for debugging
   useEffect(() => {
     console.log(`Player state: ${displayName} - playing: ${playing}, muted: ${muted}`);
   }, [playing, muted, displayName]);
   
+  // Toggle pin state
+  const togglePin = (e) => {
+    e.stopPropagation();
+    setIsPinned(!isPinned);
+    // TODO: Implement actual pinning logic via parent component
+  };
+  
+  // Show player controls on hover
+  const showControls = () => {
+    setControlsVisible(true);
+  };
+    // Hide player controls when hover ends
+  const hideControls = () => {
+    setControlsVisible(false);
+  };
+  
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
       className={cx(styles.playerContainer, {
         [styles.notActive]: !isActive,
         [styles.active]: isActive,
         [styles.notPlaying]: !playing,
+        [styles.localParticipant]: isLocal,
+        [styles.pinned]: isPinned
       })}
+      onMouseEnter={showControls}
+      onMouseLeave={hideControls}
     >
       {/* Only render ReactPlayer when we have a URL */}
       {url && (
@@ -48,115 +85,78 @@ const Player = (props) => {
             console.log(`Player ready: ${displayName}`);
             setPlayerReady(true);
           }}
-          onError={(err) => {
-            console.error(`Player error: ${displayName}`, err);
+          onError={(e) => {
+            console.error(`Player error: ${displayName}`, e);
             setHasError(true);
           }}
           config={{
             file: {
-              forceVideo: playing, // Force video when playing is true
-              forceAudio: true,    // Always force audio
-              attributes: {
-                // Improve performance and force hardware acceleration
-                style: {
-                  objectFit: 'cover'
-                }
-              }
-            }
+              forceVideo: true,
+            },
           }}
         />
       )}
       
-      {/* User name display */}
-      <div className={styles.nameTag}>
-        {displayName}
-        {muted && <MicOff className={styles.nameTagIcon} size={14} />}
+      {/* Overlay shown when video is not playing (camera off) */}
+      {!playing && (
+        <div className={styles.avatarOverlay}>
+          <div className={styles.avatarCircle}>
+            {getInitial()}
+          </div>
+        </div>
+      )}
+      
+      {/* Hand raised indicator */}
+      {handRaised && (
+        <div className={styles.handRaisedIndicator}>
+          <FaHandPaper className={styles.handIcon} />
+        </div>
+      )}
+      
+      {/* Google Meet style info bar at bottom */}
+      <div className={styles.playerInfoBar}>
+        {/* Mic status indicator */}
+        <div className={styles.micStatus}>
+          {muted ? (
+            <MicOff size={16} className={styles.micIcon} />
+          ) : (
+            <Mic size={16} className={styles.micIcon} />
+          )}
+        </div>
+        
+        {/* Participant name */}
+        <div className={styles.participantName}>
+          {isLocal ? `${displayName} (You)` : displayName}
+        </div>
       </div>
       
-      {/* Show futuristic user icon when video is off or on error */}
-      {(!playing || hasError) && (
-        <div className={styles.userIconContainer}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1,
-            }}
-            transition={{ 
-              duration: 2,
-              ease: "easeOut"
-            }}
-            className={styles.userIconWrapper}
-          >
-            <Hexagon strokeWidth={1.5} className={styles.userBg} size={isActive ? 180 : 100} />
-            <User strokeWidth={1} className={styles.user} size={isActive ? 100 : 60} />
-            
-            {/* Adding additional geometric elements for futuristic look */}
-            <motion.div 
-              className={styles.orbitRing}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            />
-            
-            <motion.div 
-              className={styles.pulseRing}
-              animate={{ 
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.6, 0.3],
-              }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </motion.div>
-          
-          {/* Decorative elements for futuristic look */}
-          <div className={styles.glowOrbs}>
-            {Array(5).fill(0).map((_, i) => (
-              <motion.div 
-                key={i}
-                className={styles.glowOrb}
-                animate={{
-                  x: Math.random() * 40 - 20,
-                  y: Math.random() * 40 - 20,
-                  opacity: [0.4, 0.8, 0.4]
-                }}
-                transition={{ 
-                  duration: 3 + Math.random() * 2, 
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-                style={{
-                  left: `${20 + Math.random() * 60}%`,
-                  top: `${20 + Math.random() * 60}%`,
-                }}
-              />
-            ))}
-          </div>
+      {/* Video controls that appear on hover */}
+      <motion.div 
+        className={styles.videoControls}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isControlsVisible ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className={styles.controlButton} onClick={togglePin}>
+          <Pin size={16} className={cx(styles.controlIcon, { [styles.active]: isPinned })} />
         </div>
-      )}
+        
+        <div className={styles.controlButton}>
+          <Fullscreen size={16} className={styles.controlIcon} />
+        </div>
+        
+        <div className={styles.controlButton}>
+          <MoreVertical size={16} className={styles.controlIcon} />
+        </div>
+      </motion.div>
       
-      {/* Audio indicator when muted is false */}
+      {/* Audio meter (animation if speaking) */}
       {!muted && (
-        <div className={styles.audioIndicatorContainer}>
-          <div className={styles.audioIndicator}>
-            <motion.div 
-              className={styles.audioBar} 
-              animate={{ height: ["20%", "80%", "40%", "60%", "20%"] }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatType: "loop" }}
-            />
-            <motion.div 
-              className={styles.audioBar} 
-              animate={{ height: ["40%", "20%", "60%", "30%", "40%"] }}
-              transition={{ duration: 1.2, repeat: Infinity, repeatType: "loop", delay: 0.2 }}
-            />
-            <motion.div 
-              className={styles.audioBar} 
-              animate={{ height: ["60%", "40%", "80%", "20%", "60%"] }}
-              transition={{ duration: 1.8, repeat: Infinity, repeatType: "loop", delay: 0.4 }}
-            />
-          </div>
+        <div className={styles.audioMeterContainer}>
+          <div className={styles.audioMeter}></div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

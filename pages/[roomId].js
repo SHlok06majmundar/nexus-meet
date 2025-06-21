@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { cloneDeep } from "lodash";
 import { motion } from "framer-motion";
-
+import { FaCopy, FaClipboardCheck, FaInfoCircle, FaHandPaper, FaLock } from "react-icons/fa";
+import { MdGridView, MdOutlinePoll, MdOndemandVideo, MdClosedCaption, MdMoreVert } from "react-icons/md";
 import { useSocket } from "@/context/socket";
 import usePeer from "@/hooks/usePeer";
 import useMediaStream from "@/hooks/useMediaStream";
@@ -9,7 +10,14 @@ import usePlayer from "@/hooks/usePlayer";
 import { useUser } from "@clerk/nextjs";
 import ReactionsContainer from "@/component/Reaction/ReactionsContainer";
 import NotificationSystem from "@/component/Notification";
-import { setViewportHeight } from "@/utils/responsiveUtils";
+import ToastNotification from "@/component/Notification/ToastNotification";
+import { 
+  setViewportHeight, 
+  setupResponsiveListeners, 
+  isPortraitMode, 
+  getGridClasses,
+  isMobileDevice
+} from "@/utils/responsiveUtils";
 
 import Player from "@/component/Player";
 import Bottom from "@/component/Bottom";
@@ -94,7 +102,36 @@ const Room = () => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const { isSignedIn, isLoaded, user } = useUser();
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [isPortrait, setIsPortrait] = useState(true);
+  const [activeSidebarTab, setActiveSidebarTab] = useState('chat');
+  const [isRoomInfoVisible, setIsRoomInfoVisible] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [viewMode, setViewMode] = useState('tiled'); // 'tiled', 'spotlight', 'sidebar'
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [raisedHands, setRaisedHands] = useState({}); // Track users who raised hands
   
+  // Track device orientation for responsive layout
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsPortrait(isPortraitMode());
+    };
+    
+    // Check on mount
+    checkOrientation();
+    
+    // Add listeners for changes
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', () => {
+      // Small delay to ensure dimensions are updated after orientation change
+      setTimeout(checkOrientation, 100);
+    });
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+
   // Handle auth redirection
   useEffect(() => {
     if (isLoaded) {
@@ -187,6 +224,32 @@ const Room = () => {
       });
     };
     
+    const handleUserRaisedHand = (userId, userName) => {
+      console.log(`User ${userName || userId} raised hand`);
+      setRaisedHands(prev => ({
+        ...prev,
+        [userId]: true
+      }));
+      
+      // Create and dispatch a notification
+      const handRaiseEvent = new CustomEvent("show-toast-notification", {
+        detail: { 
+          title: "Hand Raised",
+          message: `${userName || "A user"} raised their hand`
+        }
+      });
+      window.dispatchEvent(handRaiseEvent);
+    };
+    
+    const handleUserLoweredHand = (userId) => {
+      console.log(`User ${userId} lowered hand`);
+      setRaisedHands(prev => {
+        const updated = { ...prev };
+        delete updated[userId];
+        return updated;
+      });
+    };
+    
     const handleUserLeave = (userId) => {
       // Get the user's name before removing them
       const leavingUserName = players[userId]?.userName || `User ${userId.substring(0, 5)}`;
@@ -202,35 +265,39 @@ const Room = () => {
         detail: { userName: leavingUserName }
       });
       window.dispatchEvent(leaveEvent);
-    };
-
-    const handleNewMessage = (message) => {
+    };    const handleNewMessage = (message) => {
       console.log(`New message received from ${message.senderId}: ${message.content}`);
       // Only increment unread count if chat is closed and it's not a system message
       if (!isChatOpen && !message.isSystemMessage) {
         setUnreadMessages(prev => prev + 1);
         
-        // Show a notification
-        if ("Notification" in window && Notification.permission === "granted") {
-          const senderName = message.senderName || `User ${message.senderId.substring(0, 5)}`;
-          new Notification(`New message from ${senderName}`, {
-            body: message.content,
-            icon: "/favicon.ico"
-          });
-        }
+        // Create a toast notification instead of browser notification
+        // This avoids the Notification API issues in some contexts
+        const senderName = message.senderName || `User ${message.senderId.substring(0, 5)}`;
+        
+        // Create and dispatch a custom event for showing a toast notification
+        const notificationEvent = new CustomEvent("show-toast-notification", {
+          detail: { 
+            title: `New message from ${senderName}`,
+            message: message.content
+          }
+        });
+        window.dispatchEvent(notificationEvent);
       }
-    };
-
-    socket.on("user-toggle-audio", handleToggleAudio);
+    };    socket.on("user-toggle-audio", handleToggleAudio);
     socket.on("user-toggle-video", handleToggleVideo);
     socket.on("user-leave", handleUserLeave);
     socket.on("new-message", handleNewMessage);
+    socket.on("user-raised-hand", handleUserRaisedHand);
+    socket.on("user-lowered-hand", handleUserLoweredHand);
     
     return () => {
       socket.off("user-toggle-audio", handleToggleAudio);
       socket.off("user-toggle-video", handleToggleVideo);
       socket.off("user-leave", handleUserLeave);
       socket.off("new-message", handleNewMessage);
+      socket.off("user-raised-hand", handleUserRaisedHand);
+      socket.off("user-lowered-hand", handleUserLoweredHand);
     };
   }, [players, setPlayers, socket, users, isChatOpen]);
 
@@ -255,12 +322,77 @@ const Room = () => {
       });
     });
   }, [peer, stream, setPlayers]);
-
-  // Effect to manage chat
+  // Effect to manage chat and sidebar
   const toggleChat = () => {
     setIsChatOpen(prev => !prev);
     if (!isChatOpen) {
       setUnreadMessages(0);
+      setActiveSidebarTab('chat');
+    }
+  };
+  
+  const togglePeopleTab = () => {
+    setIsChatOpen(true);
+    setActiveSidebarTab('people');
+  };
+
+  const toggleActivities = () => {
+    setIsChatOpen(true);
+    setActiveSidebarTab('activities');
+  };
+
+  // Copy room URL to clipboard
+  const copyRoomUrl = () => {
+    const roomUrl = `${window.location.origin}/${roomId}`;
+    navigator.clipboard.writeText(roomUrl).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    });
+  };
+
+  // Toggle room info panel
+  const toggleRoomInfo = () => {
+    setIsRoomInfoVisible(prev => !prev);
+  };
+
+  // Toggle more options menu
+  const toggleMoreOptions = () => {
+    setShowMoreOptions(prev => !prev);
+  };
+
+  // Switch view mode (tiled, spotlight, sidebar)
+  const cycleViewMode = () => {
+    if (viewMode === 'tiled') setViewMode('spotlight');
+    else if (viewMode === 'spotlight') setViewMode('sidebar');
+    else setViewMode('tiled');
+  };
+  
+  // Handle raise hand functionality
+  const raiseHand = () => {
+    // If hand is already raised, lower it
+    if (raisedHands[myId]) {
+      // Create and dispatch a custom event for lowering hand
+      const lowerHandEvent = new CustomEvent("lower-hand");
+      window.dispatchEvent(lowerHandEvent);
+      
+      // Update local state immediately for responsive UI
+      setRaisedHands(prev => {
+        const updated = { ...prev };
+        delete updated[myId];
+        return updated;
+      });
+    } else {
+      // Create and dispatch a custom event for raising hand
+      const raiseHandEvent = new CustomEvent("raise-hand", {
+        detail: { userName }
+      });
+      window.dispatchEvent(raiseHandEvent);
+      
+      // Update local state immediately for responsive UI
+      setRaisedHands(prev => ({
+        ...prev,
+        [myId]: true
+      }));
     }
   };
 
@@ -300,26 +432,31 @@ const Room = () => {
       }
     }
   }, [playerHighlighted, stream]);
-
-  // Add viewport height fix for mobile
+  // Close more options menu when clicking outside
   useEffect(() => {
-    // Set the viewport height correctly for mobile
-    setViewportHeight();
+    function handleClickOutside(event) {
+      if (showMoreOptions && !event.target.closest(`.${styles.controlButton}`)) {
+        setShowMoreOptions(false);
+      }
+    }
     
-    // Update on resize
-    const handleResize = () => {
-      setViewportHeight();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-    
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+  }, [showMoreOptions, styles.controlButton]);
+  
+  // Add viewport height fix for mobile and set up responsive listeners
+  useEffect(() => {
+    // Initialize all responsive utilities
+    setupResponsiveListeners();
     
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      // Cleanup will be handled by the utility function
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
     };
   }, []);
-
   // Show loading screen while auth is being loaded
   if (isLoadingAuth) {
     return (
@@ -349,94 +486,304 @@ const Room = () => {
     );
   }
   
-  // The main room UI
+  // Determine the appropriate container class for layout
+  const isMobile = typeof window !== 'undefined' ? isMobileDevice() : false;
+  
+  // Apply special class for view modes and responsive classes
+  const roomContainerClass = `${styles.roomContainer} ${
+    styles[`${viewMode}Mode`]
+  } ${
+    isChatOpen ? styles.sidebarOpen : ''
+  } ${
+    // Add responsive classes
+    isMobile ? (isPortrait ? styles.portraitMode : styles.landscapeMode) : ''
+  }`;
+  
+  // The main room UI with all Google Meet zones
   return (
-    <div className={styles.roomContainer}>
-      {/* Notification System - Prominently positioned */}
+    <div className={roomContainerClass}>
+      {/* Notification Systems */}
       <NotificationSystem />
+      <ToastNotification />
       
-      {/* Futuristic grid overlay */}
+      {/* Background effects */}
       <div className={styles.gridOverlay}></div>
       <div className={styles.horizontalLines}></div>
+      <div className={styles.lightSpot1}></div>
+      <div className={styles.lightSpot2}></div>
       
+      {/* 1. TOP BAR (HEADER) - Height: 56px */}
+      <div className={styles.roomHeader}>
+        <div className={styles.headerLeft}>
+          <div className={styles.meetingInfo}>
+            <span>{roomId}</span>
+            {isRoomInfoVisible ? (
+              <FaClipboardCheck onClick={toggleRoomInfo} className={styles.iconButton} />
+            ) : (
+              <FaInfoCircle onClick={toggleRoomInfo} className={styles.iconButton} />
+            )}
+          </div>
+          <div className={styles.divider}></div>
+          <div className={styles.headerButton}>
+            <FaLock className={styles.iconButton} title="Security Options" />
+          </div>
+        </div>
+        
+        <div className={styles.headerCenter}>
+          <div className={styles.headerButton}>
+            <MdClosedCaption className={styles.iconButton} title="Turn on captions" />
+          </div>
+          <div className={styles.headerButton} onClick={cycleViewMode}>
+            <MdGridView className={styles.iconButton} title="Change layout" />
+          </div>
+          <div className={styles.headerButton} onClick={toggleActivities}>
+            <MdOutlinePoll className={styles.iconButton} title="Activities" />
+          </div>
+        </div>
+        
+        <div className={styles.headerRight}>
+          <div className={styles.meetingTime}>
+            {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          </div>
+          {user && (
+            <div className={styles.userAvatar}>
+              {user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+            </div>
+          )}
+        </div>
+      </div>      {/* Room info panel (if visible) */}
+      {isRoomInfoVisible && (
+        <div className={styles.roomInfoPanel}>
+          <h3>
+            Meeting Details
+            <button className={styles.closeInfoPanel} onClick={toggleRoomInfo}>✕</button>
+          </h3>
+          <div className={styles.roomInfoContent}>
+            <div className={styles.roomIdContainer}>
+              <span>Meeting ID: {roomId}</span>
+            </div>
+            <button onClick={copyRoomUrl} className={styles.copyButton}>
+              {copySuccess ? <FaClipboardCheck /> : <FaCopy />}
+              {copySuccess ? 'Link copied to clipboard' : 'Share meeting link'}
+            </button>            <div className={styles.joinInfo}>
+              <p>Share this meeting link with others you want in the meeting.</p>
+              <div className={styles.securityNote}>
+                <FaLock size={12} style={{marginRight: '6px'}} />
+                <span>People who use this meeting link must get your permission before they can join.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Reactions container for displaying emojis */}
       <ReactionsContainer />
       
-      {/* Main content area with proper scrolling */}
-      <div className={styles.mainContent}>
-        {/* Active player container with animation */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className={styles.activePlayerContainer}
-        >
-          {playerHighlighted && (
-            <Player
-              url={playerHighlighted.url}
-              muted={playerHighlighted.muted}
-              playing={playerHighlighted.playing}
-              userName={playerHighlighted.userName}
-              isActive
-            />
+      {/* 4. MAIN CONTENT AREA (VIDEO GRID) */}
+      <div className={styles.mainContentArea}>
+        <div className={`${styles.videoGrid} ${styles[`${viewMode}Grid`]}`}>
+          {/* Active speaker */}
+          {playerHighlighted && (            <div className={`${styles.videoTile} ${
+              Object.keys(nonHighlightedPlayers).length > 0 && viewMode === 'spotlight' 
+                ? styles.activeSpeakerTile 
+                : ''
+            }`}>
+              <Player
+                url={playerHighlighted.url}
+                muted={playerHighlighted.muted}
+                playing={playerHighlighted.playing}
+                userName={playerHighlighted.userName}
+                handRaised={raisedHands[myId]}
+                isActive
+              />
+            </div>
           )}
-        </motion.div>
-        
-        {/* Room info and copy link section */}
-        <CopySection roomId={roomId} />
-        
-        {/* Grid of other participants with animations */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className={styles.nonActivePlayersContainer}
-        >
-          {Object.keys(nonHighlightedPlayers).map((playerId, index) => {
-            const { url, muted, playing, userName } = nonHighlightedPlayers[playerId];
-            return (
-              <motion.div
-                key={playerId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-              >
-                <Player
-                  url={url}
-                  muted={muted}
-                  playing={playing}
-                  userName={userName}
-                />
-              </motion.div>
-            );
-          })}
-        </motion.div>
+          
+          {/* Other participants */}
+          {Object.keys(nonHighlightedPlayers).length > 0 && (
+            Object.keys(nonHighlightedPlayers).map((playerId) => {
+              const { url, muted, playing, userName } = nonHighlightedPlayers[playerId];
+              return (
+                <div 
+                  key={playerId}
+                  className={styles.videoTile}
+                >                  <Player
+                    url={url}
+                    muted={muted}
+                    playing={playing}
+                    userName={userName}
+                    handRaised={raisedHands[playerId]}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
       
-      {/* Bottom controls */}
-      <Bottom
-        muted={playerHighlighted?.muted}
-        playing={playerHighlighted?.playing}
-        toggleAudio={toggleAudio}
-        toggleVideo={toggleVideo}
-        leaveRoom={leaveRoom}
-      />
+      {/* 5. BOTTOM CONTROL BAR - Height: 72px */}
+      <div className={styles.controlBar}>
+        <div className={styles.controlsLeft}>
+          <div className={styles.meetingInfo}>
+            {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          </div>
+        </div>
+        
+        <div className={styles.controlsCenter}>          <Bottom
+            muted={playerHighlighted?.muted}
+            playing={playerHighlighted?.playing}
+            toggleAudio={toggleAudio}
+            toggleVideo={toggleVideo}
+            leaveRoom={leaveRoom}
+            toggleChat={toggleChat}
+            togglePeopleTab={togglePeopleTab}
+            toggleActivities={toggleActivities}
+          />
+        </div>
+          <div className={styles.controlsRight}>
+          <div className={styles.controlButton} onClick={toggleRoomInfo}>
+            <FaInfoCircle className={styles.iconButton} title="Meeting details" />
+          </div>
+          <div className={styles.controlButton} onClick={toggleMoreOptions}>
+            <MdMoreVert className={styles.iconButton} title="More options" />
+            {showMoreOptions && (              <div className={styles.moreOptionsMenu} onClick={(e) => e.stopPropagation()}>
+                <div className={styles.optionItem} onClick={() => {
+                  toggleMoreOptions();
+                  toggleRoomInfo();
+                }}>
+                  <FaInfoCircle className={styles.optionIcon} />
+                  <span>Meeting details</span>
+                </div>
+                <div className={styles.optionItem} onClick={() => toggleMoreOptions()}>
+                  <MdClosedCaption className={styles.optionIcon} />
+                  <span>Turn on captions</span>
+                </div>
+                <div className={styles.optionItem} onClick={() => {
+                  toggleMoreOptions();
+                  toggleActivities();
+                }}>
+                  <MdOutlinePoll className={styles.optionIcon} />
+                  <span>Start a poll</span>
+                </div>                <div className={styles.optionItem} onClick={() => toggleMoreOptions()}>
+                  <MdOndemandVideo className={styles.optionIcon} />
+                  <span>Record meeting</span>
+                </div>
+                <div className={`${styles.optionItem} ${raisedHands[myId] ? styles.activeOption : ''}`} 
+                     onClick={() => {
+                       toggleMoreOptions();
+                       raiseHand();
+                     }}
+                >
+                  <FaHandPaper className={styles.optionIcon} />
+                  <span>{raisedHands[myId] ? 'Lower hand' : 'Raise hand'}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       
-      {/* Chat Button */}      <ChatButton 
+      {/* Floating Chat Button (when sidebar is closed) */}
+      <ChatButton 
         visible={!isChatOpen}
         unreadCount={unreadMessages}
         onClick={toggleChat} 
       />
       
-      {/* Chat Component */}      
-      <Chat 
-        socket={socket}
-        roomId={roomId}
-        myId={myId}
-        players={players}
-        visible={isChatOpen}
-        onClose={toggleChat}
-      />
+      {/* 7. FLOATING ELEMENTS - Self View Tile */}
+      {playerHighlighted && myId && viewMode !== 'sidebar' && (
+        <div className={styles.selfViewTile}>          <Player
+            url={playerHighlighted.url}
+            muted={true} // Always mute self view
+            playing={playerHighlighted.playing}
+            userName={userName || 'You'}
+            handRaised={raisedHands[myId]}
+            isLocal={true}
+          />
+        </div>
+      )}
+      
+      {/* 6. RIGHT SIDEBAR PANEL - Width: 320px */}
+      <div className={`${styles.rightSidebar} ${!isChatOpen ? styles.rightSidebarClosed : ''}`}>
+        <div className={styles.sidebarTabs}>
+          <div 
+            className={`${styles.sidebarTab} ${activeSidebarTab === 'chat' ? styles.activeTab : ''}`}
+            onClick={() => setActiveSidebarTab('chat')}
+          >
+            Chat
+          </div>
+          <div 
+            className={`${styles.sidebarTab} ${activeSidebarTab === 'people' ? styles.activeTab : ''}`}
+            onClick={() => setActiveSidebarTab('people')}
+          >
+            People ({Object.keys(players).length})
+          </div>
+          <div 
+            className={`${styles.sidebarTab} ${activeSidebarTab === 'activities' ? styles.activeTab : ''}`}
+            onClick={() => setActiveSidebarTab('activities')}
+          >
+            Activities
+          </div>          <button 
+            className={styles.closeSidebar} 
+            onClick={() => setIsChatOpen(false)}
+            aria-label="Close sidebar"
+            title="Close sidebar"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className={styles.sidebarContent}>
+          {activeSidebarTab === 'chat' && (
+            <Chat 
+              socket={socket}
+              roomId={roomId}
+              myId={myId}
+              players={players}
+              visible={true}
+              onClose={toggleChat}
+            />
+          )}
+          
+          {activeSidebarTab === 'people' && (
+            <div className={styles.peopleList}>
+              {Object.entries(players).map(([playerId, player]) => (
+                <div key={playerId} className={styles.participantItem}>
+                  <div className={styles.participantAvatar}>
+                    {player.userName ? player.userName.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div className={styles.participantName}>
+                    {playerId === myId ? `${player.userName} (You)` : player.userName}
+                  </div>                  <div className={styles.participantControls}>
+                    {!player.muted && <div className={styles.participantMicActive} title="Mic on" />}
+                    {!player.playing && <div className={styles.participantVideoOff} title="Video off" />}
+                    {raisedHands[playerId] && <div className={styles.participantHandRaised} title="Hand raised"><FaHandPaper size={12} /></div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+            {activeSidebarTab === 'activities' && (
+            <div className={styles.activitiesPanel}>
+              <div className={styles.activityItem}>
+                <MdOutlinePoll className={styles.activityIcon} />
+                <span>Create a poll</span>
+              </div>
+              <div 
+                className={`${styles.activityItem} ${raisedHands[myId] ? styles.activeActivity : ''}`}
+                onClick={raiseHand}
+              >
+                <FaHandPaper className={styles.activityIcon} />
+                <span>{raisedHands[myId] ? 'Lower hand' : 'Raise hand'}</span>
+              </div>
+              <div className={styles.activityItem}>
+                <MdOndemandVideo className={styles.activityIcon} />
+                <span>Record meeting</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

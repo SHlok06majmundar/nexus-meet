@@ -154,3 +154,41 @@
     height: 6px;
   }
 }
+
+.toastContainer {
+  position: fixed;
+  bottom: 90px; /* Position above the bottom controls */
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 350px;
+  width: calc(100% - 40px);
+}
+
+.toast {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(30, 0, 60, 0.85);
+  color: white;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 
+              0 0 10px rgba(148, 0, 255, 0.15);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(200, 90, 255, 0.3);
+  pointer-events: auto; /* Make the toast itself clickable */
+}
+
+.toastTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #fff;
+}
+
+.toastMessage {
+  opacity: 0.9;
+  font-size: 13px;
+}

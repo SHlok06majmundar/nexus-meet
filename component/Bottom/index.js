@@ -8,14 +8,19 @@ import {
   VideoOff, 
   Smile, 
   ScreenShare, 
-  Shield
+  Shield,
+  MoreHorizontal,
+  MessageSquare,
+  Settings,
+  Users,
+  BarChart
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 import styles from "@/component/Bottom/index.module.css";
 
 const Bottom = (props) => {
-  const { muted, playing, toggleAudio, toggleVideo, leaveRoom } = props;
+  const { muted, playing, toggleAudio, toggleVideo, leaveRoom, togglePeopleTab, toggleChat, toggleActivities } = props;
   // Debounce flags for controls to prevent rapid clicking
   const [isVideoButtonDisabled, setVideoButtonDisabled] = useState(false);
   const [isAudioButtonDisabled, setAudioButtonDisabled] = useState(false);
@@ -50,201 +55,232 @@ const Bottom = (props) => {
     setShowReactions(!showReactions);
   };
   
-  // Function to send a reaction
-  const sendReaction = (emoji) => {
-    // Create a custom event that the socket context can handle
-    const reactionEvent = new CustomEvent('send-reaction', { 
-      detail: { emoji } 
-    });
-    window.dispatchEvent(reactionEvent);
-    setShowReactions(false);
-  };
-  
-  // Debounced toggle functions to prevent rapid clicking
-  const handleVideoToggle = () => {
-    if (isVideoButtonDisabled) return;
-    
-    setVideoButtonDisabled(true);
-    toggleVideo();
-    
-    // Re-enable after a short delay
-    setTimeout(() => {
-      setVideoButtonDisabled(false);
-    }, 1500);
-  };
-  
-  const handleAudioToggle = () => {
+  // Handle control button clicks with debounce
+  const handleToggleAudio = () => {
     if (isAudioButtonDisabled) return;
     
     setAudioButtonDisabled(true);
     toggleAudio();
     
-    // Re-enable after a short delay
+    // Re-enable button after a short delay
     setTimeout(() => {
       setAudioButtonDisabled(false);
     }, 500);
   };
+  
+  const handleToggleVideo = () => {
+    if (isVideoButtonDisabled) return;
+    
+    setVideoButtonDisabled(true);
+    toggleVideo();
+    
+    // Re-enable button after a short delay
+    setTimeout(() => {
+      setVideoButtonDisabled(false);
+    }, 500);
+  };
+  
+  // Motion variants for animations
+  const controlButtonVariants = {
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 }
+  };
+  
+  const dangerButtonVariants = {
+    hover: { scale: 1.05, backgroundColor: "#ea4335" },
+    tap: { scale: 0.95 }
+  };
 
   return (
-    <motion.div 
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.2, duration: 0.5 }}
-      className={styles.bottomMenu}
-    >
-      {/* Audio Button with tooltip */}
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className={styles.buttonWrapper}
-      >
-        <div className={styles.tooltip}>{muted ? "Unmute" : "Mute"}</div>
-        {muted ? (
-          <MicOff
-            className={cx(styles.icon, styles.active)}
-            size={24}
-            onClick={handleAudioToggle}
-            strokeWidth={1.5}
-          />
-        ) : (
-          <Mic 
-            className={styles.icon} 
-            size={24} 
-            onClick={handleAudioToggle}
-            strokeWidth={1.5} 
-          />
-        )}
-      </motion.div>
-
-      {/* Video Button with tooltip */}
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className={styles.buttonWrapper}
-      >
-        <div className={styles.tooltip}>{playing ? "Stop Video" : "Start Video"}</div>
-        {playing ? (
-          <Video 
-            className={styles.icon} 
-            size={24} 
-            onClick={handleVideoToggle}
-            strokeWidth={1.5}
-          />
-        ) : (
-          <VideoOff
-            className={cx(styles.icon, styles.active)}
-            size={24}
-            onClick={handleVideoToggle}
-            strokeWidth={1.5}
-          />
-        )}
-      </motion.div>
-        {/* Reactions Button with tooltip */}
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className={styles.buttonWrapper}
-      >
-        <div className={styles.tooltip}>Reactions</div>
-        <Smile 
-          className={styles.icon} 
-          size={24} 
-          onClick={toggleReactions}
-          strokeWidth={1.5}
-        />
+    <div className={styles.controlsWrapper}>
+      {/* Primary Controls - Google Meet Style */}
+      <div className={styles.primaryControls}>
+        {/* Mic Button */}
+        <motion.button
+          variants={controlButtonVariants}
+          whileHover="hover"
+          whileTap="tap"
+          transition={{ duration: 0.1 }}
+          className={cx(styles.controlButton, {
+            [styles.active]: !muted
+          })}
+          onClick={handleToggleAudio}
+          disabled={isAudioButtonDisabled}
+          aria-label={muted ? "Unmute microphone" : "Mute microphone"}
+        >
+          {muted ? (
+            <>
+              <MicOff className={styles.controlIcon} />
+              <span className={styles.buttonLabel}>Unmute</span>
+            </>
+          ) : (
+            <>
+              <Mic className={styles.controlIcon} />
+              <span className={styles.buttonLabel}>Mute</span>
+            </>
+          )}
+        </motion.button>
         
-        {/* Reactions Panel */}
-        {showReactions && (
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className={styles.reactionsPanel}
-          >
-            <div className={styles.reactionsTitle}>Quick Reactions</div>
-            <div className={styles.reactionsList}>
-              <motion.div 
-                whileHover={{ scale: 1.2 }} 
-                whileTap={{ scale: 0.9 }}
-                className={styles.reactionButton} 
-                onClick={() => sendReaction('👍')}
-              >
-                👍
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.2 }} 
-                whileTap={{ scale: 0.9 }}
-                className={styles.reactionButton} 
-                onClick={() => sendReaction('👏')}
-              >
-                👏
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.2 }} 
-                whileTap={{ scale: 0.9 }}
-                className={styles.reactionButton} 
-                onClick={() => sendReaction('❤️')}
-              >
-                ❤️
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.2 }} 
-                whileTap={{ scale: 0.9 }}
-                className={styles.reactionButton} 
-                onClick={() => sendReaction('🎉')}
-              >
-                🎉
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.2 }} 
-                whileTap={{ scale: 0.9 }}
-                className={styles.reactionButton} 
-                onClick={() => sendReaction('😂')}
-              >
-                😂
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.2 }} 
-                whileTap={{ scale: 0.9 }}
-                className={styles.reactionButton} 
-                onClick={() => sendReaction('🙌')}
-              >
-                🙌
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </motion.div>
-      
-      {/* Share Screen Button with tooltip */}
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className={styles.buttonWrapper}
-      >
-        <div className={styles.tooltip}>Share Screen</div>
-        <ScreenShare 
-          className={styles.icon} 
-          size={24} 
+        {/* Video Button */}
+        <motion.button
+          variants={controlButtonVariants}
+          whileHover="hover"
+          whileTap="tap"
+          transition={{ duration: 0.1 }}
+          className={cx(styles.controlButton, {
+            [styles.active]: playing
+          })}
+          onClick={handleToggleVideo}
+          disabled={isVideoButtonDisabled}
+          aria-label={playing ? "Turn off camera" : "Turn on camera"}
+        >
+          {playing ? (
+            <>
+              <Video className={styles.controlIcon} />
+              <span className={styles.buttonLabel}>Stop</span>
+            </>
+          ) : (
+            <>
+              <VideoOff className={styles.controlIcon} />
+              <span className={styles.buttonLabel}>Start</span>
+            </>
+          )}
+        </motion.button>
+        
+        {/* Screen Share Button */}
+        <motion.button
+          variants={controlButtonVariants}
+          whileHover="hover"
+          whileTap="tap"
+          transition={{ duration: 0.1 }}
+          className={styles.controlButton}
           onClick={shareScreen}
-          strokeWidth={1.5}
-        />
-      </motion.div>
+          aria-label="Share screen"
+        >
+          <ScreenShare className={styles.controlIcon} />
+          <span className={styles.buttonLabel}>Present</span>
+        </motion.button>
+        
+        {/* Menu Button for Options */}
+        <motion.button
+          variants={controlButtonVariants}
+          whileHover="hover"
+          whileTap="tap"
+          transition={{ duration: 0.1 }}
+          className={styles.controlButton}
+          aria-label="More options"
+        >
+          <MoreHorizontal className={styles.controlIcon} />
+          <span className={styles.buttonLabel}>More</span>
+        </motion.button>
+      </div>
 
-      {/* End Call Button with tooltip */}
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className={cx(styles.buttonWrapper, styles.endCallWrapper)}
+      {/* End Call Button - Google Meet Style Red Button */}
+      <motion.button
+        variants={dangerButtonVariants}
+        whileHover="hover"
+        whileTap="tap"
+        transition={{ duration: 0.1 }}
+        className={styles.leaveButton}
+        onClick={leaveRoom}
+        aria-label="Leave call"
       >
-        <div className={styles.tooltip}>Leave Meeting</div>
-        <PhoneOff 
-          size={24} 
-          className={cx(styles.icon, styles.endCall)} 
-          onClick={leaveRoom}
-          strokeWidth={1.5}
-        />
-      </motion.div>
-    </motion.div>
+        <PhoneOff className={styles.leaveIcon} />
+      </motion.button>
+      
+      {/* Secondary Controls */}
+      <div className={styles.secondaryControls}>
+        {/* Chat Button */}
+        {toggleChat && (
+          <motion.button
+            variants={controlButtonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            transition={{ duration: 0.1 }}
+            className={styles.controlButton}
+            onClick={toggleChat}
+            aria-label="Open chat"
+          >
+            <MessageSquare className={styles.controlIcon} />
+            <span className={styles.buttonLabel}>Chat</span>
+          </motion.button>
+        )}
+        
+        {/* People Button */}
+        {togglePeopleTab && (
+          <motion.button
+            variants={controlButtonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            transition={{ duration: 0.1 }}
+            className={styles.controlButton}
+            onClick={togglePeopleTab}
+            aria-label="Show participants"
+          >
+            <Users className={styles.controlIcon} />
+            <span className={styles.buttonLabel}>People</span>
+          </motion.button>
+        )}
+        
+        {/* Activities Button */}
+        {toggleActivities && (
+          <motion.button
+            variants={controlButtonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            transition={{ duration: 0.1 }}
+            className={styles.controlButton}
+            onClick={toggleActivities}
+            aria-label="Activities"
+          >
+            <BarChart className={styles.controlIcon} />
+            <span className={styles.buttonLabel}>Activities</span>
+          </motion.button>
+        )}
+        
+        {/* Reactions Button */}
+        <motion.div className={styles.reactionsWrapper}>
+          <motion.button
+            variants={controlButtonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            transition={{ duration: 0.1 }}
+            className={cx(styles.controlButton, {
+              [styles.active]: showReactions
+            })}
+            onClick={toggleReactions}
+            aria-label="Show reactions"
+          >
+            <Smile className={styles.controlIcon} />
+            <span className={styles.buttonLabel}>Reactions</span>
+          </motion.button>
+          
+          {/* Emoji reactions panel */}
+          {showReactions && (
+            <div className={styles.reactionsPanel}>
+              {['👍', '👏', '❤️', '😂', '😮', '😢'].map((emoji) => (
+                <button
+                  key={emoji}
+                  className={styles.reactionButton}
+                  onClick={() => {                    // Create a custom event for the emoji reaction
+                    const emojiEvent = new CustomEvent('send-reaction', {
+                      detail: { emoji }
+                    });
+                    window.dispatchEvent(emojiEvent);
+                    setShowReactions(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </div>
+      
+      {/* Emoji Reactions Container */}
+      {showReactions && <div className={styles.backdropOverlay} onClick={toggleReactions} />}
+    </div>
   );
 };
 

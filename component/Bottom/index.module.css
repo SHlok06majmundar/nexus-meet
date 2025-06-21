@@ -1,26 +1,24 @@
 .bottomMenu {
-  position: absolute;
+  position: fixed;
   display: flex;
   justify-content: center;
-  gap: 24px;
-  bottom: 24px;
+  gap: 20px;
+  bottom: 0;
   left: 0;
   right: 0;
-  margin: 0 auto;
-  width: fit-content;
-  max-width: 95vw; /* Prevent overflow on small screens */
-  padding: 16px 32px;
-  border-radius: 50px;
-  background-color: rgba(40, 0, 80, 0.8);
+  margin: 0;
+  width: 100%;
+  height: 72px;
+  padding: 0 24px;
+  background-color: rgba(32, 33, 36, 0.95);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   z-index: 100;
-  border: 2px solid rgba(200, 90, 255, 0.4);
-  box-shadow: 0 0 25px rgba(200, 90, 255, 0.4), 0 10px 20px rgba(0, 0, 0, 0.5);
-  animation: glow 3s infinite alternate;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.2);
   transform-origin: center bottom;
-  overflow: hidden; /* Ensure border radius is maintained */
-  flex-wrap: wrap; /* Allow wrapping on very small screens */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @keyframes glow {
@@ -39,16 +37,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(60, 64, 67, 0.8);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.buttonWrapper:hover {
+  background: rgba(80, 85, 90, 0.9);
 }
 
 .tooltip {
   position: absolute;
-  top: -48px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(40, 0, 80, 0.9);
-  color: rgb(255, 210, 255);
-  padding: 8px 15px;
+  background-color: rgba(32, 33, 36, 0.95);
+  color: white;
+  padding: 6px 12px;
+  font-size: 12px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
@@ -100,6 +109,170 @@
   border: 1px solid rgba(200, 90, 255, 0.4);
 }
 
+/* Google Meet style control bar */
+.controlsWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  height: 100%;
+  width: 100%;
+  max-width: 800px; /* Limit width for very wide screens */
+}
+
+.primaryControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.secondaryControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* Google Meet style control button */
+.controlButton {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(60, 64, 67, 1);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  padding: 0;
+  margin: 0 4px;
+}
+
+.controlButton:hover {
+  background: rgba(80, 85, 90, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.controlButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.controlButton.active {
+  background: rgba(26, 115, 232, 0.8);
+}
+
+.controlButton.active:hover {
+  background: rgba(26, 115, 232, 1);
+}
+
+.buttonLabel {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.controlButton:hover .buttonLabel {
+  opacity: 1;
+}
+
+.controlIcon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Google Meet style leave button (red) */
+.leaveButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 48px;
+  border-radius: 24px;
+  background: #ea4335;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  margin: 0 16px;
+  box-shadow: 0 2px 8px rgba(234, 67, 53, 0.4);
+}
+
+.leaveButton:hover {
+  background: #d33426;
+  box-shadow: 0 4px 12px rgba(234, 67, 53, 0.6);
+  transform: translateY(-2px);
+}
+
+.leaveIcon {
+  width: 22px;
+  height: 22px;
+  transform: rotate(135deg);
+}
+
+/* Reactions panel */
+.reactionsWrapper {
+  position: relative;
+}
+
+.reactionsPanel {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3c4043;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.reactionButton {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(60, 64, 67, 1);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+}
+
+.reactionButton:hover {
+  background: rgba(80, 85, 90, 1);
+  transform: scale(1.1);
+}
+
+.backdropOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  cursor: default;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* Responsive styles for mobile */
 @media (max-width: 768px) {
   .bottomMenu {
@@ -111,6 +284,35 @@
     width: 48px;
     height: 48px;
     padding: 13px;
+  }
+  
+  .controlsWrapper {
+    gap: 12px;
+  }
+  
+  .primaryControls,
+  .secondaryControls {
+    gap: 8px;
+  }
+  
+  .controlButton {
+    width: 42px;
+    height: 42px;
+  }
+  
+  .controlIcon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .leaveButton {
+    width: 52px;
+    height: 42px;
+    margin: 0 8px;
+  }
+  
+  .buttonLabel {
+    display: none;
   }
 }
 
@@ -126,6 +328,10 @@
     width: 42px;
     height: 42px;
     padding: 11px;
+  }
+  
+  .secondaryControls {
+    display: none;
   }
 }
 
@@ -217,83 +423,4 @@
 .endCallWrapper .tooltip::after {
   background-color: rgba(200, 30, 60, 0.9);
   border-color: rgba(255, 90, 120, 0.4);
-}
-
-.reactionsPanel {
-  position: absolute;
-  top: -200px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  background-color: rgba(40, 0, 80, 0.9);
-  border-radius: 16px;
-  padding: 16px;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(200, 90, 255, 0.4);
-  box-shadow: 0 0 25px rgba(200, 90, 255, 0.5);
-  z-index: 200;
-}
-
-@media (max-width: 480px) {
-  .reactionsPanel {
-    width: 280px;
-    padding: 12px;
-    top: -180px;
-  }
-}
-
-.reactionsTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: rgb(255, 210, 255);
-  text-align: center;
-  margin-bottom: 12px;
-  text-shadow: 0 0 10px rgba(255, 90, 200, 0.5);
-}
-
-.reactionsList {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.reactionButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(200, 90, 255, 0.2);
-  border: 1px solid rgba(200, 90, 255, 0.4);
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 24px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 0 10px rgba(200, 90, 255, 0.2);
-}
-
-.reactionButton:hover {
-  background: rgba(200, 90, 255, 0.3);
-  box-shadow: 0 0 15px rgba(200, 90, 255, 0.4);
-  transform: translateY(-2px);
-}
-
-/* Animation for reactions when they appear in the meeting */
-@keyframes floatUp {
-  0% { 
-    transform: translateY(0) scale(0.5);
-    opacity: 0; 
-  }
-  20% { 
-    transform: translateY(-20px) scale(1.2);
-    opacity: 1; 
-  }
-  80% { 
-    transform: translateY(-80px) scale(1);
-    opacity: 0.8; 
-  }
-  100% { 
-    transform: translateY(-100px) scale(0.8);
-    opacity: 0; 
-  }
 }

@@ -1,0 +1,221 @@
+.mainContent {
+  flex: 1;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  overflow: hidden;
+  gap: 16px;
+}
+
+.activePlayerContainer {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nonActivePlayersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+  padding-bottom: 100px; /* Make room for bottom menu */
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+/* Player wrapper for non-active players */
+.playerWrapper {
+  width: 280px;
+  height: 158px; /* 16:9 aspect ratio */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grid classes for different participant counts */
+.grid1 .playerWrapper {
+  width: 100%;
+  max-width: 500px;
+}
+
+.grid2 .playerWrapper {
+  width: calc(50% - 8px);
+  max-width: 400px;
+}
+
+.grid3 .playerWrapper,
+.grid4 .playerWrapper {
+  width: calc(33.33% - 11px);
+  max-width: 350px;
+}
+
+.grid5 .playerWrapper,
+.grid6 .playerWrapper {
+  width: calc(25% - 12px);
+  max-width: 300px;
+}
+
+.grid7 .playerWrapper,
+.grid8 .playerWrapper,
+.grid9 .playerWrapper {
+  width: calc(20% - 13px);
+  max-width: 250px;
+}
+
+.grid10plus .playerWrapper {
+  width: calc(16.66% - 14px);
+  max-width: 240px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 1200px) {
+  .playerWrapper {
+    width: 240px;
+    height: 135px;
+  }
+  
+  .grid3 .playerWrapper,
+  .grid4 .playerWrapper {
+    width: calc(50% - 8px);
+  }
+  
+  .grid5 .playerWrapper,
+  .grid6 .playerWrapper,
+  .grid7 .playerWrapper,
+  .grid8 .playerWrapper,
+  .grid9 .playerWrapper {
+    width: calc(33.33% - 11px);
+  }
+  
+  .grid10plus .playerWrapper {
+    width: calc(25% - 12px);
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .activePlayerContainer {
+    min-height: 200px;
+    margin-bottom: 12px;
+  }
+  
+  .playerWrapper {
+    width: 180px;
+    height: 101px;
+  }
+  
+  .grid2 .playerWrapper,
+  .grid3 .playerWrapper,
+  .grid4 .playerWrapper {
+    width: calc(50% - 6px);
+  }
+  
+  .grid5 .playerWrapper,
+  .grid6 .playerWrapper,
+  .grid7 .playerWrapper,
+  .grid8 .playerWrapper,
+  .grid9 .playerWrapper,
+  .grid10plus .playerWrapper {
+    width: calc(33.33% - 8px);
+  }
+}
+
+@media (max-width: 576px) {
+  .mainContent {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .activePlayerContainer {
+    min-height: 160px;
+    margin-bottom: 8px;
+  }
+  
+  .nonActivePlayersContainer {
+    gap: 8px;
+    padding-bottom: 80px;
+  }
+  
+  .playerWrapper {
+    width: 150px;
+    height: 84px;
+  }
+  
+  .grid2 .playerWrapper,
+  .grid3 .playerWrapper,
+  .grid4 .playerWrapper,
+  .grid5 .playerWrapper,
+  .grid6 .playerWrapper,
+  .grid7 .playerWrapper,
+  .grid8 .playerWrapper,
+  .grid9 .playerWrapper,
+  .grid10plus .playerWrapper {
+    width: calc(50% - 4px);
+  }
+}
+
+/* Special style for 2 participants view */
+.twoParticipantsLayout .mainContent {
+  flex-direction: row;
+  padding: 20px;
+  gap: 20px;
+}
+
+.twoParticipantsLayout .activePlayerContainer {
+  flex: 1;
+  min-height: auto;
+  margin-bottom: 0;
+}
+
+.twoParticipantsLayout .nonActivePlayersContainer {
+  flex: 1;
+  height: auto;
+  max-height: none;
+  padding-bottom: 0;
+}
+
+.twoParticipantsLayout .playerWrapper {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+/* Mobile landscape adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .twoParticipantsLayout .mainContent {
+    flex-direction: row;
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+/* Mobile portrait adjustments */
+@media (max-width: 768px) and (orientation: portrait) {
+  .twoParticipantsLayout .mainContent {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .twoParticipantsLayout .activePlayerContainer,
+  .twoParticipantsLayout .nonActivePlayersContainer {
+    height: calc(50% - 6px);
+    width: 100%;
+  }
+}

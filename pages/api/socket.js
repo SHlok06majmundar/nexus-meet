@@ -117,6 +117,34 @@ const SocketHandler = (req, res) => {
                 // Broadcast to everyone including sender (using io instead of socket.broadcast)
                 io.to(roomId).emit('user-reaction', data.userId, data.emoji)
             })
+            
+            // Handle raise hand events
+            socket.on('raise-hand', (data, roomId) => {
+                console.log(`User ${data.userId} raised hand in room ${roomId}`)
+                socket.join(roomId)
+                
+                // Broadcast hand raise to everyone
+                io.to(roomId).emit('user-raised-hand', data.userId, data.userName)
+                
+                // Send system message for raised hand
+                const systemMessage = {
+                    content: `${data.userName || 'A user'} raised their hand`,
+                    senderId: 'system',
+                    senderName: 'System',
+                    timestamp: new Date().toISOString(),
+                    isSystemMessage: true
+                }
+                io.to(roomId).emit('new-message', systemMessage)
+            })
+            
+            // Handle lower hand events
+            socket.on('lower-hand', (data, roomId) => {
+                console.log(`User ${data.userId} lowered hand in room ${roomId}`)
+                socket.join(roomId)
+                
+                // Broadcast hand lowered to everyone
+                io.to(roomId).emit('user-lowered-hand', data.userId)
+            })
         })
     }
     res.end();
