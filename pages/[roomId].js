@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { cloneDeep } from "lodash";
 import { motion } from "framer-motion";
-import { FaCopy, FaClipboardCheck, FaInfoCircle, FaHandPaper, FaLock } from "react-icons/fa";
+import { FaCopy, FaClipboardCheck, FaInfoCircle, FaHandPaper, FaLock, FaTimes } from "react-icons/fa";
 import { MdGridView, MdOutlinePoll, MdOndemandVideo, MdClosedCaption, MdMoreVert } from "react-icons/md";
 import { useSocket } from "@/context/socket";
 import usePeer from "@/hooks/usePeer";
@@ -204,9 +204,9 @@ const Room = () => {
   // Effect to handle various socket events (toggle audio, video, user leave, etc.)
   useEffect(() => {
     if (!socket) return;
-    
-    const handleToggleAudio = (userId) => {
-      console.log(`user with id ${userId} toggled audio`);
+      const handleToggleAudio = (userId) => {
+      const userDisplayName = players[userId]?.userName || `User ${userId.substring(0, 5)}`;
+      console.log(`${userDisplayName} toggled audio`);
       setPlayers((prev) => {
         const copy = cloneDeep(prev);
         copy[userId].muted = !copy[userId].muted;
@@ -215,7 +215,8 @@ const Room = () => {
     };
     
     const handleToggleVideo = (userId, videoState) => {
-      console.log(`user with id ${userId} toggled video to ${videoState}`);
+      const userDisplayName = players[userId]?.userName || `User ${userId.substring(0, 5)}`;
+      console.log(`${userDisplayName} toggled video to ${videoState}`);
       setPlayers((prev) => {
         const copy = cloneDeep(prev);
         // Use the videoState value sent from the server instead of toggling
@@ -223,9 +224,10 @@ const Room = () => {
         return { ...copy };
       });
     };
-    
-    const handleUserRaisedHand = (userId, userName) => {
-      console.log(`User ${userName || userId} raised hand`);
+      const handleUserRaisedHand = (userId, userName) => {
+      // Use the provided userName, or get from players state, or fallback to shortened ID
+      const userDisplayName = userName || players[userId]?.userName || `User ${userId.substring(0, 5)}`;
+      console.log(`${userDisplayName} raised hand`);
       setRaisedHands(prev => ({
         ...prev,
         [userId]: true
@@ -235,14 +237,15 @@ const Room = () => {
       const handRaiseEvent = new CustomEvent("show-toast-notification", {
         detail: { 
           title: "Hand Raised",
-          message: `${userName || "A user"} raised their hand`
+          message: `${userDisplayName} raised their hand`
         }
       });
       window.dispatchEvent(handRaiseEvent);
     };
     
     const handleUserLoweredHand = (userId) => {
-      console.log(`User ${userId} lowered hand`);
+      const userDisplayName = players[userId]?.userName || `User ${userId.substring(0, 5)}`;
+      console.log(`${userDisplayName} lowered hand`);
       setRaisedHands(prev => {
         const updated = { ...prev };
         delete updated[userId];
@@ -306,17 +309,17 @@ const Room = () => {
     if (!peer || !stream) return;
     peer.on("call", (call) => {
       const { peer: callerId } = call;
-      call.answer(stream);
-
-      call.on("stream", (incomingStream) => {
-        console.log(`incoming stream from ${callerId}`);
+      call.answer(stream);      call.on("stream", (incomingStream) => {
+        // Format a friendly display name
+        const displayName = `User ${callerId.substring(0, 5)}`;
+        console.log(`Incoming stream from ${displayName}`);
         setPlayers((prev) => ({
           ...prev,
           [callerId]: {
             url: incomingStream,
             muted: true,
             playing: true,
-            userName: `User ${callerId.substring(0, 5)}` // Default name until we get the real one
+            userName: displayName // Default name until we get the real one
           },
         }));
       });
@@ -704,8 +707,7 @@ const Room = () => {
       )}
       
       {/* 6. RIGHT SIDEBAR PANEL - Width: 320px */}
-      <div className={`${styles.rightSidebar} ${!isChatOpen ? styles.rightSidebarClosed : ''}`}>
-        <div className={styles.sidebarTabs}>
+      <div className={`${styles.rightSidebar} ${!isChatOpen ? styles.rightSidebarClosed : ''}`}>        <div className={styles.sidebarTabs}>
           <div 
             className={`${styles.sidebarTab} ${activeSidebarTab === 'chat' ? styles.activeTab : ''}`}
             onClick={() => setActiveSidebarTab('chat')}
@@ -722,14 +724,14 @@ const Room = () => {
             className={`${styles.sidebarTab} ${activeSidebarTab === 'activities' ? styles.activeTab : ''}`}
             onClick={() => setActiveSidebarTab('activities')}
           >
-            Activities
-          </div>          <button 
+            Act.
+          </div><button 
             className={styles.closeSidebar} 
             onClick={() => setIsChatOpen(false)}
             aria-label="Close sidebar"
             title="Close sidebar"
           >
-            ✕
+            <FaTimes size={14} />
           </button>
         </div>
         

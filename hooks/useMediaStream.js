@@ -17,13 +17,13 @@ const useMediaStream = () => {
     // Function to initialize stream - exposed so it can be called again if needed
     const initializeStream = async () => {
         try {
-            console.log("Initializing media stream");
-            const stream = await navigator.mediaDevices.getUserMedia({
+            console.log("Initializing media stream");            const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
                 video: {
                     facingMode: "user", // Front camera
-                    // Don't apply any mirroring - let the browser show the natural orientation
-                    mirror: false
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    aspectRatio: { ideal: 16/9 }
                 }
             })
             console.log("Setting your stream")
@@ -69,12 +69,13 @@ const useMediaStream = () => {
                             track.stop()
                         }
                     })
-                }
-                  // Get a new video stream with same non-mirrored settings
+                }                // Get a new video stream with same high quality settings
                 const newVideoStream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        facingMode: "user",
-                        mirror: false
+                        facingMode: "user", 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        aspectRatio: { ideal: 16/9 }
                     }
                 })
                 

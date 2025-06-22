@@ -424,7 +424,7 @@
 
 /* 6. Right Sidebar Panel - Width: 320px - Google Meet spec */
 .rightSidebar {
-  width: 320px; /* Google Meet sidebar width */
+  width: 300px; /* Slightly narrower sidebar width */
   position: fixed;
   right: 0;
   top: 56px; /* Below header */
@@ -443,10 +443,14 @@
 }
 
 .sidebarTabs {
-  height: 48px; /* Google Meet tabs height */
+  height: 42px; /* Smaller height */
   display: flex;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
+  padding-right: 40px; /* Space for close button */
+  justify-content: space-between;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .sidebarTab {
@@ -455,11 +459,16 @@
   align-items: center;
   justify-content: center;
   color: #e8eaed;
-  font-size: 14px;
+  font-size: 12px; /* Smaller font size */
   font-weight: 500;
   cursor: pointer;
+  padding: 0 5px; /* Smaller padding */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   position: relative;
   transition: color 0.2s;
+  max-width: 30%;
 }
 
 .sidebarTab:hover {
@@ -482,27 +491,41 @@
 
 .closeSidebar {
   position: absolute;
-  right: 12px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: #e8eaed;
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 26px; /* Smaller width */
+  height: 26px; /* Smaller height */
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  z-index: 10;
+  z-index: 101; /* Higher z-index */
   transition: all 0.2s ease;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  outline: none;
 }
 
 .closeSidebar:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.4);
   color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.closeSidebar svg {
+  color: white;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.5));
+}
+
+.closeSidebar:hover svg {
+  opacity: 1;
 }
 
 .sidebarContent {

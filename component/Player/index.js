@@ -55,8 +55,36 @@ const Player = (props) => {
   const hideControls = () => {
     setControlsVisible(false);
   };
-  
-  return (
+    // More gentle approach to disable mirroring
+  useEffect(() => {
+    // Skip if not a local video feed or player ref not available
+    if (!isLocal || !playerRef.current) return;
+      const checkVideoElements = () => {
+      try {
+        if (!playerRef.current?.wrapper) return;
+        
+        // Get video elements safely
+        const videoElements = playerRef.current.wrapper.getElementsByTagName('video');
+        if (!videoElements || videoElements.length === 0) return;
+        
+        console.log(`Configuring video elements (${videoElements.length})`);
+        
+        // Instead of modifying the video elements directly, we'll rely on CSS classes
+        // The styling is already applied through the .localParticipant class in the CSS
+        // No need to add classes to the video elements directly
+      } catch (err) {
+        console.error("Error configuring video elements:", err);
+      }
+    };
+    
+    // Set a timeout to allow ReactPlayer to fully initialize
+    const timeoutId = setTimeout(checkVideoElements, 300);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [isLocal, url, playing]);
+    return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -72,15 +100,16 @@ const Player = (props) => {
       onMouseLeave={hideControls}
     >
       {/* Only render ReactPlayer when we have a URL */}
-      {url && (
-        <ReactPlayer
+      {url && (        <ReactPlayer
           ref={playerRef}
           url={url}
           muted={muted}
           playing={true}  // Always keep playing for audio
           width="100%"
           height="100%"
-          style={{ display: playing ? 'block' : 'none' }}  // Hide video when not playing
+          style={{ 
+            display: playing ? 'block' : 'none'
+          }}
           onReady={() => {
             console.log(`Player ready: ${displayName}`);
             setPlayerReady(true);
@@ -91,7 +120,7 @@ const Player = (props) => {
           }}
           config={{
             file: {
-              forceVideo: true,
+              forceVideo: true
             },
           }}
         />

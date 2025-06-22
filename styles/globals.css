@@ -143,3 +143,5 @@ button, a, input, select, textarea {
   min-height: 44px;
   min-width: 44px;
 }
+
+/* Video mirroring is now handled in the component-specific CSS */

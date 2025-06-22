@@ -145,8 +145,8 @@ const Dashboard = () => {
                 className="px-4 py-2.5 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/50 flex-1 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 required
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg flex items-center hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <ArrowRight size={18} />

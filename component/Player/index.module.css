@@ -49,19 +49,13 @@
   z-index: 2;
 }
 
-/* Remove mirror effect to show correct left/right orientation */
+/* Force mirroring for camera feed - if none shows wrong orientation */
 .localParticipant video {
-  transform: none !important;
-}
-
-.localParticipant .avatarOverlay {
-  transform: none;
-}
-
-/* No mirroring for ReactPlayer */
-.localParticipant > div,
-.localParticipant > div > div {
-  transform: none;
+  /* Using scaleX to flip the video horizontally */
+  -webkit-transform: scaleX(-1) !important;
+  -moz-transform: scaleX(-1) !important;
+  -ms-transform: scaleX(-1) !important;
+  transform: scaleX(-1) !important;
 }
 
 /* No need to counter-flip text elements anymore */

@@ -51,9 +51,13 @@ const NotificationSystem = () => {
       window.removeEventListener("user-leave-notification", handleLeaveEvent);
     };
   }, []);
+    // Generate a truly unique ID for notifications
+  const generateUniqueId = () => {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  };
   
   const addNotification = (message, type) => {
-    const id = Date.now();
+    const id = generateUniqueId();
     console.log(`Adding notification: ${message} (${type})`);
     
     setNotifications((prev) => [...prev, { id, message, type }]);
