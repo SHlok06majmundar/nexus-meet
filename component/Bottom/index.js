@@ -18,9 +18,10 @@ import {
 import { motion } from "framer-motion";
 
 import styles from "@/component/Bottom/index.module.css";
+import AIRecorder from "@/component/AIRecorder";
 
 const Bottom = (props) => {
-  const { muted, playing, toggleAudio, toggleVideo, leaveRoom, togglePeopleTab, toggleChat, toggleActivities } = props;
+  const { muted, playing, toggleAudio, toggleVideo, leaveRoom, togglePeopleTab, toggleChat, toggleActivities, roomId, players, myId } = props;
   // Debounce flags for controls to prevent rapid clicking
   const [isVideoButtonDisabled, setVideoButtonDisabled] = useState(false);
   const [isAudioButtonDisabled, setAudioButtonDisabled] = useState(false);
@@ -160,19 +161,17 @@ const Bottom = (props) => {
           <ScreenShare className={styles.controlIcon} />
           <span className={styles.buttonLabel}>Present</span>
         </motion.button>
-        
-        {/* Menu Button for Options */}
-        <motion.button
-          variants={controlButtonVariants}
-          whileHover="hover"
-          whileTap="tap"
-          transition={{ duration: 0.1 }}
-          className={styles.controlButton}
-          aria-label="More options"
-        >
-          <MoreHorizontal className={styles.controlIcon} />
-          <span className={styles.buttonLabel}>More</span>
-        </motion.button>
+          {/* AI Recorder Button */}
+        {roomId && players && myId && (
+          <motion.div
+            className={styles.aiButtonContainer}
+            variants={controlButtonVariants}
+            whileHover="hover"
+            transition={{ duration: 0.1 }}
+          >
+            <AIRecorder roomId={roomId} players={players} myId={myId} />
+          </motion.div>
+        )}
       </div>
 
       {/* End Call Button - Google Meet Style Red Button */}

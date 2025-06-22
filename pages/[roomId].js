@@ -631,8 +631,7 @@ const Room = () => {
             {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
           </div>
         </div>
-        
-        <div className={styles.controlsCenter}>          <Bottom
+          <div className={styles.controlsCenter}>          <Bottom
             muted={playerHighlighted?.muted}
             playing={playerHighlighted?.playing}
             toggleAudio={toggleAudio}
@@ -641,6 +640,9 @@ const Room = () => {
             toggleChat={toggleChat}
             togglePeopleTab={togglePeopleTab}
             toggleActivities={toggleActivities}
+            roomId={roomId}
+            players={players}
+            myId={myId}
           />
         </div>
           <div className={styles.controlsRight}>

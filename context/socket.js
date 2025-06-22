@@ -86,11 +86,34 @@ export const SocketProvider = (props) => {
         }, roomId);
       }
     };
-      // Add event listeners
+    
+    // Event listener for AI recording started
+    const handleAIRecordingStart = (event) => {
+      if (socket) {
+        // Get the room ID from the URL
+        const roomId = window.location.pathname.substring(1);
+        
+        socket.emit('ai-recording-started', roomId);
+      }
+    };
+    
+    // Event listener for AI recording stopped
+    const handleAIRecordingStop = (event) => {
+      if (socket) {
+        // Get the room ID from the URL
+        const roomId = window.location.pathname.substring(1);
+        
+        socket.emit('ai-recording-stopped', roomId);
+      }
+    };
+
+    // Add event listeners
     window.addEventListener('screen-share-started', handleScreenShare);
     window.addEventListener('send-reaction', handleReaction);
     window.addEventListener('raise-hand', handleRaiseHand);
     window.addEventListener('lower-hand', handleLowerHand);
+    window.addEventListener('ai-recording-start', handleAIRecordingStart);
+    window.addEventListener('ai-recording-stop', handleAIRecordingStop);
     
     // Set up socket event listeners for debugging
     socket.on('connect', () => {
@@ -108,12 +131,15 @@ export const SocketProvider = (props) => {
     socket.on('user-leave', (userId) => {
       console.log(`Socket event: user-leave - ${userId}`);
     });
-      // Cleanup
+    
+    // Cleanup
     return () => {
       window.removeEventListener('screen-share-started', handleScreenShare);
       window.removeEventListener('send-reaction', handleReaction);
       window.removeEventListener('raise-hand', handleRaiseHand);
       window.removeEventListener('lower-hand', handleLowerHand);
+      window.removeEventListener('ai-recording-start', handleAIRecordingStart);
+      window.removeEventListener('ai-recording-stop', handleAIRecordingStop);
       
       if (socket) {
         socket.off('connect');

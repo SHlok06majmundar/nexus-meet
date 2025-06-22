@@ -424,3 +424,21 @@
   background-color: rgba(200, 30, 60, 0.9);
   border-color: rgba(255, 90, 120, 0.4);
 }
+
+.controlContainer {
+  position: relative;
+  margin: 0 -2px;
+}
+
+/* Style tweaks for AI Recorder when it's inside Bottom component */
+.controlContainer > div {
+  margin: 0;
+}
+
+.aiButtonContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 4px;
+}

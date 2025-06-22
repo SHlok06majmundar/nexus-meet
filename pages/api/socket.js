@@ -145,6 +145,41 @@ const SocketHandler = (req, res) => {
                 // Broadcast hand lowered to everyone
                 io.to(roomId).emit('user-lowered-hand', data.userId)
             })
+            
+            // AI recording events
+            socket.on('ai-recording-started', (roomId, userId) => {
+                socket.join(roomId)
+                const userName = socket.userName || 'A user'
+                console.log(`AI recording started by ${userName} in room ${roomId}`)
+                
+                // Notify all users in the room
+                const systemMessage = {
+                    content: `${userName} started AI meeting recording`,
+                    senderId: 'system',
+                    senderName: 'System',
+                    timestamp: new Date().toISOString(),
+                    isSystemMessage: true                
+                }
+                io.to(roomId).emit('new-message', systemMessage)
+                io.to(roomId).emit('ai-recording-started', userId, userName)
+            })
+            
+            socket.on('ai-recording-stopped', (roomId, userId) => {
+                socket.join(roomId)
+                const userName = socket.userName || 'A user'
+                console.log(`AI recording stopped by ${userName} in room ${roomId}`)
+                
+                // Notify all users in the room
+                const systemMessage = {
+                    content: `${userName} stopped AI meeting recording`,
+                    senderId: 'system',
+                    senderName: 'System',
+                    timestamp: new Date().toISOString(),
+                    isSystemMessage: true                
+                }
+                io.to(roomId).emit('new-message', systemMessage)
+                io.to(roomId).emit('ai-recording-stopped', userId, userName)
+            })
         })
     }
     res.end();
