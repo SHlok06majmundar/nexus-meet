@@ -19,9 +19,23 @@ import { motion } from "framer-motion";
 
 import styles from "@/component/Bottom/index.module.css";
 import AIRecorder from "@/component/AIRecorder";
+import LocalRecorder from "@/component/LocalRecorder";
 
 const Bottom = (props) => {
-  const { muted, playing, toggleAudio, toggleVideo, leaveRoom, togglePeopleTab, toggleChat, toggleActivities, roomId, players, myId } = props;
+  const { 
+    muted,
+    playing,
+    toggleAudio, 
+    toggleVideo, 
+    leaveRoom, 
+    togglePeopleTab, 
+    toggleChat, 
+    toggleActivities, 
+    roomId, 
+    players, 
+    myId, 
+    myStream  // Get the user's media stream for recording
+  } = props;
   // Debounce flags for controls to prevent rapid clicking
   const [isVideoButtonDisabled, setVideoButtonDisabled] = useState(false);
   const [isAudioButtonDisabled, setAudioButtonDisabled] = useState(false);
@@ -147,8 +161,7 @@ const Bottom = (props) => {
             </>
           )}
         </motion.button>
-        
-        {/* Screen Share Button */}
+          {/* Screen Share Button */}
         <motion.button
           variants={controlButtonVariants}
           whileHover="hover"
@@ -161,7 +174,20 @@ const Bottom = (props) => {
           <ScreenShare className={styles.controlIcon} />
           <span className={styles.buttonLabel}>Present</span>
         </motion.button>
-          {/* AI Recorder Button */}
+        
+        {/* Local Video Recorder Button */}
+        {roomId && players && myId && (
+          <motion.div
+            className={styles.recorderButtonContainer}
+            variants={controlButtonVariants}
+            whileHover="hover"
+            transition={{ duration: 0.1 }}
+          >
+            <LocalRecorder roomId={roomId} players={players} myId={myId} myStream={props.myStream} />
+          </motion.div>
+        )}
+
+        {/* AI Recorder Button */}
         {roomId && players && myId && (
           <motion.div
             className={styles.aiButtonContainer}

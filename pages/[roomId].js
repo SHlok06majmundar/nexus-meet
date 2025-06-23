@@ -582,9 +582,8 @@ const Room = () => {
       {/* Reactions container for displaying emojis */}
       <ReactionsContainer />
       
-      {/* 4. MAIN CONTENT AREA (VIDEO GRID) */}
-      <div className={styles.mainContentArea}>
-        <div className={`${styles.videoGrid} ${styles[`${viewMode}Grid`]}`}>
+      {/* 4. MAIN CONTENT AREA (VIDEO GRID) */}      <div className={styles.mainContentArea}>
+        <div id="videoGrid" className={`${styles.videoGrid} ${styles[`${viewMode}Grid`]}`}>
           {/* Active speaker */}
           {playerHighlighted && (            <div className={`${styles.videoTile} ${
               Object.keys(nonHighlightedPlayers).length > 0 && viewMode === 'spotlight' 
@@ -639,10 +638,10 @@ const Room = () => {
             leaveRoom={leaveRoom}
             toggleChat={toggleChat}
             togglePeopleTab={togglePeopleTab}
-            toggleActivities={toggleActivities}
-            roomId={roomId}
+            toggleActivities={toggleActivities}            roomId={roomId}
             players={players}
             myId={myId}
+            myStream={stream} // Pass the stream for local recording
           />
         </div>
           <div className={styles.controlsRight}>

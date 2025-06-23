@@ -64,6 +64,17 @@
   box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
 }
 
+.reset {
+  background-color: rgba(76, 175, 230, 0.85);
+  box-shadow: 0 0 12px rgba(76, 175, 230, 0.4);
+  margin-left: 8px;
+}
+
+.reset:hover {
+  background-color: rgba(76, 175, 230, 0.95);
+  box-shadow: 0 0 15px rgba(76, 175, 230, 0.5);
+}
+
 .unsupported {
   background-color: rgba(150, 150, 150, 0.5);
   box-shadow: none;
@@ -92,9 +103,8 @@
   border-radius: 10px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
   overflow: hidden;
-  z-index: 100;
+  z-index: 100;  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -113,6 +123,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.headerRight {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .transcriptHeader h4 {
@@ -141,6 +157,29 @@
   border-radius: 50%;
   background-color: #e53935;
   animation: pulse 2s infinite;
+}
+
+.newRecordingButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(76, 175, 230, 0.85);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.newRecordingButton:hover {
+  background-color: rgba(76, 175, 230, 0.95);
+  transform: translateY(-1px);
+}
+
+.newRecordingButton svg {
+  margin-right: 2px;
 }
 
 .downloadButton {
@@ -181,6 +220,22 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   position: relative;
   transition: all 0.2s ease;
+}
+
+.simulatedLine {
+  opacity: 0.85;
+  background-color: rgba(45, 55, 72, 0.5);
+}
+
+.simulatedSpeaker {
+  font-style: italic;
+}
+
+.simulatedIndicator {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 4px;
+  font-style: normal;
 }
 
 .transcriptLineHeader {
@@ -264,6 +319,17 @@
   padding: 2px 6px;
   border-radius: 10px;
   font-size: 10px;
+}
+
+.recordingTime {
+  font-size: 12px;
+  color: #8ab4f8;
+  margin-left: auto;
+  padding: 2px 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
 }
 
 .unsupported {

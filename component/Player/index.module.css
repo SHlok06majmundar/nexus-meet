@@ -49,13 +49,13 @@
   z-index: 2;
 }
 
-/* Force mirroring for camera feed - if none shows wrong orientation */
+/* Optional mirroring for camera feed, but default to no mirror for correct orientation */
 .localParticipant video {
-  /* Using scaleX to flip the video horizontally */
-  -webkit-transform: scaleX(-1) !important;
-  -moz-transform: scaleX(-1) !important;
-  -ms-transform: scaleX(-1) !important;
-  transform: scaleX(-1) !important;
+  /* Using scaleX to flip the video horizontally - removed !important to allow user preference */
+  -webkit-transform: scaleX(1);
+  -moz-transform: scaleX(1);
+  -ms-transform: scaleX(1);
+  transform: scaleX(1);
 }
 
 /* No need to counter-flip text elements anymore */
@@ -167,6 +167,19 @@
 
 .controlIcon.active {
   color: #8ab4f8;
+}
+
+/* Mirror button active state */
+.controlButton .controlIcon.active {
+  color: #8ab4f8;
+  stroke-width: 2.5px;
+  animation: flash 0.3s ease-in-out;
+}
+
+@keyframes flash {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
 }
 
 /* Audio meter visualization when participant is speaking */

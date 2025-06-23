@@ -23,6 +23,7 @@ const Player = (props) => {
   const [hasError, setHasError] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [isControlsVisible, setControlsVisible] = useState(false);
+  const [isMirrored, setIsMirrored] = useState(false);
   const playerRef = useRef(null);
   
   // Reset error state whenever url or playing changes
@@ -47,6 +48,22 @@ const Player = (props) => {
     // TODO: Implement actual pinning logic via parent component
   };
   
+  // Toggle mirror mode
+  const toggleMirror = (e) => {
+    e.stopPropagation();
+    setIsMirrored(!isMirrored);
+    
+    // Apply mirror effect to video elements
+    if (playerRef.current?.wrapper) {
+      const videoElements = playerRef.current.wrapper.getElementsByTagName('video');
+      if (videoElements && videoElements.length > 0) {
+        for (let i = 0; i < videoElements.length; i++) {
+          videoElements[i].style.transform = !isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+        }
+      }
+    }
+  };
+  
   // Show player controls on hover
   const showControls = () => {
     setControlsVisible(true);
@@ -55,11 +72,12 @@ const Player = (props) => {
   const hideControls = () => {
     setControlsVisible(false);
   };
-    // More gentle approach to disable mirroring
+  // Apply video mirroring based on user preference
   useEffect(() => {
     // Skip if not a local video feed or player ref not available
     if (!isLocal || !playerRef.current) return;
-      const checkVideoElements = () => {
+    
+    const applyVideoSettings = () => {
       try {
         if (!playerRef.current?.wrapper) return;
         
@@ -67,24 +85,25 @@ const Player = (props) => {
         const videoElements = playerRef.current.wrapper.getElementsByTagName('video');
         if (!videoElements || videoElements.length === 0) return;
         
-        console.log(`Configuring video elements (${videoElements.length})`);
+        console.log(`Configuring video elements (${videoElements.length}): mirrored=${isMirrored}`);
         
-        // Instead of modifying the video elements directly, we'll rely on CSS classes
-        // The styling is already applied through the .localParticipant class in the CSS
-        // No need to add classes to the video elements directly
+        // Apply mirroring based on user preference
+        for (let i = 0; i < videoElements.length; i++) {
+          videoElements[i].style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+        }
       } catch (err) {
         console.error("Error configuring video elements:", err);
       }
     };
     
     // Set a timeout to allow ReactPlayer to fully initialize
-    const timeoutId = setTimeout(checkVideoElements, 300);
-    
-    return () => {
+    const timeoutId = setTimeout(applyVideoSettings, 300);
+      return () => {
       clearTimeout(timeoutId);
     };
-  }, [isLocal, url, playing]);
-    return (
+  }, [isLocal, isMirrored]);
+  
+  return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -177,6 +196,20 @@ const Player = (props) => {
         <div className={styles.controlButton}>
           <MoreVertical size={16} className={styles.controlIcon} />
         </div>
+          {/* Mirror toggle button - only for local video */}
+        {isLocal && (
+          <div 
+            className={styles.controlButton} 
+            onClick={toggleMirror}
+            title={isMirrored ? "Disable mirroring" : "Enable mirroring"}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cx(styles.controlIcon, { [styles.active]: isMirrored })}>
+              <rect x="2" y="3" width="8" height="18" />
+              <path d="M12 12h.01" />
+              <rect x="14" y="3" width="8" height="18" />
+              <path d="M12 3v18" />            </svg>
+          </div>
+        )}
       </motion.div>
       
       {/* Audio meter (animation if speaking) */}
