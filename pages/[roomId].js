@@ -132,7 +132,7 @@ const Room = () => {
     };
   }, []);
 
-  // Handle auth redirection
+  // Handle auth redirection and prejoin check
   useEffect(() => {
     if (isLoaded) {
       setIsLoadingAuth(false);
@@ -142,6 +142,36 @@ const Room = () => {
           pathname: '/sign-in',
           query: { redirect_url: `/${roomId}` }
         });
+        return;
+      }
+      
+      // Check if user has gone through prejoin process
+      const comingFromPrejoin = sessionStorage.getItem('comingFromPrejoin');
+      const meetingPreferences = sessionStorage.getItem('meetingPreferences');
+      
+      // Allow direct access for authenticated users, but redirect new/anonymous users to prejoin
+      if (!comingFromPrejoin && !meetingPreferences) {
+        // Only redirect to prejoin if this seems like a new session
+        // Check if this is a fresh browser session without user preferences
+        const hasUserPreferences = user?.fullName || user?.firstName || user?.username;
+        
+        if (!hasUserPreferences) {
+          // No user data available, definitely need prejoin
+          router.push(`/prejoin?roomId=${roomId}`);
+          return;
+        }
+        
+        // User has Clerk data, we can proceed but set default preferences
+        sessionStorage.setItem('meetingPreferences', JSON.stringify({
+          displayName: user.fullName || user.firstName || user.username || 'Guest',
+          isVideoEnabled: true,
+          isAudioEnabled: true
+        }));
+      }
+      
+      // Clear the prejoin flag after successful entry
+      if (comingFromPrejoin) {
+        sessionStorage.removeItem('comingFromPrejoin');
       }
     }
   }, [isLoaded, isSignedIn, router, roomId]);
@@ -595,7 +625,7 @@ const Room = () => {
                 playing={playerHighlighted.playing}
                 userName={playerHighlighted.userName}
                 handRaised={raisedHands[myId]}
-                isLocal={myId === Object.keys(players).find(id => players[id] === playerHighlighted)}
+                isLocal={true} // playerHighlighted is always the current user in this context
                 isActive
               />
             </div>
@@ -615,6 +645,7 @@ const Room = () => {
                     playing={playing}
                     userName={userName}
                     handRaised={raisedHands[playerId]}
+                    isLocal={false} // Other participants are never local
                   />
                 </div>
               );

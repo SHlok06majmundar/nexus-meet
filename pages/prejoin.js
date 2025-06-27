@@ -16,6 +16,16 @@ export default function PreJoin() {
   const [stream, setStream] = useState(null);
   const videoRef = useRef(null);
 
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push({
+        pathname: '/sign-in',
+        query: { redirect_url: `/prejoin?roomId=${roomId}` }
+      });
+    }
+  }, [isLoaded, isSignedIn, router, roomId]);
+
   // Set initial display name when user data is loaded
   useEffect(() => {
     if (isLoaded && user) {
@@ -137,7 +147,8 @@ export default function PreJoin() {
               autoPlay 
               playsInline 
               muted 
-              className={styles.videoPreview} 
+              className={styles.videoPreview}
+              style={{ transform: 'scaleX(-1)' }} // Mirror the preview video
             />
           ) : (
             <div className={styles.videoPlaceholder}>

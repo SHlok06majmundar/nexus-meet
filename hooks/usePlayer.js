@@ -9,7 +9,35 @@ const usePlayer = (myId, roomId, peer) => {
     const [players, setPlayers] = useState({})
     const router = useRouter()
     const { user } = useUser();
-    const userName = user?.fullName || user?.firstName || user?.username || `User ${myId.substring(0, 5)}`;
+    
+    // Get user name from prejoin preferences first, then fallback to Clerk user data
+    const getDisplayName = () => {
+        // Check if coming from prejoin with stored preferences
+        if (typeof window !== 'undefined') {
+            const storedPreferences = sessionStorage.getItem('meetingPreferences');
+            if (storedPreferences) {
+                try {
+                    const preferences = JSON.parse(storedPreferences);
+                    if (preferences.displayName && preferences.displayName.trim()) {
+                        return preferences.displayName.trim();
+                    }
+                } catch (error) {
+                    console.error('Error parsing meeting preferences:', error);
+                }
+            }
+        }
+        
+        // Fallback to Clerk user data
+        if (user?.fullName) return user.fullName;
+        if (user?.firstName && user?.lastName) return `${user.firstName} ${user.lastName}`;
+        if (user?.firstName) return user.firstName;
+        if (user?.username) return user.username;
+        
+        // Last resort fallback
+        return 'Guest User';
+    };
+    
+    const userName = getDisplayName();
     
     const playersCopy = cloneDeep(players)
 

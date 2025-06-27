@@ -8,11 +8,25 @@ import { FaHandPaper } from "react-icons/fa";
 import styles from "@/component/Player/index.module.css";
 
 const Player = (props) => {
-  const { url, muted, playing, isActive, userName, isLocal, handRaised } = props;// Format username to handle both strings and user IDs
+  const { url, muted, playing, isActive, userName, isLocal, handRaised } = props;  // Format username to handle both strings and user IDs
   const formatDisplayName = (name) => {
-    if (!name) return "User";
-    // If name looks like a user ID (contains numbers and special chars), use "User" instead
-    if (/^[a-z0-9-]+$/.test(name) && name.length > 10) return "User";
+    if (!name) return "Guest";
+    
+    // If name looks like a user ID (UUID pattern), use "Guest User" instead
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)) {
+      return "Guest User";
+    }
+    
+    // If name looks like a short ID (alphanumeric), use "Guest User" instead
+    if (/^[a-z0-9-]+$/.test(name) && name.length > 10) {
+      return "Guest User";
+    }
+    
+    // If name is too long, truncate it
+    if (name.length > 25) {
+      return name.substring(0, 22) + "...";
+    }
+    
     return name;
   };
   
@@ -23,7 +37,7 @@ const Player = (props) => {
   const [hasError, setHasError] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [isControlsVisible, setControlsVisible] = useState(false);
-  const [isMirrored, setIsMirrored] = useState(false);
+  const [isMirrored, setIsMirrored] = useState(isLocal || false); // Mirror local video by default
   const playerRef = useRef(null);
   
   // Reset error state whenever url or playing changes
@@ -51,14 +65,19 @@ const Player = (props) => {
   // Toggle mirror mode
   const toggleMirror = (e) => {
     e.stopPropagation();
-    setIsMirrored(!isMirrored);
+    const newMirrorState = !isMirrored;
+    setIsMirrored(newMirrorState);
     
-    // Apply mirror effect to video elements
+    // Apply mirror effect to video elements immediately
     if (playerRef.current?.wrapper) {
       const videoElements = playerRef.current.wrapper.getElementsByTagName('video');
       if (videoElements && videoElements.length > 0) {
         for (let i = 0; i < videoElements.length; i++) {
-          videoElements[i].style.transform = !isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+          const transform = newMirrorState ? 'scaleX(-1)' : 'scaleX(1)';
+          videoElements[i].style.webkitTransform = transform;
+          videoElements[i].style.mozTransform = transform;
+          videoElements[i].style.msTransform = transform;
+          videoElements[i].style.transform = transform;
         }
       }
     }
@@ -72,10 +91,10 @@ const Player = (props) => {
   const hideControls = () => {
     setControlsVisible(false);
   };
-  // Apply video mirroring based on user preference
+  // Apply video mirroring based on user preference and local/remote status
   useEffect(() => {
-    // Skip if not a local video feed or player ref not available
-    if (!isLocal || !playerRef.current) return;
+    // Skip if player ref not available
+    if (!playerRef.current) return;
     
     const applyVideoSettings = () => {
       try {
@@ -85,23 +104,55 @@ const Player = (props) => {
         const videoElements = playerRef.current.wrapper.getElementsByTagName('video');
         if (!videoElements || videoElements.length === 0) return;
         
-        console.log(`Configuring video elements (${videoElements.length}): mirrored=${isMirrored}`);
+        console.log(`Configuring video elements (${videoElements.length}): isLocal=${isLocal}, mirrored=${isMirrored}`);
         
-        // Apply mirroring based on user preference
+        // Apply mirroring - local videos are mirrored by default, remote videos are not
         for (let i = 0; i < videoElements.length; i++) {
-          videoElements[i].style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+          const transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+          videoElements[i].style.webkitTransform = transform;
+          videoElements[i].style.mozTransform = transform;
+          videoElements[i].style.msTransform = transform;
+          videoElements[i].style.transform = transform;
         }
       } catch (err) {
         console.error("Error configuring video elements:", err);
       }
     };
     
-    // Set a timeout to allow ReactPlayer to fully initialize
-    const timeoutId = setTimeout(applyVideoSettings, 300);
-      return () => {
+    // Apply settings immediately if player is ready
+    if (isPlayerReady) {
+      applyVideoSettings();
+    }
+    
+    // Also set a timeout to ensure it applies after ReactPlayer fully initializes
+    const timeoutId = setTimeout(applyVideoSettings, 100);
+    
+    return () => {
       clearTimeout(timeoutId);
     };
-  }, [isLocal, isMirrored]);
+  }, [isLocal, isMirrored, isPlayerReady, url]); // Added url to re-apply when stream changes
+  
+  // Set default mirroring based on whether this is local or remote video
+  useEffect(() => {
+    setIsMirrored(isLocal || false); // Local videos are mirrored by default, remote are not
+  }, [isLocal]);
+  
+  // Apply mirroring immediately when player becomes ready
+  useEffect(() => {
+    if (isPlayerReady && playerRef.current?.wrapper && isLocal) {
+      const videoElements = playerRef.current.wrapper.getElementsByTagName('video');
+      if (videoElements && videoElements.length > 0) {
+        console.log(`Applying mirroring on player ready: ${displayName}`);
+        for (let i = 0; i < videoElements.length; i++) {
+          const transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+          videoElements[i].style.webkitTransform = transform;
+          videoElements[i].style.mozTransform = transform;
+          videoElements[i].style.msTransform = transform;
+          videoElements[i].style.transform = transform;
+        }
+      }
+    }
+  }, [isPlayerReady, isMirrored, isLocal, displayName]);
   
   return (
     <motion.div
@@ -130,7 +181,7 @@ const Player = (props) => {
             display: playing ? 'block' : 'none'
           }}
           onReady={() => {
-            console.log(`Player ready: ${displayName}`);
+            console.log(`Player ready: ${displayName} (isLocal: ${isLocal})`);
             setPlayerReady(true);
           }}
           onError={(e) => {

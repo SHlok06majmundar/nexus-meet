@@ -22,13 +22,15 @@ const Dashboard = () => {
     setIsCreatingMeeting(true);
     // Generate a random meeting ID
     const randomId = Math.random().toString(36).substring(2, 11);
-    router.push(`/${randomId}`);
+    // Redirect to prejoin instead of directly to room
+    router.push(`/prejoin?roomId=${randomId}`);
   };
   
   const joinMeeting = (e) => {
     e.preventDefault();
     if (meetingId.trim()) {
-      router.push(`/${meetingId}`);
+      // Redirect to prejoin instead of directly to room
+      router.push(`/prejoin?roomId=${meetingId.trim()}`);
     }
   };
   // Empty recent meetings array - no fake data
