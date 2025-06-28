@@ -184,30 +184,74 @@ const Room = () => {
     if (roomId && myId && userName) {
       socket.emit("join-room", roomId, myId, userName);
       
+      // Immediately announce our username to all existing users in the room
+      socket.emit("update-user-name", myId, roomId, userName);
+      
       // Dispatch join notification for ourselves
       setTimeout(() => {
         const joinEvent = new CustomEvent("user-join-notification", {
           detail: { userName: userName }
         });
         window.dispatchEvent(joinEvent);
+        
+        // After a short delay, request usernames from all other users
+        // This helps handle the case where we joined after others
+        socket.emit("update-user-name", myId, roomId, userName);
       }, 1000);
+      
+      // Send additional username announcements with increasing delays
+      // to ensure everyone receives it (network race conditions)
+      [2000, 3500, 5000].forEach(delay => {
+        setTimeout(() => {
+          socket.emit("update-user-name", myId, roomId, userName);
+        }, delay);
+      });
     }
     
     const handleUserConnected = (newUser, newUserName) => {
-      const displayName = newUserName || `User ${newUser.substring(0, 5)}`;
+      // Always use the provided name if available, with a clear fallback pattern
+      const displayName = newUserName && newUserName !== "undefined" && newUserName !== "null" 
+                          ? newUserName 
+                          : `User ${newUser.substring(0, 5)}`;
+      
       console.log(`user ${displayName} connected in room`);
+      
+      // Immediately add the user to the players list with the initial name
+      // This ensures they show up in the UI even before the call is established
+      setPlayers((prev) => {
+        // Only update if player doesn't exist yet to avoid overwriting
+        if (!prev[newUser]) {
+          return {
+            ...prev,
+            [newUser]: {
+              url: null, // Will be filled when stream is received
+              muted: true,
+              playing: true,
+              userName: displayName,
+            }
+          };
+        }
+        return prev;
+      });
 
-      const call = peer.call(newUser, stream);
+      // Include userName metadata in outgoing call
+      const callOptions = {
+        metadata: {
+          userName: userName
+        }
+      };
+      
+      const call = peer.call(newUser, stream, callOptions);
 
       call.on("stream", (incomingStream) => {
         console.log(`incoming stream from ${displayName}`);
+        
+        // Update player with the actual stream
         setPlayers((prev) => ({
           ...prev,
           [newUser]: {
+            ...prev[newUser],
             url: incomingStream,
-            muted: true,
-            playing: true,
-            userName: displayName,
           },
         }));
 
@@ -216,11 +260,33 @@ const Room = () => {
           [newUser]: call
         }));
         
+        // When we get a stream, we know the connection is established
+        // Emit our userName to all users to ensure they have the correct name
+        if (socket && userName && roomId) {
+          console.log(`Emitting userName update after connection: ${userName}`);
+          socket.emit("update-user-name", myId, roomId, userName);
+          
+          // After a brief delay, request the user's name again to ensure we have the most up-to-date name
+          setTimeout(() => {
+            socket.emit("request-username", myId, newUser, roomId);
+          }, 1000);
+        }
+        
         // Dispatch join notification event
         const joinEvent = new CustomEvent("user-join-notification", {
           detail: { userName: displayName }
         });
         window.dispatchEvent(joinEvent);
+      });
+      
+      // Handle call errors
+      call.on("error", (err) => {
+        console.error("Peer call error:", err);
+        
+        // Still request the username even if the call fails
+        if (socket && roomId) {
+          socket.emit("request-username", myId, newUser, roomId);
+        }
       });
     };
     
@@ -254,7 +320,35 @@ const Room = () => {
         return { ...copy };
       });
     };
-      const handleUserRaisedHand = (userId, userName) => {
+
+    const handleUserNameUpdated = (userId, updatedUserName) => {
+      console.log(`Received userName update for ${userId}: ${updatedUserName}`);
+      if (userId && updatedUserName) {
+        setPlayers((prev) => {
+          if (prev[userId]) {
+            const copy = cloneDeep(prev);
+            copy[userId].userName = updatedUserName;
+            // Clear the pending name request flag if it exists
+            if (copy[userId].pendingNameRequest) {
+              delete copy[userId].pendingNameRequest;
+            }
+            return { ...copy };
+          }
+          return prev;
+        });
+      }
+    };
+    
+    // Handle username request events
+    const handleUsernameRequested = (requesterId, targetUserId) => {
+      // If we are the target user, respond with our username
+      if (targetUserId === myId && userName) {
+        console.log(`Username requested by ${requesterId}, sending my name: ${userName}`);
+        socket.emit("update-user-name", myId, roomId, userName);
+      }
+    };
+      
+    const handleUserRaisedHand = (userId, userName) => {
       // Use the provided userName, or get from players state, or fallback to shortened ID
       const userDisplayName = userName || players[userId]?.userName || `User ${userId.substring(0, 5)}`;
       console.log(`${userDisplayName} raised hand`);
@@ -323,6 +417,8 @@ const Room = () => {
     socket.on("new-message", handleNewMessage);
     socket.on("user-raised-hand", handleUserRaisedHand);
     socket.on("user-lowered-hand", handleUserLoweredHand);
+    socket.on("user-name-updated", handleUserNameUpdated);
+    socket.on("username-requested", handleUsernameRequested);
     
     return () => {
       socket.off("user-toggle-audio", handleToggleAudio);
@@ -331,30 +427,86 @@ const Room = () => {
       socket.off("new-message", handleNewMessage);
       socket.off("user-raised-hand", handleUserRaisedHand);
       socket.off("user-lowered-hand", handleUserLoweredHand);
+      socket.off("user-name-updated", handleUserNameUpdated);
+      socket.off("username-requested", handleUsernameRequested);
     };
-  }, [players, setPlayers, socket, users, isChatOpen]);
-
+  }, [players, setPlayers, socket, users, isChatOpen, myId, userName, roomId]);
   // Handle incoming calls
   useEffect(() => {
-    if (!peer || !stream) return;
+    if (!peer || !stream || !socket || !userName || !roomId) return;
     peer.on("call", (call) => {
       const { peer: callerId } = call;
-      call.answer(stream);      call.on("stream", (incomingStream) => {
-        // Format a friendly display name
-        const displayName = `User ${callerId.substring(0, 5)}`;
-        console.log(`Incoming stream from ${displayName}`);
-        setPlayers((prev) => ({
-          ...prev,
-          [callerId]: {
-            url: incomingStream,
-            muted: true,
-            playing: true,
-            userName: displayName // Default name until we get the real one
-          },
-        }));
+      
+      // Try to get user name from call metadata
+      let callerName = null;
+      try {
+        if (call.metadata && call.metadata.userName) {
+          callerName = call.metadata.userName;
+          console.log(`Got username from call metadata: ${callerName}`);
+        }
+      } catch (e) {
+        console.error("Error extracting metadata from call", e);
+      }
+      
+      // Include our metadata in the answer
+      const answerOptions = {
+        metadata: {
+          userName: userName
+        }
+      };
+      
+      call.answer(stream, answerOptions);
+      
+      call.on("stream", (incomingStream) => {
+        console.log(`Incoming stream from user ${callerId}`);
+        
+        // Set player with the best name we have and request an update if needed
+        setPlayers((prev) => {
+          // Get the best username we have from different sources
+          const existingPlayer = prev[callerId];
+          const existingName = existingPlayer?.userName;
+          
+          // Determine best name in priority order:
+          // 1. Existing confirmed name that isn't generic
+          // 2. Name from call metadata
+          // 3. Existing name even if generic
+          // 4. Generic fallback
+          let bestName;
+          if (existingName && !existingName.includes(`User ${callerId.substring(0, 5)}`)) {
+            bestName = existingName;
+          } else if (callerName) {
+            bestName = callerName;
+          } else {
+            bestName = existingName || `User ${callerId.substring(0, 5)}`;
+          }
+          
+          const needsNameUpdate = bestName.includes(`User ${callerId.substring(0, 5)}`);
+          
+          if (needsNameUpdate) {
+            // Request the user's real name
+            socket.emit("request-username", myId, callerId, roomId);
+          }
+          
+          return {
+            ...prev,
+            [callerId]: {
+              url: incomingStream,
+              muted: existingPlayer?.muted ?? true,
+              playing: existingPlayer?.playing ?? true,
+              userName: bestName,
+              pendingNameRequest: needsNameUpdate
+            },
+          };
+        });
+        
+        // After answering the call, emit our userName to ensure all users get it
+        if (socket && userName && roomId) {
+          console.log(`Emitting userName update after answering call: ${userName}`);
+          socket.emit("update-user-name", myId, roomId, userName);
+        }
       });
     });
-  }, [peer, stream, setPlayers]);
+  }, [peer, stream, setPlayers, socket, userName, roomId, myId]);
   // Effect to manage chat and sidebar
   const toggleChat = () => {
     setIsChatOpen(prev => !prev);

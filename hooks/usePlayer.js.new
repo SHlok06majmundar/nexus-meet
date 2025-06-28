@@ -1,0 +1,147 @@
+import {useState} from 'react'
+import { cloneDeep } from 'lodash'
+import { useSocket } from '@/context/socket'
+import { useRouter } from 'next/router'
+import { useUser } from "@clerk/nextjs";
+
+const usePlayer = (myId, roomId, peer) => {
+    const socket = useSocket()
+    const [players, setPlayers] = useState({})
+    const router = useRouter()
+    const { user } = useUser();
+    
+    // Get user name from prejoin preferences first, then fallback to Clerk user data
+    const getDisplayName = () => {
+        // Check if coming from prejoin with stored preferences
+        if (typeof window !== 'undefined') {
+            const storedPreferences = sessionStorage.getItem('meetingPreferences');
+            if (storedPreferences) {
+                try {
+                    const preferences = JSON.parse(storedPreferences);
+                    if (preferences.displayName && preferences.displayName.trim()) {
+                        return preferences.displayName.trim();
+                    }
+                } catch (error) {
+                    console.error('Error parsing meeting preferences:', error);
+                }
+            }
+        }
+        
+        // Fallback to Clerk user data
+        if (user?.fullName) return user.fullName;
+        if (user?.firstName && user?.lastName) return `${user.firstName} ${user.lastName}`;
+        if (user?.firstName) return user.firstName;
+        if (user?.username) return user.username;
+        
+        // Last resort fallback
+        return 'Guest User';
+    };
+    
+    const userName = getDisplayName();
+    
+    // Get user preferences for audio and video state
+    const getUserPreferences = () => {
+        if (typeof window === 'undefined') return { isAudioEnabled: true, isVideoEnabled: true };
+        
+        try {
+            const prefsString = sessionStorage.getItem('meetingPreferences');
+            if (prefsString) {
+                const prefs = JSON.parse(prefsString);
+                return {
+                    isAudioEnabled: prefs.isAudioEnabled,
+                    isVideoEnabled: prefs.isVideoEnabled
+                };
+            }
+        } catch (error) {
+            console.error('Error parsing meeting preferences:', error);
+        }
+        
+        return { isAudioEnabled: true, isVideoEnabled: true };
+    };
+    
+    // Get the player preferences
+    const { isAudioEnabled, isVideoEnabled } = getUserPreferences();
+    
+    const playersCopy = cloneDeep(players);
+    const playerHighlighted = playersCopy[myId];
+    delete playersCopy[myId];
+    const nonHighlightedPlayers = playersCopy;
+
+    const leaveRoom = () => {
+        socket.emit('user-leave', myId, roomId, userName);
+        console.log("leaving room", roomId);
+        peer?.disconnect();
+        router.push('/');
+    };
+
+    const toggleAudio = () => {
+        console.log("I toggled my audio");
+        
+        // Calculate new muted state - the opposite of the current muted state
+        const newMutedState = players[myId] ? !players[myId].muted : false;
+        console.log(`Toggling audio: new muted state will be ${newMutedState}`);
+        
+        // Critical: Toggle the actual MediaStream audio track FIRST
+        // This affects what's actually sent over the network to other users
+        try {
+            const stream = players[myId]?.url;
+            if (stream) {
+                const audioTracks = stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    // IMPORTANT: Enable the track when NOT muted (unmuted means audio enabled)
+                    audioTracks[0].enabled = !newMutedState;
+                    console.log(`Audio track enabled set to ${!newMutedState}`);
+                }
+            }
+        } catch (e) {
+            console.error("Error updating audio track:", e);
+        }
+        
+        // Then update the UI state
+        setPlayers((prev) => {
+            const copy = cloneDeep(prev);
+            if (copy[myId]) {
+                copy[myId].muted = newMutedState;
+            }
+            return {...copy};
+        });
+        
+        // Finally, emit to other users so they update their UI
+        socket.emit('user-toggle-audio', myId, roomId, userName);
+    };
+    
+    const toggleVideo = () => {
+        console.log("I toggled my video");
+        
+        // Update local state first
+        let newVideoState = false;
+        
+        setPlayers((prev) => {
+            const copy = cloneDeep(prev);
+            // Calculate new state
+            newVideoState = !copy[myId].playing;
+            copy[myId].playing = newVideoState;
+            return {...copy};
+        });
+        
+        // Emit to other users with explicit video state and username
+        console.log(`Emitting video state: ${newVideoState} for ${userName}`);
+        socket.emit('user-toggle-video', myId, roomId, newVideoState, userName);
+        
+        // Return the new state for external reference
+        return newVideoState;
+    };
+
+    return {
+        players, 
+        setPlayers, 
+        playerHighlighted, 
+        nonHighlightedPlayers, 
+        toggleAudio, 
+        toggleVideo, 
+        leaveRoom,
+        userName
+    };
+};
+
+export default usePlayer;

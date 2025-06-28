@@ -45,6 +45,21 @@ const SocketHandler = (req, res) => {
                 socket.broadcast.to(roomId).emit('user-toggle-video', userId, videoState)
             })
             
+            socket.on('update-user-name', (userId, roomId, userName) => {
+                socket.join(roomId)
+                console.log(`Broadcasting userName update: userId=${userId}, userName=${userName}`)
+                // Broadcast the userName update to all clients in the room
+                io.to(roomId).emit('user-name-updated', userId, userName)
+            })
+            
+            // Add a new event for requesting a specific user's name
+            socket.on('request-username', (requesterId, targetUserId, roomId) => {
+                console.log(`User ${requesterId} requesting username for ${targetUserId} in room ${roomId}`)
+                socket.join(roomId)
+                // Forward the request to the target user
+                socket.to(roomId).emit('username-requested', requesterId, targetUserId)
+            })
+            
             socket.on('user-leave', (userId, roomId, userName) => {
                 socket.join(roomId)
                 // Use the stored userName if available and not provided
