@@ -100,6 +100,11 @@
     width: calc(33.33% - 11px);
   }
   
+  .mainContent {
+    overflow-y: auto;
+  }
+  }
+  
   .grid10plus .playerWrapper {
     width: calc(25% - 12px);
   }
@@ -217,5 +222,51 @@
   .twoParticipantsLayout .nonActivePlayersContainer {
     height: calc(50% - 6px);
     width: 100%;
+  }
+}
+
+/* Enhanced mobile experience styles */
+@media (max-width: 480px) {
+  .mainContent {
+    padding: 6px;
+    gap: 6px;
+  }
+  
+  .activePlayerContainer {
+    min-height: 140px;
+  }
+  
+  .nonActivePlayersContainer {
+    gap: 6px;
+    overflow-y: visible;
+    max-height: none;
+    padding-bottom: 70px;
+  }
+  
+  /* Make all participants fill the full width on very small screens */
+  .playerWrapper {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+    margin-bottom: 6px;
+  }
+  
+  .grid2 .playerWrapper,
+  .grid3 .playerWrapper,
+  .grid4 .playerWrapper,
+  .grid5 .playerWrapper,
+  .grid6 .playerWrapper,
+  .grid7 .playerWrapper,
+  .grid8 .playerWrapper,
+  .grid9 .playerWrapper,
+  .grid10plus .playerWrapper {
+    width: 100%;
+    max-width: none;
+  }
+  
+  /* Scrollable main content for mobile */
+  .mainContent {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

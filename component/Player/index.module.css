@@ -8,6 +8,12 @@
   border-radius: 8px;
   aspect-ratio: 16/9;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  min-height: 90px; /* Minimum height even on small screens */
+  
+  /* Maintain minimum dimensions on small screens */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Active player styles - for the main speaker view */

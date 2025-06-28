@@ -8,6 +8,10 @@ export function setViewportHeight() {
   const vh = window.innerHeight * 0.01;
   // Then we set the value in the --vh custom property to the root of the document
   document.documentElement.style.setProperty('--vh', `${vh}px`);
+  
+  // Also set additional viewport variables for more precise control
+  document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
+  document.documentElement.style.setProperty('--window-width', `${window.innerWidth}px`);
 }
 
 // Function to check if the device is a mobile device

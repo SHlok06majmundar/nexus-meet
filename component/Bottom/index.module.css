@@ -113,7 +113,7 @@
 .controlsWrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 20px;
   height: 100%;
   width: 100%;
@@ -125,6 +125,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
+  flex-wrap: nowrap; /* Prevent wrapping on small screens */
 }
 
 .secondaryControls {
@@ -132,6 +133,30 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
+  flex-wrap: nowrap; /* Prevent wrapping on small screens */
+}
+
+/* Responsive styles for controls */
+@media (max-width: 768px) {
+  .controlsWrapper {
+    gap: 12px;
+  }
+  
+  .primaryControls,
+  .secondaryControls {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controlsWrapper {
+    gap: 8px;
+  }
+  
+  .primaryControls,
+  .secondaryControls {
+    gap: 4px;
+  }
 }
 
 /* Google Meet style control button */
@@ -148,6 +173,15 @@
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  /* Ensure accessible touch targets for mobile */
+  min-width: 44px;
+  min-height: 44px;
+  
+  /* Prevent text selection on button labels */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   color: white;
   padding: 0;
   margin: 0 4px;
@@ -208,6 +242,54 @@
   color: white;
   margin: 0 16px;
   box-shadow: 0 2px 8px rgba(234, 67, 53, 0.4);
+}
+
+/* Responsive styles for buttons */
+@media (max-width: 768px) {
+  .controlIcon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .controlButton {
+    width: 44px;
+    height: 44px;
+    margin: 0 2px;
+  }
+  
+  .leaveButton {
+    width: 60px;
+    height: 44px;
+    margin: 0 8px;
+  }
+  
+  .buttonLabel {
+    font-size: 10px;
+    bottom: -18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controlIcon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .controlButton {
+    width: 40px;
+    height: 40px;
+    margin: 0 1px;
+  }
+  
+  .leaveButton {
+    width: 52px;
+    height: 40px;
+    margin: 0 4px;
+  }
+  
+  .buttonLabel {
+    display: none; /* Hide labels on very small screens */
+  }
 }
 
 .leaveButton:hover {

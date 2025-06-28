@@ -12,6 +12,15 @@
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+  transition: width 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .chatContainer {
+    width: 100%; /* Full width on mobile */
+    border-left: none;
+  }
 }
 
 .chatHeader {
@@ -58,6 +67,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .messageItem {
@@ -156,6 +166,18 @@
   color: white;
   outline: none;
   transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .messageForm {
+    padding: 10px;
+  }
+  
+  .messageInput {
+    font-size: 16px; /* Larger for better mobile typing experience */
+    padding: 8px 12px;
+  }
 }
 
 .messageInput:focus {
@@ -188,6 +210,13 @@
   bottom: 100px;
   right: 24px;
   background-color: rgba(200, 90, 255, 0.3);
+  
+  /* Ensure good touch target size for mobile */
+  min-width: 48px;
+  min-height: 48px;
+  
+  /* Improved visibility on mobile */
+  z-index: 99;
   color: white;
   border: none;
   width: 50px;
@@ -205,6 +234,24 @@
 .chatButton:hover {
   background-color: rgba(200, 90, 255, 0.5);
   box-shadow: 0 0 25px rgba(200, 90, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+  .chatButton {
+    bottom: 80px;
+    right: 16px;
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chatButton {
+    bottom: 70px;
+    right: 12px;
+    width: 42px;
+    height: 42px;
+  }
 }
 
 .unreadBadge {

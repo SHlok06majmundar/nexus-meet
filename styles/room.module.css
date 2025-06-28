@@ -10,6 +10,13 @@
   background: #202124; /* Google Meet dark background */
   color: white;
   font-family: 'Google Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Add touch-action for better mobile experience */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Optional: Add smooth transitions for responsive changes */
+  transition: padding 0.3s ease;
 }
 
 /* Grid overlay for futuristic look */
@@ -815,6 +822,20 @@
   .roomHeader {
     padding: 0 8px;
     height: 48px;
+    flex-wrap: nowrap;
+  }
+  
+  .headerLeft {
+    flex: 1;
+    overflow: hidden;
+  }
+  
+  .meetingInfo {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
   }
   
   .headerCenter {
@@ -829,6 +850,9 @@
     padding: 0 8px;
     height: 64px;
     justify-content: center;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
   
   .controlsRight {
@@ -837,18 +861,29 @@
     gap: 8px;
   }
   
+  .controlsCenter {
+    flex: 1;
+    justify-content: center;
+    max-width: 450px;
+  }
+  
   .mainContentArea {
     top: 48px;
     bottom: 64px;
     padding: 4px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   }
   
   .rightSidebar {
     width: 100%;
     top: 48px;
     bottom: 64px;
+    z-index: 200;
+    border-radius: 0;
   }
-    .sidebarOpen .mainContentArea {
+  
+  .sidebarOpen .mainContentArea {
     visibility: hidden;
   }
   
@@ -857,6 +892,8 @@
     max-width: 360px;
     left: 50%;
     transform: translateX(-50%);
+    max-height: 80vh;
+    overflow-y: auto;
   }
   
   .selfViewTile {
@@ -864,11 +901,20 @@
     height: 90px;
     bottom: 72px;
     right: 8px;
+    z-index: 15;
   }
   
   .videoGrid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 8px;
+    padding-bottom: 80px; /* Extra space at bottom to ensure content isn't hidden behind controls */
+  }
+  
+  /* Improved touch targets for mobile */
+  .controlButton, 
+  .headerButton {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -888,6 +934,44 @@
   .controlBar {
     height: 60px;
     padding: 0 6px;
+  }
+  
+  /* Adjust layout specifically for portrait mode on small screens */
+  .videoGrid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    width: 100%;
+  }
+
+  /* Stack videos vertically in portrait mode */
+  .portraitMode .videoGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .portraitMode .videoTile {
+    width: 100%;
+    max-width: none;
+    margin-bottom: 8px;
+  }
+  
+  /* Make buttons more compact */
+  .controlsCenter {
+    gap: 6px;
+  }
+  
+  .buttonLabel {
+    font-size: 10px;
+  }
+  
+  .controlIcon {
+    font-size: 18px;
+  }
+  
+  /* Make the chat button more accessible */
+  .chatButtonContainer {
+    bottom: 68px;
+    right: 8px;
   }
   
   .moreOptionsMenu {
