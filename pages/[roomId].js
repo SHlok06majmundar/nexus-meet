@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { cloneDeep } from "lodash";
 import { motion } from "framer-motion";
-import { FaCopy, FaClipboardCheck, FaInfoCircle, FaHandPaper, FaLock, FaTimes } from "react-icons/fa";
+import { FaCopy, FaClipboardCheck, FaInfoCircle, FaHandPaper, FaTimes } from "react-icons/fa";
 import { MdGridView, MdOutlinePoll, MdOndemandVideo, MdClosedCaption, MdMoreVert } from "react-icons/md";
 import { useSocket } from "@/context/socket";
 import usePeer from "@/hooks/usePeer";
@@ -23,6 +23,7 @@ import Player from "@/component/Player";
 import Bottom from "@/component/Bottom";
 import CopySection from "@/component/CopySection";
 import Chat, { ChatButton } from "@/component/Chat";
+import ShareMenu from "@/component/ShareMenu";
 
 import styles from "@/styles/room.module.css";
 import { useRouter } from "next/router";
@@ -710,7 +711,7 @@ const Room = () => {
           </div>
           <div className={styles.divider}></div>
           <div className={styles.headerButton}>
-            <FaLock className={styles.iconButton} title="Security Options" />
+            <ShareMenu roomId={roomId} />
           </div>
         </div>
         
@@ -753,8 +754,8 @@ const Room = () => {
             </button>            <div className={styles.joinInfo}>
               <p>Share this meeting link with others you want in the meeting.</p>
               <div className={styles.securityNote}>
-                <FaLock size={12} style={{marginRight: '6px'}} />
-                <span>People who use this meeting link must get your permission before they can join.</span>
+                <FaInfoCircle size={12} style={{marginRight: '6px'}} />
+                <span>Share this link with people you want to join the meeting. Anyone with the link can join.</span>
               </div>
             </div>
           </div>
