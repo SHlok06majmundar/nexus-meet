@@ -28,25 +28,6 @@ export const SocketProvider = (props) => {
   useEffect(() => {
     if (!socket) return;
     
-    // Event listeners for screen sharing
-    const handleScreenShare = (event) => {
-      const { stream, videoTrack } = event.detail;
-      if (socket && videoTrack) {
-        // Get the room ID from the URL
-        const roomId = window.location.pathname.substring(1);
-        
-        // Inform other participants about screen sharing
-        socket.emit('screen-share', { 
-          sharing: true, 
-          userId: socket.id 
-        }, roomId);
-        
-        // You would need to replace the video track in your peer connections here
-        // This is a placeholder for actual WebRTC implementation
-        console.log("Screen share started", stream, videoTrack);
-      }
-    };
-    
     // Event listener for reactions
     const handleReaction = (event) => {
       const { emoji } = event.detail;
@@ -108,7 +89,6 @@ export const SocketProvider = (props) => {
     };
 
     // Add event listeners
-    window.addEventListener('screen-share-started', handleScreenShare);
     window.addEventListener('send-reaction', handleReaction);
     window.addEventListener('raise-hand', handleRaiseHand);
     window.addEventListener('lower-hand', handleLowerHand);
@@ -134,7 +114,6 @@ export const SocketProvider = (props) => {
     
     // Cleanup
     return () => {
-      window.removeEventListener('screen-share-started', handleScreenShare);
       window.removeEventListener('send-reaction', handleReaction);
       window.removeEventListener('raise-hand', handleRaiseHand);
       window.removeEventListener('lower-hand', handleLowerHand);

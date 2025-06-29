@@ -7,7 +7,6 @@ import {
   MicOff, 
   VideoOff, 
   Smile, 
-  ScreenShare, 
   Shield,
   MoreHorizontal,
   MessageSquare,
@@ -40,28 +39,6 @@ const Bottom = (props) => {
   const [isVideoButtonDisabled, setVideoButtonDisabled] = useState(false);
   const [isAudioButtonDisabled, setAudioButtonDisabled] = useState(false);
   
-  // Function to share the current screen
-  const shareScreen = () => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-      navigator.mediaDevices.getDisplayMedia({ video: true })
-        .then((stream) => {
-          // Find the existing video track and replace it
-          const videoTrack = stream.getVideoTracks()[0];
-          
-          // Dispatch an event that the socket context can listen to
-          const screenShareEvent = new CustomEvent('screen-share-started', { 
-            detail: { stream, videoTrack } 
-          });
-          window.dispatchEvent(screenShareEvent);
-        })
-        .catch((err) => {
-          console.error("Error sharing screen:", err);
-          alert("Could not share screen: " + err.message);
-        });
-    } else {
-      alert("Your browser doesn't support screen sharing");
-    }
-  };
   
   // Function to show emoji reactions
   const [showReactions, setShowReactions] = useState(false);
@@ -160,19 +137,6 @@ const Bottom = (props) => {
               <span className={styles.buttonLabel}>Start</span>
             </>
           )}
-        </motion.button>
-          {/* Screen Share Button */}
-        <motion.button
-          variants={controlButtonVariants}
-          whileHover="hover"
-          whileTap="tap"
-          transition={{ duration: 0.1 }}
-          className={styles.controlButton}
-          onClick={shareScreen}
-          aria-label="Share screen"
-        >
-          <ScreenShare className={styles.controlIcon} />
-          <span className={styles.buttonLabel}>Present</span>
         </motion.button>
         
         {/* Local Video Recorder Button */}

@@ -106,24 +106,6 @@ const SocketHandler = (req, res) => {
                 socket.broadcast.to(roomId).emit('new-message', message)
             })
             
-            // Screen sharing
-            socket.on('screen-share', (data, roomId) => {
-                console.log(`User ${data.userId} is ${data.sharing ? 'sharing' : 'stopped sharing'} their screen in room ${roomId}`)
-                socket.join(roomId)
-                socket.broadcast.to(roomId).emit('user-screen-share', data.userId, data.sharing)
-                
-                // Send a system message for screen sharing
-                if (data.sharing) {
-                    const systemMessage = {
-                        content: `A user started sharing their screen`,
-                        senderId: 'system',
-                        senderName: 'System',
-                        timestamp: new Date().toISOString(),
-                        isSystemMessage: true
-                    }
-                    io.to(roomId).emit('new-message', systemMessage)
-                }
-            })
             
             // Reactions
             socket.on('reaction', (data, roomId) => {

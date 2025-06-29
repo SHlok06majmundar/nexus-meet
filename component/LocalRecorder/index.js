@@ -400,14 +400,6 @@ const LocalRecorder = ({ roomId, myStream, players, myId }) => {
       recorderRef.current.start(1000);
       
       console.log('Recording started successfully');
-      
-      // Add listener for the end of screen share
-      if (combinedStream.getVideoTracks().length > 0) {
-        combinedStream.getVideoTracks()[0].addEventListener('ended', () => {
-          console.log('Screen sharing ended by user');
-          stopRecording();
-        });
-      }
     } catch (error) {
       console.error('Failed to start recording:', error);
       alert(`Could not start recording: ${error.message || 'Unknown error'}`);
