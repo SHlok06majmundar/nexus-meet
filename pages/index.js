@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import { Video, Users, MessageSquare, Shield, Zap, ChevronRight } from 'lucide-react';
+import Footer from '../component/Footer';
 
 export default function Home() {
   const router = useRouter();
@@ -210,20 +211,7 @@ export default function Home() {
       </div>
       
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-white/5 backdrop-blur-sm py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center">
-                <Video size={16} className="text-white" />
-              </div>
-              <span className="text-lg font-semibold text-white">Nexus Meet</span>
-            </div>
-            
-            <p className="text-sm text-blue-200">© {new Date().getFullYear()} Nexus Meet. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

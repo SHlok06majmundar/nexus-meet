@@ -1,40 +1,169 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Nexus Meet - Video Conferencing Platform
+
+![Nexus Meet](https://your-screenshot-url-here.png)
+
+Nexus Meet is a modern video conferencing platform built with Next.js and WebRTC technology, designed to provide seamless communication for teams and individuals. The application offers high-quality video and audio streaming, real-time chat, screen sharing, and other collaborative features.
+
+## Features
+
+### Core Functionality
+- **HD Video Conferencing**: Crystal clear video for seamless communication
+- **Real-time Chat**: Send messages during meetings with instant delivery
+- **User Authentication**: Secure sign-up and login with Clerk authentication
+- **Custom Meeting Rooms**: Create and join meetings with unique room IDs
+- **Pre-join Screen**: Check audio/video settings before entering a meeting
+
+### Interactive Features
+- **Reactions**: Send quick emoji reactions during meetings
+- **Raise Hand**: Signal when you want to speak
+- **Polls**: Create and participate in polls during meetings
+- **Recording**: Record meetings for future reference
+  - Local recording support
+  - AI-powered recording and transcription
+
+### User Interface
+- **Responsive Design**: Works on desktop and mobile devices
+- **Dark Theme**: Easy on the eyes with a modern dark UI
+- **Prejoin Screen**: Test audio/video before joining
+- **Dashboard**: View and manage your meetings
+
+## Tech Stack
+
+- **Frontend**: 
+  - Next.js 13
+  - React 18
+  - Tailwind CSS
+  - Framer Motion (animations)
+  - Lucide React (icons)
+
+- **Backend**:
+  - Next.js API Routes
+  - Socket.IO (real-time communication)
+  - PeerJS (WebRTC wrapper)
+  - Prisma ORM
+
+- **Authentication**:
+  - Clerk Authentication
+
+- **Deployment**:
+  - Vercel (recommended)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 16.x or higher
+- npm or yarn package manager
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Installation
+
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/google-meet-clone.git
+   cd google-meet-clone
+   ```
+
+2. Install dependencies
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. Set up environment variables
+   Create a `.env.local` file in the root directory with the following variables:
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   CLERK_SECRET_KEY=your_clerk_secret_key
+   DATABASE_URL=your_database_connection_string
+   ```
+
+4. Set up the database
+   ```bash
+   npx prisma db push
+   ```
+
+5. Run the development server
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+6. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
+
+## Project Structure
+
+```
+/
+├── component/          # Reusable UI components
+├── context/            # React context providers
+├── hooks/              # Custom React hooks
+├── lib/                # Utility libraries
+├── pages/              # Next.js pages and API routes
+│   ├── api/            # Backend API endpoints
+│   ├── dashboard/      # User dashboard
+│   └── [roomId].js     # Dynamic meeting room page
+├── prisma/             # Database schema and migrations
+├── public/             # Static files
+└── styles/             # Global styles and CSS modules
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Key Components
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+### Socket Communication
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+The application uses Socket.IO for real-time communication between clients. The socket connection is established in `context/socket.js` and provides events for:
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+- User presence (join/leave)
+- Reactions and emojis
+- Raise/lower hand functionality
+- Recording status
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### WebRTC Integration
 
-## Learn More
+WebRTC is used for peer-to-peer video and audio streaming, implemented with PeerJS for simplified connection management. The core functionality is in `hooks/useMediaStream.js` and `hooks/usePeer.js`.
 
-To learn more about Next.js, take a look at the following resources:
+### Meeting Room
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The meeting room (`pages/[roomId].js`) is the main interface where users interact during video calls. It includes:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- Video grid layout
+- Chat interface
+- Bottom control bar
+- Various interactive components
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The application is optimized for deployment on Vercel:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+1. Create a Vercel account and link your repository
+2. Configure environment variables in the Vercel dashboard
+3. Deploy the application
+
+For other hosting providers, build the application with:
+```bash
+npm run build
+npm start
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contact
+
+Shlok Majmundar
+- [LinkedIn](https://www.linkedin.com/in/shlok-majmundar-988851252/)
+- [Instagram](https://www.instagram.com/shlok.majmundar)
+- [GitHub](https://github.com/SHlok06majmundar)
+- Email: majmundarshlok06@gmail.com
+
+Project Link: [https://github.com/SHlok06majmundar/google-meet-clone](https://github.com/SHlok06majmundar/google-meet-clone)

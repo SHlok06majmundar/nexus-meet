@@ -4,6 +4,7 @@ import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { Video, Users, Calendar, Clock, Plus, ArrowRight } from "lucide-react";
+import Footer from '../../component/Footer';
 
 const Dashboard = () => {
   const router = useRouter();
@@ -167,6 +168,7 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 };
