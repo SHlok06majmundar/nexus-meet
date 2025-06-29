@@ -103,7 +103,7 @@ const OnboardingPage = () => {
             transition={{ delay: 0.3 }}
             className="mt-2 text-center text-sm text-blue-200"
           >
-            Let's personalize your Nexus Meet experience
+            Let&apos;s personalize your Nexus Meet experience
           </motion.p>
         </div>
         

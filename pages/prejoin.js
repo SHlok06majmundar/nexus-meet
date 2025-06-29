@@ -61,7 +61,7 @@ export default function PreJoin() {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [isAudioEnabled, isVideoEnabled, stream]);
 
   // Toggle video
   const toggleVideo = async () => {

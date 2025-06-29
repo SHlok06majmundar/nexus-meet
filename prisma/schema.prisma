@@ -9,12 +9,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @unique
   name      String?
   username  String?  @unique
@@ -25,12 +25,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  meetings Meeting[] @relation("hostedMeetings")
-  attended Meeting[] @relation("attendedMeetings")
+  // Hosted meetings (one-to-many)
+  hostedMeetings Meeting[] @relation("hostedMeetings")
+  
+  // Meeting participations (many-to-many)
+  participations MeetingParticipant[]
 }
 
 model Meeting {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   roomId      String   @unique
   title       String?
   description String?
@@ -39,10 +42,29 @@ model Meeting {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  hostId      String
+  // Host relationship (many-to-one)
+  hostId      String   @db.ObjectId
   host        User     @relation("hostedMeetings", fields: [hostId], references: [id], onDelete: Cascade)
   
-  participants User[]  @relation("attendedMeetings")
+  // Participant relationships (many-to-many through join model)
+  participants MeetingParticipant[]
+}
+
+// Join model for many-to-many relationship between User and Meeting
+model MeetingParticipant {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   
-  @@index([hostId])
+  // User relationship
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Meeting relationship
+  meetingId String   @db.ObjectId
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  // Additional fields for the relationship
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  
+  @@unique([userId, meetingId])
 }

@@ -40,7 +40,7 @@ Nexus Meet is a modern video conferencing platform built with Next.js and WebRTC
   - Next.js API Routes
   - Socket.IO (real-time communication)
   - PeerJS (WebRTC wrapper)
-  - Prisma ORM
+  - MongoDB
 
 - **Authentication**:
   - Clerk Authentication
@@ -78,8 +78,7 @@ Nexus Meet is a modern video conferencing platform built with Next.js and WebRTC
    ```
 
 4. Set up the database
-   ```bash
-   npx prisma db push
+   
    ```
 
 5. Run the development server

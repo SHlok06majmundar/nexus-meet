@@ -166,7 +166,7 @@ export default function Home() {
                 
                 <div className="mt-6 pt-6 border-t border-white/10">
                   <p className="text-center text-blue-200 text-sm">
-                    Don't have a meeting code? <SignInButton><span className="text-blue-400 cursor-pointer hover:underline">Sign in</span></SignInButton> to create one
+                    Don&apos;t have a meeting code? <SignInButton><span className="text-blue-400 cursor-pointer hover:underline">Sign in</span></SignInButton> to create one
                   </p>
                 </div>
               </div>

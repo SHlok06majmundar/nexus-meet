@@ -175,7 +175,7 @@ const Room = () => {
         sessionStorage.removeItem('comingFromPrejoin');
       }
     }
-  }, [isLoaded, isSignedIn, router, roomId]);
+  }, [isLoaded, isSignedIn, router, roomId, user?.firstName, user?.fullName, user?.username]);
 
   // Effect to handle room joining and user connection
   useEffect(() => {
@@ -630,7 +630,7 @@ const Room = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showMoreOptions, styles.controlButton]);
+  }, [showMoreOptions]);
   
   // Add viewport height fix for mobile and set up responsive listeners
   useEffect(() => {
