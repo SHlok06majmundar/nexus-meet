@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { cloneDeep } from "lodash";
 import { motion } from "framer-motion";
 import { FaCopy, FaClipboardCheck, FaInfoCircle, FaHandPaper, FaTimes } from "react-icons/fa";
-import { MdGridView, MdOutlinePoll, MdOndemandVideo, MdClosedCaption, MdMoreVert } from "react-icons/md";
+import { MdGridView, MdOutlinePoll, MdOndemandVideo, MdMoreVert } from "react-icons/md";
 import { useSocket } from "@/context/socket";
 import usePeer from "@/hooks/usePeer";
 import useMediaStream from "@/hooks/useMediaStream";
@@ -110,7 +110,7 @@ const Room = () => {
   const [viewMode, setViewMode] = useState('tiled'); // 'tiled', 'spotlight', 'sidebar'
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [raisedHands, setRaisedHands] = useState({}); // Track users who raised hands
-  
+
   // Track device orientation for responsive layout
   useEffect(() => {
     const checkOrientation = () => {
@@ -715,15 +715,9 @@ const Room = () => {
           </div>
         </div>
         
-        <div className={styles.headerCenter}>
-          <div className={styles.headerButton}>
-            <MdClosedCaption className={styles.iconButton} title="Turn on captions" />
-          </div>
+        <div className={styles.headerCenter}>          
           <div className={styles.headerButton} onClick={cycleViewMode}>
             <MdGridView className={styles.iconButton} title="Change layout" />
-          </div>
-          <div className={styles.headerButton} onClick={toggleActivities}>
-            <MdOutlinePoll className={styles.iconButton} title="Activities" />
           </div>
         </div>
         
@@ -822,56 +816,17 @@ const Room = () => {
             leaveRoom={leaveRoom}
             toggleChat={toggleChat}
             togglePeopleTab={togglePeopleTab}
-            toggleActivities={toggleActivities}            roomId={roomId}
+            roomId={roomId}
             players={players}
             myId={myId}
             myStream={stream} // Pass the stream for local recording
           />
         </div>
           <div className={styles.controlsRight}>
-          <div className={styles.controlButton} onClick={toggleRoomInfo}>
-            <FaInfoCircle className={styles.iconButton} title="Meeting details" />
-          </div>
-          <div className={styles.controlButton} onClick={toggleMoreOptions}>
-            <MdMoreVert className={styles.iconButton} title="More options" />
-            {showMoreOptions && (              <div className={styles.moreOptionsMenu} onClick={(e) => e.stopPropagation()}>
-                <div className={styles.optionItem} onClick={() => {
-                  toggleMoreOptions();
-                  toggleRoomInfo();
-                }}>
-                  <FaInfoCircle className={styles.optionIcon} />
-                  <span>Meeting details</span>
-                </div>
-                <div className={styles.optionItem} onClick={() => toggleMoreOptions()}>
-                  <MdClosedCaption className={styles.optionIcon} />
-                  <span>Turn on captions</span>
-                </div>
-                <div className={styles.optionItem} onClick={() => {
-                  toggleMoreOptions();
-                  toggleActivities();
-                }}>
-                  <MdOutlinePoll className={styles.optionIcon} />
-                  <span>Start a poll</span>
-                </div>                <div className={styles.optionItem} onClick={() => toggleMoreOptions()}>
-                  <MdOndemandVideo className={styles.optionIcon} />
-                  <span>Record meeting</span>
-                </div>
-                <div className={`${styles.optionItem} ${raisedHands[myId] ? styles.activeOption : ''}`} 
-                     onClick={() => {
-                       toggleMoreOptions();
-                       raiseHand();
-                     }}
-                >
-                  <FaHandPaper className={styles.optionIcon} />
-                  <span>{raisedHands[myId] ? 'Lower hand' : 'Raise hand'}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Floating Chat Button (when sidebar is closed) */}
+             {/* Removed meeting details and more options buttons */}
+           </div>
+       </div>
+       {/* Floating Chat Button (when sidebar is closed) */}
       <ChatButton 
         visible={!isChatOpen}
         unreadCount={unreadMessages}
@@ -952,7 +907,7 @@ const Room = () => {
           )}
             {activeSidebarTab === 'activities' && (
             <div className={styles.activitiesPanel}>
-              <div className={styles.activityItem}>
+              <div className={styles.activityItem} onClick={() => setIsPollOpen(true)}>
                 <MdOutlinePoll className={styles.activityIcon} />
                 <span>Create a poll</span>
               </div>

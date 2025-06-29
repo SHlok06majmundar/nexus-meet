@@ -247,22 +247,6 @@ const Bottom = (props) => {
           </motion.button>
         )}
         
-        {/* Activities Button */}
-        {toggleActivities && (
-          <motion.button
-            variants={controlButtonVariants}
-            whileHover="hover"
-            whileTap="tap"
-            transition={{ duration: 0.1 }}
-            className={styles.controlButton}
-            onClick={toggleActivities}
-            aria-label="Activities"
-          >
-            <BarChart className={styles.controlIcon} />
-            <span className={styles.buttonLabel}>Activities</span>
-          </motion.button>
-        )}
-        
         {/* Reactions Button */}
         <motion.div className={styles.reactionsWrapper}>
           <motion.button
