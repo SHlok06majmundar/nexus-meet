@@ -9,9 +9,31 @@ const usePeer = () => {
     const [peer, setPeer] = useState(null)
     const [myId, setMyId] = useState('')
     const isPeerSet = useRef(false)
+    const socketRetryCount = useRef(0)
+    const MAX_RETRIES = 5
 
     useEffect(() => {
-        if (isPeerSet.current || !roomId || !socket) return;
+        if (isPeerSet.current || !roomId) return;
+        
+        // Check for socket availability with retry mechanism
+        if (!socket) {
+            console.log("Socket not available yet, waiting...", socketRetryCount.current);
+            if (socketRetryCount.current < MAX_RETRIES) {
+                const retryTimer = setTimeout(() => {
+                    socketRetryCount.current += 1;
+                    // This will trigger re-render and re-evaluation
+                    setPeer(old => old);
+                }, 1000); // Retry every second
+                
+                return () => clearTimeout(retryTimer);
+            } else {
+                console.error("Failed to connect to socket after multiple attempts");
+                return;
+            }
+        }
+        
+        // Reset retry count when socket is available
+        socketRetryCount.current = 0;
         isPeerSet.current = true;
         let myPeer;
         
@@ -36,15 +58,25 @@ const usePeer = () => {
             myPeer = new (await import('peerjs')).default({
                 metadata: {
                     userName: displayName
-                }
+                },
+                debug: 2 // Add debug option to help troubleshooting
             });
             setPeer(myPeer)
 
             myPeer.on('open', (id) => {
                 console.log(`your peer id is ${id}`)
                 setMyId(id)
-                socket?.emit('join-room', roomId, id, displayName)
+                if (socket && socket.connected) {
+                    console.log("Emitting join-room event to socket");
+                    socket.emit('join-room', roomId, id, displayName);
+                } else {
+                    console.error("Socket disconnected, cannot join room");
+                }
             })
+            
+            myPeer.on('error', (err) => {
+                console.error('PeerJS error:', err);
+            });
         })()
     }, [roomId, socket])
 

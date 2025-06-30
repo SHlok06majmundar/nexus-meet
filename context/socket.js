@@ -17,8 +17,19 @@ export const SocketProvider = (props) => {
       // Make sure the socket server is running
       await fetch('/api/socket');
       
-      const connection = io();
-      console.log("socket connection", connection);
+      // Determine the appropriate socket connection options based on environment
+      const url = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const options = {
+        path: '/api/socketio',
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        transports: ['websocket', 'polling'] // Try websocket first, fall back to polling
+      };
+      
+      console.log("Connecting to socket at:", url, options);
+      const connection = io(url, options);
+      
+      console.log("Socket connection attempt:", connection);
       setSocket(connection);
     };
     
@@ -28,10 +39,28 @@ export const SocketProvider = (props) => {
   useEffect(() => {
     if (!socket) return;
     
+    // Setup socket event handlers for connection issues
+    socket.on('connect', () => {
+      console.log('Socket connected successfully');
+    });
+    
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      // Try to reconnect if needed
+      if (reason === 'io server disconnect') {
+        // The server disconnected the client, try to reconnect
+        socket.connect();
+      }
+    });
+    
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+    
     // Event listener for reactions
     const handleReaction = (event) => {
       const { emoji } = event.detail;
-      if (socket && emoji) {
+      if (socket && emoji && socket.connected) {
         // Get the room ID from the URL
         const roomId = window.location.pathname.substring(1);
         

@@ -1,11 +1,19 @@
 import { Server } from "socket.io";
 
 const SocketHandler = (req, res) => {
-    console.log("called api")
+    console.log("Socket API initialization...")
     if (res.socket.server.io) {
-        console.log("socket already running")
+        console.log("Socket already running")
     } else {
-        const io = new Server(res.socket.server)
+        const io = new Server(res.socket.server, {
+            path: '/api/socketio',
+            cors: {
+                origin: '*', // In production, you might want to limit this
+                methods: ['GET', 'POST']
+            },
+            transports: ['websocket', 'polling'],
+            allowEIO3: true // Compatibility with Socket.io v2 clients
+        });
         res.socket.server.io = io
     
         io.on('connection', (socket) => {
