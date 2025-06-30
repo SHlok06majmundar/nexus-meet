@@ -1,11 +1,10 @@
-// This file handles socket.io specific API calls
-// This is needed for proper Socket.io functioning in production environments like Vercel
+// Main socket.io handler at the expected path
 import { Server } from 'socket.io';
 
-// This is a fallback handler if the socket.js API doesn't initialize properly
 export default function handler(req, res) {
     if (!res.socket.server.io) {
-        console.log("Initializing socket.io from socketio.js API route");
+        console.log("Initializing socket.io at socket.io.js endpoint");
+        
         const io = new Server(res.socket.server, {
             path: '/api/socket.io',
             cors: {
@@ -20,7 +19,7 @@ export default function handler(req, res) {
         
         // Set up socket event handlers
         io.on('connection', (socket) => {
-            console.log("socket connected from socketio.js handler");
+            console.log("socket connected from socket.io.js handler");
             
             socket.on('join-room', (roomId, userId, userName) => {
                 console.log(`a new user ${userName || userId} joined room ${roomId}`);
@@ -57,6 +56,27 @@ export default function handler(req, res) {
                     };
                     socket.broadcast.to(roomId).emit('chat-message', systemMessage);
                 }
+            });
+            
+            // Additional handlers from your original socket.js
+            socket.on('chat-message', (message, roomId) => {
+                io.to(roomId).emit('chat-message', message);
+            });
+            
+            socket.on('reaction', (reaction, roomId) => {
+                socket.broadcast.to(roomId).emit('reaction', reaction);
+            });
+            
+            socket.on('raise-hand', (data, roomId) => {
+                socket.broadcast.to(roomId).emit('raise-hand', data);
+            });
+            
+            socket.on('toggle-mute', (userId, isMuted, roomId) => {
+                socket.broadcast.to(roomId).emit('toggle-mute', userId, isMuted);
+            });
+            
+            socket.on('toggle-video', (userId, isVideoOn, roomId) => {
+                socket.broadcast.to(roomId).emit('toggle-video', userId, isVideoOn);
             });
         });
         

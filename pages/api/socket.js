@@ -6,13 +6,15 @@ const SocketHandler = (req, res) => {
         console.log("Socket already running")
     } else {
         const io = new Server(res.socket.server, {
-            path: '/api/socketio',
+            path: '/api/socket.io', // Match the default Socket.io path
             cors: {
                 origin: '*', // In production, you might want to limit this
                 methods: ['GET', 'POST']
             },
-            transports: ['websocket', 'polling'],
-            allowEIO3: true // Compatibility with Socket.io v2 clients
+            transports: ['polling', 'websocket'], // Start with polling for better compatibility
+            allowEIO3: true, // Compatibility with Socket.io v2 clients
+            maxHttpBufferSize: 1e8, // Increase buffer size for large messages
+            pingTimeout: 60000 // Increase timeout for better reliability
         });
         res.socket.server.io = io
     

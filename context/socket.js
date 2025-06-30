@@ -14,26 +14,52 @@ export const SocketProvider = (props) => {
 
   useEffect(() => {
     const initializeSocket = async () => {
-      // Make sure the socket server is running
-      await fetch('/api/socket');
-      
-      // Determine the appropriate socket connection options based on environment
-      const url = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-      const options = {
-        path: '/api/socketio',
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        transports: ['websocket', 'polling'] // Try websocket first, fall back to polling
-      };
-      
-      console.log("Connecting to socket at:", url, options);
-      const connection = io(url, options);
-      
-      console.log("Socket connection attempt:", connection);
-      setSocket(connection);
+      try {
+        // Try to ping both socket handlers to ensure one of them is running
+        try {
+          await fetch('/api/socket');
+          console.log("Socket API endpoint is responding");
+        } catch (e) {
+          console.log("Fallback to direct Socket.io endpoint");
+          await fetch('/api/socket.io');
+        }
+        
+        // Determine the appropriate socket connection options based on environment
+        const url = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        const options = {
+          path: '/api/socket.io', // Match the default Socket.io path
+          reconnectionAttempts: 10,
+          reconnectionDelay: 1000,
+          timeout: 20000, // Increase timeout for slower connections
+          transports: ['polling', 'websocket'], // Start with polling for better compatibility
+          forceNew: true, // Force a new connection
+          autoConnect: true, // Automatically connect
+        };
+        
+        console.log("Connecting to socket at:", url);
+        const connection = io(url, options);
+        
+        // Add immediate error handling
+        connection.on('error', (error) => {
+          console.error("Socket connection error:", error);
+        });
+        
+        console.log("Socket connection initialized");
+        setSocket(connection);
+      } catch (e) {
+        console.error("Failed to initialize socket:", e);
+      }
     };
     
     initializeSocket();
+    
+    // Cleanup function to disconnect socket when component unmounts
+    return () => {
+      if (socket) {
+        console.log("Disconnecting socket");
+        socket.disconnect();
+      }
+    };
   }, []);
   
   useEffect(() => {
