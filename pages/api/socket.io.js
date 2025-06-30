@@ -3,18 +3,15 @@ import { Server } from 'socket.io';
 
 export default function handler(req, res) {
     if (!res.socket.server.io) {
-        console.log("Initializing socket.io at socket.io.js endpoint");
+        console.log("Initializing socket.io handler");
         
+        // Create socket server with simplified configuration
         const io = new Server(res.socket.server, {
-            path: '/api/socket.io',
             cors: {
                 origin: '*',
                 methods: ['GET', 'POST']
             },
-            transports: ['polling', 'websocket'],
-            allowEIO3: true,
-            maxHttpBufferSize: 1e8,
-            pingTimeout: 60000
+            transports: ['polling', 'websocket']
         });
         
         // Set up socket event handlers

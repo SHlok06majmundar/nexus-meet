@@ -1,21 +1,22 @@
-// This file handles socket.io specific API calls
-// This is needed for proper Socket.io functioning in production environments like Vercel
+// Socket.io specific handler for Vercel
 import { Server } from 'socket.io';
 
-// This is a fallback handler if the socket.js API doesn't initialize properly
 export default function handler(req, res) {
+    // Return a basic response for health checks
+    if (req.method === 'GET') {
+        res.status(200).end();
+        return;
+    }
+    
+    // Initialize socket server if not already initialized
     if (!res.socket.server.io) {
-        console.log("Initializing socket.io from socketio.js API route");
+        console.log('Socket.io server initializing from socketio.js handler');
         const io = new Server(res.socket.server, {
-            path: '/api/socket.io',
             cors: {
                 origin: '*',
                 methods: ['GET', 'POST']
             },
-            transports: ['polling', 'websocket'],
-            allowEIO3: true,
-            maxHttpBufferSize: 1e8,
-            pingTimeout: 60000
+            transports: ['polling', 'websocket']
         });
         
         // Set up socket event handlers

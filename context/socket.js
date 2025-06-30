@@ -15,36 +15,33 @@ export const SocketProvider = (props) => {
   useEffect(() => {
     const initializeSocket = async () => {
       try {
-        // Try to ping both socket handlers to ensure one of them is running
+        // Initialize the socket API on the server
         try {
           await fetch('/api/socket');
-          console.log("Socket API endpoint is responding");
-        } catch (e) {
-          console.log("Fallback to direct Socket.io endpoint");
-          await fetch('/api/socket.io');
+          console.log("Socket API initialized");
+        } catch (error) {
+          console.warn("Socket API fetch failed, will try direct connection");
         }
         
-        // Determine the appropriate socket connection options based on environment
-        const url = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-        const options = {
-          path: '/api/socket.io', // Match the default Socket.io path
-          reconnectionAttempts: 10,
+        // Create a simple socket.io connection with minimal options
+        // Let Socket.io handle the default path (/socket.io)
+        const connection = io({
+          transports: ['polling', 'websocket'],
+          reconnectionAttempts: 5,
           reconnectionDelay: 1000,
-          timeout: 20000, // Increase timeout for slower connections
-          transports: ['polling', 'websocket'], // Start with polling for better compatibility
-          forceNew: true, // Force a new connection
-          autoConnect: true, // Automatically connect
-        };
-        
-        console.log("Connecting to socket at:", url);
-        const connection = io(url, options);
-        
-        // Add immediate error handling
-        connection.on('error', (error) => {
-          console.error("Socket connection error:", error);
+          timeout: 20000
         });
         
-        console.log("Socket connection initialized");
+        // Set up basic event handlers
+        connection.on('connect', () => {
+          console.log('Socket connected successfully!', connection.id);
+        });
+        
+        connection.on('connect_error', (error) => {
+          console.error('Socket connection error:', error);
+        });
+        
+        console.log("Socket connection attempt initialized");
         setSocket(connection);
       } catch (e) {
         console.error("Failed to initialize socket:", e);

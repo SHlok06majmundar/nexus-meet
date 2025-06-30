@@ -8,12 +8,19 @@
   ],
   "routes": [
     {
-      "src": "/api/socket.io/(.*)",
-      "dest": "/api/socket.io"
+      "src": "/api/socket.io",
+      "dest": "/api/socket.io.js"
+    },
+    {
+      "src": "/socket.io/(.*)",
+      "dest": "/api/socket.io.js"
     },
     {
       "src": "/(.*)",
       "dest": "/$1"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

@@ -59,19 +59,32 @@ const usePeer = () => {
                 metadata: {
                     userName: displayName
                 },
-                debug: 2 // Add debug option to help troubleshooting
+                debug: 1 // Reduced debug level
             });
             setPeer(myPeer)
 
             myPeer.on('open', (id) => {
                 console.log(`your peer id is ${id}`)
                 setMyId(id)
-                if (socket && socket.connected) {
-                    console.log("Emitting join-room event to socket");
-                    socket.emit('join-room', roomId, id, displayName);
-                } else {
-                    console.error("Socket disconnected, cannot join room");
-                }
+                
+                // Keep trying to emit join event if socket isn't connected yet
+                const emitJoinRoom = () => {
+                    if (socket) {
+                        if (socket.connected) {
+                            console.log("Emitting join-room event to socket");
+                            socket.emit('join-room', roomId, id, displayName);
+                        } else {
+                            console.log("Socket not connected, waiting 1s before retry...");
+                            setTimeout(emitJoinRoom, 1000);
+                        }
+                    } else {
+                        console.log("Socket not initialized, waiting 1s before retry...");
+                        setTimeout(emitJoinRoom, 1000);
+                    }
+                };
+                
+                // Start the join room process
+                emitJoinRoom();
             })
             
             myPeer.on('error', (err) => {
