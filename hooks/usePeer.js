@@ -23,12 +23,12 @@ const usePeer = () => {
                     socketRetryCount.current += 1;
                     // This will trigger re-render and re-evaluation
                     setPeer(old => old);
-                }, 1000); // Retry every second
+                }, 2000); // Increased retry interval
                 
                 return () => clearTimeout(retryTimer);
             } else {
-                console.error("Failed to connect to socket after multiple attempts");
-                return;
+                console.log("Proceeding without socket after multiple retry attempts");
+                // Continue anyway - we'll try to connect the socket later
             }
         }
         
@@ -68,18 +68,34 @@ const usePeer = () => {
                 setMyId(id)
                 
                 // Keep trying to emit join event if socket isn't connected yet
+                let joinAttempts = 0;
+                const MAX_JOIN_ATTEMPTS = 15; // Try for longer
+                
                 const emitJoinRoom = () => {
+                    joinAttempts++;
+                    
                     if (socket) {
                         if (socket.connected) {
                             console.log("Emitting join-room event to socket");
                             socket.emit('join-room', roomId, id, displayName);
+                            
+                            // Also set up reconnect handler in case socket disconnects later
+                            socket.io.on("reconnect", () => {
+                                console.log("Socket reconnected, rejoining room");
+                                socket.emit('join-room', roomId, id, displayName);
+                            });
+                            
+                        } else if (joinAttempts < MAX_JOIN_ATTEMPTS) {
+                            console.log("Socket not connected, waiting 2s before retry... (Attempt " + joinAttempts + ")");
+                            setTimeout(emitJoinRoom, 2000);
                         } else {
-                            console.log("Socket not connected, waiting 1s before retry...");
-                            setTimeout(emitJoinRoom, 1000);
+                            console.warn("Failed to connect socket after maximum attempts");
                         }
+                    } else if (joinAttempts < MAX_JOIN_ATTEMPTS) {
+                        console.log("Socket not initialized, waiting 2s before retry... (Attempt " + joinAttempts + ")");
+                        setTimeout(emitJoinRoom, 2000);
                     } else {
-                        console.log("Socket not initialized, waiting 1s before retry...");
-                        setTimeout(emitJoinRoom, 1000);
+                        console.warn("Failed to initialize socket after maximum attempts");
                     }
                 };
                 

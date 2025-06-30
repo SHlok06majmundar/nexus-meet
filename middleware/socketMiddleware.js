@@ -1,3 +1,8 @@
+// This file is kept for reference but is no longer needed.
+// Socket.io handling is now done directly in the socket-server.js API route.
+// We'll use a direct socket server approach instead of middleware rewriting.
+
+/*
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
@@ -6,7 +11,7 @@ export function middleware(request) {
   
   // For socket.io requests, passthrough to the appropriate handler
   if (pathname.startsWith('/socket.io/')) {
-    return NextResponse.rewrite(new URL('/api/socketio', request.url));
+    return NextResponse.rewrite(new URL('/api/socket-server', request.url));
   }
   
   // Continue with default behavior for all other routes
@@ -19,3 +24,4 @@ export const config = {
     '/socket.io/:path*', // Match all socket.io paths
   ],
 };
+*/

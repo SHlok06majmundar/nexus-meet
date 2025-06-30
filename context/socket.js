@@ -15,33 +15,47 @@ export const SocketProvider = (props) => {
   useEffect(() => {
     const initializeSocket = async () => {
       try {
-        // Initialize the socket API on the server
+        // Initialize the socket server
+        console.log("Initializing socket server...");
+        
         try {
-          await fetch('/api/socket');
-          console.log("Socket API initialized");
+          // Health check to ensure the socket server is running
+          const response = await fetch('/api/socket-server');
+          console.log("Socket server health check:", await response.json());
         } catch (error) {
-          console.warn("Socket API fetch failed, will try direct connection");
+          console.warn("Socket server health check failed, continuing anyway");
         }
-        
-        // Create a simple socket.io connection with minimal options
-        // Let Socket.io handle the default path (/socket.io)
-        const connection = io({
-          transports: ['polling', 'websocket'],
-          reconnectionAttempts: 5,
+
+        // Connect to our socket server with explicit path
+        const socketUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        const socketOptions = {
+          path: process.env.NEXT_PUBLIC_SOCKET_PATH || '/api/socket-server',
+          transports: process.env.NEXT_PUBLIC_SOCKET_TRANSPORTS ? 
+                       process.env.NEXT_PUBLIC_SOCKET_TRANSPORTS.split(',') : 
+                       ['polling'],
+          reconnectionAttempts: 10,
           reconnectionDelay: 1000,
-          timeout: 20000
-        });
+          timeout: 10000,
+          forceNew: true
+        };
         
-        // Set up basic event handlers
+        console.log("Connecting to socket at:", socketUrl, "with options:", socketOptions);
+        const connection = io(socketUrl, socketOptions);
+        
+        // Set up connection event handlers
         connection.on('connect', () => {
           console.log('Socket connected successfully!', connection.id);
         });
         
         connection.on('connect_error', (error) => {
-          console.error('Socket connection error:', error);
+          console.error('Socket connection error:', error.message);
+        });
+
+        connection.on('disconnect', (reason) => {
+          console.log('Socket disconnected:', reason);
         });
         
-        console.log("Socket connection attempt initialized");
+        console.log("Socket connection initialized");
         setSocket(connection);
       } catch (e) {
         console.error("Failed to initialize socket:", e);

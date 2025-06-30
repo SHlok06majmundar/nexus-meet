@@ -1,23 +1,10 @@
-// Socket.io specific handler for Vercel
-import { Server } from 'socket.io';
+// DEPRECATED - This file is no longer used.
+// The socket server is now handled by socket-server.js
+// This file is kept for reference only.
 
 export default function handler(req, res) {
-    // Return a basic response for health checks
-    if (req.method === 'GET') {
-        res.status(200).end();
-        return;
-    }
-    
-    // Initialize socket server if not already initialized
-    if (!res.socket.server.io) {
-        console.log('Socket.io server initializing from socketio.js handler');
-        const io = new Server(res.socket.server, {
-            cors: {
-                origin: '*',
-                methods: ['GET', 'POST']
-            },
-            transports: ['polling', 'websocket']
-        });
+    res.redirect(301, '/api/socket-server');
+}
         
         // Set up socket event handlers
         io.on('connection', (socket) => {
