@@ -2,7 +2,7 @@ import { withClerkMiddleware, getAuth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 // Set the paths that don't require authentication
-const publicPaths = ['/', '/sign-in*', '/sign-up*', '/api/socket*', '/api/*', '/socket.io*'];
+const publicPaths = ['/', '/sign-in*', '/sign-up*', '/api/*'];
 
 const isPublic = (path) => {
   return publicPaths.find(publicPath => {
@@ -14,11 +14,6 @@ const isPublic = (path) => {
 // This function is the middleware
 export default withClerkMiddleware((request) => {
   const { pathname } = request.nextUrl;
-  
-  // Special handling for socket.io requests
-  if (pathname.startsWith('/socket.io/')) {
-    return NextResponse.rewrite(new URL('/api/socketio', request.url));
-  }
   
   // If the path is public or a static asset, allow the request
   if (isPublic(pathname) || pathname.includes('/_next') || pathname.includes('/public')) {

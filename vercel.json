@@ -12,15 +12,8 @@
       "dest": "/api/socket-server"
     },
     {
-      "src": "/api/socket-server/(.*)",
-      "dest": "/api/socket-server"
-    },
-    {
       "src": "/(.*)",
       "dest": "/$1"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
