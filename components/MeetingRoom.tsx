@@ -10,7 +10,7 @@ import {
   useCall,
 } from '@stream-io/video-react-sdk';
 import { useRouter } from 'next/navigation';
-import { Users, LayoutList, MessageSquare } from 'lucide-react';
+import { Users, LayoutList } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -70,7 +70,7 @@ const MeetingRoom = () => {
         
         {/* Participants Panel */}
         <div
-          className={cn('h-[calc(100vh-86px)] hidden transition-all duration-300', {
+          className={cn('hidden h-[calc(100vh-86px)] transition-all duration-300', {
             'show-block w-[280px]': showParticipants,
           })}
         >
@@ -79,7 +79,7 @@ const MeetingRoom = () => {
 
         {/* AI Transcription Panel */}
         <div
-          className={cn('h-[calc(100vh-86px)] hidden transition-all duration-300 transcription-panel', {
+          className={cn('transcription-panel hidden h-[calc(100vh-86px)] transition-all duration-300', {
             'show-block w-[320px]': showTranscription,
           })}
         >
@@ -88,8 +88,8 @@ const MeetingRoom = () => {
       </div>
       
       {/* Fixed Control Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent pt-8 pb-6">
-        <div className="flex w-full items-center justify-center gap-3 px-4 meeting-controls">
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-black/80 to-transparent pt-8 pb-6">
+        <div className="meeting-controls flex w-full items-center justify-center gap-3 px-4">
           {/* Main Call Controls */}
           <CallControls onLeave={() => router.push(`/`)} />
 
@@ -104,7 +104,7 @@ const MeetingRoom = () => {
 
           {/* Layout Control */}
           <DropdownMenu>
-            <div className="flex items-center layout-control">
+            <div className="layout-control flex items-center">
               <DropdownMenuTrigger className="cursor-pointer rounded-2xl bg-gradient-to-r from-blue-1/80 to-purple-1/80 backdrop-blur-md px-4 py-3 hover:from-blue-1 hover:to-purple-1 transition-all duration-300 border border-white/20 shadow-lg">
                 <LayoutList size={20} className="text-white" />
               </DropdownMenuTrigger>

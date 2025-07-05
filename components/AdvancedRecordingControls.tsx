@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
@@ -19,14 +19,7 @@ const AdvancedRecordingControls = () => {
   const chunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
-  // Fetch recordings on mount and when recording stops
-  useEffect(() => {
-    if (!isStreamRecording && call) {
-      fetchRecordings();
-    }
-  }, [isStreamRecording, call]);
-
-  const fetchRecordings = async () => {
+  const fetchRecordings = useCallback(async () => {
     if (!call) return;
     
     try {
@@ -40,7 +33,14 @@ const AdvancedRecordingControls = () => {
         variant: 'destructive',
       });
     }
-  };
+  }, [call, toast]);
+
+  // Fetch recordings on mount and when recording stops
+  useEffect(() => {
+    if (!isStreamRecording && call) {
+      fetchRecordings();
+    }
+  }, [isStreamRecording, call, fetchRecordings]);
 
   const startStreamRecording = async () => {
     if (!call) return;

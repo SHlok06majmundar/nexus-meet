@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
 import { Mic, MicOff, Download, FileText, Users, Clock, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
@@ -26,13 +26,6 @@ interface SpeechRecognitionErrorEvent extends Event {
   message: string;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
 const TranscriptionPanel = () => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
@@ -46,15 +39,15 @@ const TranscriptionPanel = () => {
   const localParticipant = useLocalParticipant();
 
   // Get speaker name from participant ID
-  const getSpeakerName = (participantId: string) => {
+  const getSpeakerName = useCallback((participantId: string) => {
     const participant = participants.find(p => p.userId === participantId);
     return participant?.name || `User ${participantId.slice(-4)}`;
-  };
+  }, [participants]);
 
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
@@ -127,7 +120,7 @@ const TranscriptionPanel = () => {
         recognitionRef.current.stop();
       }
     };
-  }, [isTranscribing, localParticipant, participants, toast]);
+  }, [isTranscribing, localParticipant, participants, toast, getSpeakerName]);
 
   const startTranscription = async () => {
     try {
@@ -524,7 +517,7 @@ const TranscriptionPanel = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
         {transcripts.length === 0 && !isTranscribing ? (
           <div className="text-center py-8">
-            <div className="bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-6 rounded-xl mb-4">
+            <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-6">
               <Mic size={32} className="text-blue-400 mx-auto mb-2" />
             </div>
             <p className="text-white/60 text-sm mb-4">
@@ -580,7 +573,7 @@ const TranscriptionPanel = () => {
                   </p>
                   {entry.confidence < 0.8 && entry.speakerId !== 'system' && (
                     <div className="flex items-center gap-1 mt-1">
-                      <div className="w-1 h-1 bg-yellow-500 rounded-full"></div>
+                      <div className="size-1 rounded-full bg-yellow-500"></div>
                       <span className="text-xs text-yellow-400">Low confidence</span>
                     </div>
                   )}
@@ -591,12 +584,12 @@ const TranscriptionPanel = () => {
             {/* Current live transcript */}
             {currentTranscript && isTranscribing && (
               <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-400/30 border-dashed">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="mb-1 flex items-center gap-2">
                   <span className="text-sm font-semibold text-blue-400">
                     {getSpeakerName(localParticipant?.userId || '')}
                   </span>
                   <div className="flex items-center gap-1">
-                    <div className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"></div>
+                    <div className="size-1 animate-pulse rounded-full bg-blue-400"></div>
                     <span className="text-xs text-blue-400">Speaking...</span>
                   </div>
                 </div>
