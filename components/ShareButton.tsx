@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Share2, Mail, MessageCircle, Copy, Link2, Facebook, Twitter } from 'lucide-react';
+import { Share2, Mail, MessageCircle, Copy, Facebook, Twitter } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,7 +87,7 @@ const ShareButton = ({ meetingLink, meetingTitle = "Join my meeting" }: ShareBut
   ];
 
   const handleNativeShare = () => {
-    if (navigator.share) {
+    if (typeof navigator !== 'undefined' && 'share' in navigator && navigator.share) {
       navigator.share({
         title: meetingTitle,
         text: 'Join my meeting on Nexus Meet',
@@ -97,6 +97,8 @@ const ShareButton = ({ meetingLink, meetingTitle = "Join my meeting" }: ShareBut
       });
     }
   };
+
+  const canUseNativeShare = typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'share' in navigator;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -117,7 +119,7 @@ const ShareButton = ({ meetingLink, meetingTitle = "Join my meeting" }: ShareBut
           <div className="text-sm font-semibold text-white/90 mb-2 px-2">Share Meeting</div>
           
           {/* Native Share (mobile) */}
-          {navigator.share && (
+          {canUseNativeShare && (
             <>
               <DropdownMenuItem
                 onClick={handleNativeShare}

@@ -9,7 +9,7 @@ import {
   useCallStateHooks,
   useCall,
 } from '@stream-io/video-react-sdk';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Users, LayoutList } from 'lucide-react';
 
 import {
@@ -28,7 +28,6 @@ import { cn } from '@/lib/utils';
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
 
 const MeetingRoom = () => {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
   const [showParticipants, setShowParticipants] = useState(false);

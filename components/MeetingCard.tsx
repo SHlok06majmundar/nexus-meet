@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -17,6 +18,7 @@ interface MeetingCardProps {
   buttonText?: string;
   handleClick: () => void;
   link: string;
+  onDelete?: () => void;
 }
 
 const MeetingCard = ({
@@ -28,6 +30,7 @@ const MeetingCard = ({
   handleClick,
   link,
   buttonText,
+  onDelete,
 }: MeetingCardProps) => {
   const { toast } = useToast();
 
@@ -75,6 +78,17 @@ const MeetingCard = ({
               meetingLink={link}
               meetingTitle={title}
             />
+            
+            {onDelete && (
+              <Button
+                onClick={onDelete}
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <Trash2 size={20} className="text-white" />
+                <span className="w-2" />
+                Delete
+              </Button>
+            )}
             
             <Button
               onClick={() => {

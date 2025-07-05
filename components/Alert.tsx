@@ -12,22 +12,22 @@ interface PermissionCardProps {
 const Alert = ({ title, iconUrl }: PermissionCardProps) => {
   return (
     <section className="flex-center h-screen w-full bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 p-6">
-      <Card className="w-full max-w-[600px] border border-white/20 bg-gradient-to-br from-dark-1/90 to-dark-2/90 backdrop-blur-lg p-8 py-12 text-white rounded-3xl shadow-2xl">
+      <Card className="w-full max-w-[600px] rounded-3xl border border-white/20 bg-gradient-to-br from-dark-1/90 to-dark-2/90 p-8 py-12 text-white shadow-2xl backdrop-blur-lg">
         <CardContent>
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-6 text-center">
               {iconUrl && (
                 <div className="flex-center">
-                  <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 p-6 rounded-full border border-orange-400/30">
-                    <Image src={iconUrl} width={72} height={72} alt="icon" className="filter brightness-110" />
+                  <div className="rounded-full border border-orange-400/30 bg-gradient-to-br from-orange-500/20 to-red-500/20 p-6">
+                    <Image src={iconUrl} width={72} height={72} alt="icon" className="brightness-110" />
                   </div>
                 </div>
               )}
               <div>
-                <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-3">
+                <p className="mb-3 bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-2xl font-bold text-transparent md:text-3xl">
                   Meeting Status
                 </p>
-                <p className="text-lg font-medium text-white/90 leading-relaxed max-w-md mx-auto">
+                <p className="mx-auto max-w-md text-lg font-medium leading-relaxed text-white/90">
                   {title}
                 </p>
               </div>
@@ -36,7 +36,7 @@ const Alert = ({ title, iconUrl }: PermissionCardProps) => {
             <div className="flex justify-center">
               <Button 
                 asChild 
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-2xl text-lg shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-blue-400/50"
+                className="rounded-2xl border border-blue-400/50 bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-purple-700 hover:shadow-2xl"
               >
                 <Link href="/">
                   <span className="flex items-center gap-3">
@@ -47,7 +47,7 @@ const Alert = ({ title, iconUrl }: PermissionCardProps) => {
             </div>
 
             <div className="text-center">
-              <p className="text-white/60 text-sm">
+              <p className="text-sm text-white/60">
                 Return to the dashboard to schedule or join other meetings
               </p>
             </div>

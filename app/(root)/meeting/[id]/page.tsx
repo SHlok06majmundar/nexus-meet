@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { StreamCall, StreamTheme } from '@stream-io/video-react-sdk';
 import { useParams } from 'next/navigation';
-import { Loader } from 'lucide-react';
 
 import { useGetCallById } from '@/hooks/useGetCallById';
 import Alert from '@/components/Alert';
 import MeetingSetup from '@/components/MeetingSetup';
 import MeetingRoom from '@/components/MeetingRoom';
+import Loader from '@/components/Loader';
 
 const MeetingPage = () => {
   const { id } = useParams();
@@ -22,18 +22,18 @@ const MeetingPage = () => {
   if (!call) return (
     <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
       <div className="text-center">
-        <div className="bg-gradient-to-br from-red-500/20 to-red-600/20 border border-red-400/30 rounded-3xl p-8 mb-6">
-          <div className="text-6xl mb-4">❌</div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
+        <div className="mb-6 rounded-3xl border border-red-400/30 bg-gradient-to-br from-red-500/20 to-red-600/20 p-8">
+          <div className="mb-4 text-6xl">❌</div>
+          <h1 className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-3xl font-bold text-transparent">
             Meeting Not Found
           </h1>
         </div>
-        <p className="text-white/80 text-lg mb-6">
-          The meeting you're looking for doesn't exist or has ended.
+        <p className="mb-6 text-lg text-white/80">
+          The meeting you&apos;re looking for doesn&apos;t exist or has ended.
         </p>
         <a 
           href="/"
-          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-2xl transition-all duration-300 inline-block"
+          className="inline-block rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-3 font-bold text-white transition-all duration-300 hover:from-blue-600 hover:to-purple-700"
         >
           Return to Dashboard
         </a>

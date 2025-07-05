@@ -1,7 +1,6 @@
 'use client';
 
 import { Call, CallRecording } from '@stream-io/video-react-sdk';
-import Image from 'next/image';
 
 import Loader from './Loader';
 import { useGetCalls } from '@/hooks/useGetCalls';
@@ -9,10 +8,9 @@ import MeetingCard from './MeetingCard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const CallList = ({ type }: { type: 'upcoming' | 'recordings' }) => {
+const CallList = ({ type }: { type: 'upcoming' | 'recordings' | 'ended' }) => {
   const router = useRouter();
-  const { upcomingCalls, callRecordings, isLoading } =
-    useGetCalls();
+  const { endedCalls, upcomingCalls, callRecordings, isLoading } = useGetCalls();
   const [recordings, setRecordings] = useState<CallRecording[]>([]);
 
   const getCalls = () => {
@@ -21,6 +19,8 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' }) => {
         return recordings;
       case 'upcoming':
         return upcomingCalls;
+      case 'ended':
+        return endedCalls;
       default:
         return [];
     }
@@ -28,26 +28,32 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' }) => {
 
   const getNoCallsMessage = () => {
     switch (type) {
-      case 'upcoming':
-        return 'No Upcoming Calls';
       case 'recordings':
-        return 'No Recordings';
+        return 'No recordings found';
+      case 'upcoming':
+        return 'No upcoming meetings';
+      case 'ended':
+        return 'No previous meetings';
       default:
-        return '';
+        return 'No calls found';
     }
   };
 
   useEffect(() => {
     const fetchRecordings = async () => {
-      const callData = await Promise.all(
-        callRecordings?.map((meeting) => meeting.queryRecordings()) ?? [],
-      );
+      try {
+        const callData = await Promise.all(
+          callRecordings?.map((meeting) => meeting.queryRecordings()) ?? [],
+        );
 
-      const recordings = callData
-        .filter((call) => call.recordings.length > 0)
-        .flatMap((call) => call.recordings);
+        const recordings = callData
+          .filter((call) => call.recordings.length > 0)
+          .flatMap((call) => call.recordings);
 
-      setRecordings(recordings);
+        setRecordings(recordings);
+      } catch (error) {
+        console.error('Error fetching recordings:', error);
+      }
     };
 
     if (type === 'recordings') {
@@ -61,26 +67,29 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' }) => {
   const noCallsMessage = getNoCallsMessage();
 
   return (
-    <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       {calls && calls.length > 0 ? (
         calls.map((meeting: Call | CallRecording) => (
           <MeetingCard
             key={(meeting as Call).id}
             icon={
-              type === 'upcoming'
+              type === 'ended'
+                ? '/icons/previous.svg'
+                : type === 'upcoming'
                 ? '/icons/upcoming.svg'
                 : '/icons/recordings.svg'
             }
             title={
               (meeting as Call).state?.custom?.description ||
-              (meeting as CallRecording).filename?.substring(0, 20) ||
-              'No Description'
+              (meeting as CallRecording).filename ||
+              'Personal Meeting'
             }
             date={
               (meeting as Call).state?.startsAt?.toLocaleString() ||
-              (meeting as CallRecording).start_time?.toLocaleString()
+              (meeting as CallRecording).start_time ||
+              ''
             }
-            isPreviousMeeting={false}
+            isPreviousMeeting={type === 'ended'}
             link={
               type === 'recordings'
                 ? (meeting as CallRecording).url
@@ -93,23 +102,25 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' }) => {
                 ? () => router.push(`${(meeting as CallRecording).url}`)
                 : () => router.push(`/meeting/${(meeting as Call).id}`)
             }
+            onDelete={
+              type === 'recordings'
+                ? async () => {
+                    try {
+                      // Implement recording deletion
+                      console.log('Deleting recording:', (meeting as CallRecording).filename);
+                      // Remove from local state
+                      setRecordings(prev => prev.filter(rec => rec.filename !== (meeting as CallRecording).filename));
+                    } catch (error) {
+                      console.error('Error deleting recording:', error);
+                    }
+                  }
+                : undefined
+            }
           />
         ))
       ) : (
-        <div className="col-span-full flex flex-col items-center justify-center py-20">
-          <div className="bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-8 rounded-full mb-6">
-            <div className="bg-gradient-to-br from-blue-1 to-purple-1 p-4 rounded-full">
-              <Image
-                src="/icons/Video.svg"
-                alt="no calls"
-                width={48}
-                height={48}
-                className="filter brightness-0 invert"
-              />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">{noCallsMessage}</h1>
-          <p className="text-white/60 text-lg">Check back later for updates</p>
+        <div className="flex items-center justify-center h-60">
+          <h1 className="text-2xl font-bold text-white">{noCallsMessage}</h1>
         </div>
       )}
     </div>
