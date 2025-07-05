@@ -23,6 +23,7 @@ import Loader from './Loader';
 import EndCallButton from './EndCallButton';
 import ShareButton from './ShareButton';
 import AdvancedRecordingControls from './AdvancedRecordingControls';
+import TranscriptionPanel from './TranscriptionPanel';
 import { cn } from '@/lib/utils';
 
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
@@ -32,6 +33,7 @@ const MeetingRoom = () => {
   const router = useRouter();
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(false);
   const { useCallCallingState } = useCallStateHooks();
   const call = useCall();
 
@@ -58,15 +60,31 @@ const MeetingRoom = () => {
   return (
     <section className="relative h-screen w-full overflow-hidden text-white bg-gradient-to-br from-dark-1 to-dark-2">
       <div className="relative flex size-full items-center justify-center pt-4">
-        <div className="flex size-full max-w-[1000px] items-center">
+        <div className={cn("flex size-full items-center transition-all duration-300", {
+          "max-w-[calc(100%-320px)]": showTranscription,
+          "max-w-[calc(100%-280px)]": showParticipants && !showTranscription,
+          "max-w-[calc(100%-600px)]": showParticipants && showTranscription,
+          "max-w-[1000px]": !showParticipants && !showTranscription
+        })}>
           <CallLayout />
         </div>
+        
+        {/* Participants Panel */}
         <div
-          className={cn('h-[calc(100vh-86px)] hidden ml-2', {
-            'show-block': showParticipants,
+          className={cn('h-[calc(100vh-86px)] hidden transition-all duration-300', {
+            'show-block w-[280px]': showParticipants,
           })}
         >
           <CallParticipantsList onClose={() => setShowParticipants(false)} />
+        </div>
+
+        {/* AI Transcription Panel */}
+        <div
+          className={cn('h-[calc(100vh-86px)] hidden transition-all duration-300 transcription-panel', {
+            'show-block w-[320px]': showTranscription,
+          })}
+        >
+          <TranscriptionPanel />
         </div>
       </div>
       
@@ -87,7 +105,7 @@ const MeetingRoom = () => {
 
           {/* Layout Control */}
           <DropdownMenu>
-            <div className="flex items-center">
+            <div className="flex items-center layout-control">
               <DropdownMenuTrigger className="cursor-pointer rounded-2xl bg-gradient-to-r from-blue-1/80 to-purple-1/80 backdrop-blur-md px-4 py-3 hover:from-blue-1 hover:to-purple-1 transition-all duration-300 border border-white/20 shadow-lg">
                 <LayoutList size={20} className="text-white" />
               </DropdownMenuTrigger>
@@ -116,6 +134,25 @@ const MeetingRoom = () => {
             className="cursor-pointer rounded-2xl bg-gradient-to-r from-green-1/80 to-green-2/80 backdrop-blur-md px-4 py-3 hover:from-green-1 hover:to-green-2 transition-all duration-300 border border-white/20 shadow-lg"
           >
             <Users size={20} className="text-white" />
+          </button>
+
+          {/* AI Transcription Toggle */}
+          <button 
+            onClick={() => setShowTranscription((prev) => !prev)}
+            title="Toggle AI Transcription"
+            className={cn(
+              "cursor-pointer rounded-2xl backdrop-blur-md px-4 py-3 transition-all duration-300 border border-white/20 shadow-lg",
+              showTranscription 
+                ? "bg-gradient-to-r from-purple-1 to-pink-1 hover:from-purple-2 hover:to-pink-2" 
+                : "bg-gradient-to-r from-purple-1/80 to-pink-1/80 hover:from-purple-1 hover:to-pink-1"
+            )}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+              <path d="M7 8C7 5.79086 8.79086 4 11 4H13C15.2091 4 17 5.79086 17 8V12C17 14.2091 15.2091 16 13 16H11C8.79086 16 7 14.2091 7 12V8Z" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 16V20M12 20H8M12 20H16" stroke="currentColor" strokeWidth="2"/>
+              <path d="M19 10V12C19 16.4183 15.4183 20 11 20" stroke="currentColor" strokeWidth="2"/>
+              <path d="M5 10V12C5 16.4183 8.58172 20 13 20" stroke="currentColor" strokeWidth="2"/>
+            </svg>
           </button>
 
           {/* End Call Button */}

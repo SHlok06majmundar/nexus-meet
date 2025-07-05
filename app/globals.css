@@ -384,6 +384,53 @@ button[data-testid="call-controls-button"] {
   }
 }
 
+/* Responsive meeting controls */
+@media (max-width: 768px) {
+  .meeting-controls {
+    flex-wrap: wrap;
+    gap: 8px !important;
+    padding: 12px !important;
+  }
+  
+  .meeting-controls button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* Hide layout control on mobile to save space */
+  .layout-control {
+    display: none;
+  }
+  
+  /* Make transcription panel smaller on mobile */
+  .transcription-panel {
+    width: 280px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .str-video__call-controls__button {
+    height: 44px !important;
+    width: 44px !important;
+    padding: 8px !important;
+  }
+  
+  .meeting-controls {
+    justify-content: space-around;
+  }
+  
+  /* Stack panels vertically on very small screens */
+  .transcription-panel {
+    width: 100% !important;
+    height: 200px !important;
+    position: fixed;
+    top: auto;
+    bottom: 100px;
+    left: 0;
+    right: 0;
+  }
+}
+
 /* Recording indicator styling */
 .str-video__recording-indicator {
   background: rgba(239, 68, 68, 0.9) !important;
