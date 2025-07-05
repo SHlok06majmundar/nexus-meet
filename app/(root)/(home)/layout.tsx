@@ -5,8 +5,8 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 
 export const metadata: Metadata = {
-  title: 'Nexus Meet - Modern Video Conferencing',
-  description: 'A modern, colorful video conferencing platform powered by Stream Video and Clerk.',
+  title: 'Dashboard - Nexus Meet',
+  description: 'Professional video conferencing dashboard powered by Stream Video and Clerk.',
 };
 
 const RootLayout = ({ children }: Readonly<{children: ReactNode}>) => {

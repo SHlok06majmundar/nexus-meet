@@ -9,16 +9,14 @@ import MeetingCard from './MeetingCard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
+const CallList = ({ type }: { type: 'upcoming' | 'recordings' }) => {
   const router = useRouter();
-  const { endedCalls, upcomingCalls, callRecordings, isLoading } =
+  const { upcomingCalls, callRecordings, isLoading } =
     useGetCalls();
   const [recordings, setRecordings] = useState<CallRecording[]>([]);
 
   const getCalls = () => {
     switch (type) {
-      case 'ended':
-        return endedCalls;
       case 'recordings':
         return recordings;
       case 'upcoming':
@@ -30,8 +28,6 @@ const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
 
   const getNoCallsMessage = () => {
     switch (type) {
-      case 'ended':
-        return 'No Previous Calls';
       case 'upcoming':
         return 'No Upcoming Calls';
       case 'recordings':
@@ -71,11 +67,9 @@ const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
           <MeetingCard
             key={(meeting as Call).id}
             icon={
-              type === 'ended'
-                ? '/icons/previous.svg'
-                : type === 'upcoming'
-                  ? '/icons/upcoming.svg'
-                  : '/icons/recordings.svg'
+              type === 'upcoming'
+                ? '/icons/upcoming.svg'
+                : '/icons/recordings.svg'
             }
             title={
               (meeting as Call).state?.custom?.description ||
@@ -86,7 +80,7 @@ const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
               (meeting as Call).state?.startsAt?.toLocaleString() ||
               (meeting as CallRecording).start_time?.toLocaleString()
             }
-            isPreviousMeeting={type === 'ended'}
+            isPreviousMeeting={false}
             link={
               type === 'recordings'
                 ? (meeting as CallRecording).url

@@ -66,9 +66,9 @@ If you're getting started and need assistance or face any bugs, join our active 
 
 👉 **Schedule Future Meetings**: Input meeting details (date, time) to schedule future meetings, accessible on the 'Upcoming Meetings' page for sharing the link or immediate start.
 
-👉 **Past Meetings List**: Access a list of previously held meetings, including details and metadata.
-
 👉 **View Recorded Meetings**: Access recordings of past meetings for review or reference.
+
+👉 **Professional Dashboard**: Clean, modern dashboard with quick stats, meeting actions, and easy navigation to all features.
 
 👉 **Modern UI Design**: Beautiful, colorful, and professional interface with gradient backgrounds, glassmorphism effects, and smooth animations.
 

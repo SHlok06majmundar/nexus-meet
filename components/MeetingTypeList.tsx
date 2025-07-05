@@ -70,35 +70,30 @@ const MeetingTypeList = () => {
   const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${callDetail?.id}`;
 
   return (
-    <section className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-4">
-      <HomeCard
-        img="/icons/add-meeting.svg"
-        title="New Meeting"
-        description="Start an instant meeting"
-        className="bg-gradient-to-br from-blue-1 to-blue-2 hover:from-blue-2 hover:to-blue-1 transform hover:scale-105 transition-all duration-300"
-        handleClick={() => setMeetingState('isInstantMeeting')}
-      />
-      <HomeCard
-        img="/icons/join-meeting.svg"
-        title="Join Meeting"
-        description="via invitation link"
-        className="bg-gradient-to-br from-purple-1 to-purple-2 hover:from-purple-2 hover:to-purple-1 transform hover:scale-105 transition-all duration-300"
-        handleClick={() => setMeetingState('isJoiningMeeting')}
-      />
-      <HomeCard
-        img="/icons/schedule.svg"
-        title="Schedule Meeting"
-        description="Plan your meeting"
-        className="bg-gradient-to-br from-pink-1 to-pink-2 hover:from-pink-2 hover:to-pink-1 transform hover:scale-105 transition-all duration-300"
-        handleClick={() => setMeetingState('isScheduleMeeting')}
-      />
-      <HomeCard
-        img="/icons/recordings.svg"
-        title="View Recordings"
-        description="Meeting Recordings"
-        className="bg-gradient-to-br from-green-1 to-green-2 hover:from-green-2 hover:to-green-1 transform hover:scale-105 transition-all duration-300"
-        handleClick={() => router.push('/recordings')}
-      />
+    <>
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <HomeCard
+          img="/icons/add-meeting.svg"
+          title="Instant Meeting"
+          description="Start a meeting right now"
+          className="bg-gradient-to-br from-blue-1 to-blue-2 hover:from-blue-2 hover:to-blue-1 transform hover:scale-105 transition-all duration-300"
+          handleClick={() => setMeetingState('isInstantMeeting')}
+        />
+        <HomeCard
+          img="/icons/schedule.svg"
+          title="Schedule Meeting"
+          description="Plan your meeting ahead"
+          className="bg-gradient-to-br from-purple-1 to-purple-2 hover:from-purple-2 hover:to-purple-1 transform hover:scale-105 transition-all duration-300"
+          handleClick={() => setMeetingState('isScheduleMeeting')}
+        />
+        <HomeCard
+          img="/icons/join-meeting.svg"
+          title="Join Meeting"
+          description="Enter via invitation link"
+          className="bg-gradient-to-br from-green-1 to-green-2 hover:from-green-2 hover:to-green-1 transform hover:scale-105 transition-all duration-300"
+          handleClick={() => setMeetingState('isJoiningMeeting')}
+        />
+      </section>
 
       {!callDetail ? (
         <MeetingModal
@@ -174,7 +169,7 @@ const MeetingTypeList = () => {
         buttonText="Start Meeting"
         handleClick={createMeeting}
       />
-    </section>
+    </>
   );
 };
 
