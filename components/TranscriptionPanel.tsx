@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
-import { Mic, MicOff, Download, FileText, Users, Clock } from 'lucide-react';
+import { Mic, MicOff, Download, FileText, Users, Clock, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import jsPDF from 'jspdf';
@@ -192,6 +192,23 @@ const TranscriptionPanel = () => {
     toast({
       title: 'AI Transcription Stopped',
       description: 'Transcription has been completed.',
+    });
+  };
+
+  const resetTranscription = () => {
+    // Stop any ongoing transcription
+    if (recognitionRef.current && isTranscribing) {
+      recognitionRef.current.stop();
+    }
+    
+    // Reset all states
+    setIsTranscribing(false);
+    setTranscripts([]);
+    setCurrentTranscript('');
+    
+    toast({
+      title: 'Transcription Reset',
+      description: 'All transcription data has been cleared. Ready for a new session.',
     });
   };
 
@@ -483,6 +500,15 @@ const TranscriptionPanel = () => {
               <Download size={16} />
             )}
           </Button>
+
+          <Button
+            onClick={resetTranscription}
+            disabled={transcripts.length === 0 && !isTranscribing}
+            className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 rounded-xl font-semibold transition-all duration-300"
+            title="Reset Session"
+          >
+            <RotateCcw size={16} />
+          </Button>
         </div>
 
         {/* Live status */}
@@ -501,9 +527,27 @@ const TranscriptionPanel = () => {
             <div className="bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-6 rounded-xl mb-4">
               <Mic size={32} className="text-blue-400 mx-auto mb-2" />
             </div>
-            <p className="text-white/60 text-sm">
+            <p className="text-white/60 text-sm mb-4">
               Start AI transcription to see live speech-to-text conversion
             </p>
+            <div className="grid grid-cols-1 gap-2 text-xs text-white/50 max-w-xs mx-auto">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Real-time speech recognition</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Speaker identification</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <span>Professional PDF export</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <span>Session reset available</span>
+              </div>
+            </div>
           </div>
         ) : (
           <>
@@ -568,9 +612,22 @@ const TranscriptionPanel = () => {
       {/* Footer Stats */}
       {transcripts.length > 0 && (
         <div className="p-3 border-t border-white/10 bg-dark-1/50">
-          <div className="flex justify-between text-xs text-white/60">
-            <span>{transcripts.filter(t => t.speakerId !== 'system').length} messages</span>
-            <span>{uniqueParticipants.filter(p => p !== 'System').length} speakers</span>
+          <div className="flex justify-between items-center text-xs text-white/60">
+            <div className="flex gap-4">
+              <span>{transcripts.filter(t => t.speakerId !== 'system').length} messages</span>
+              <span>{uniqueParticipants.filter(p => p !== 'System').length} speakers</span>
+            </div>
+            {!isTranscribing && transcripts.length > 0 && (
+              <Button
+                onClick={resetTranscription}
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg"
+              >
+                <RotateCcw size={10} className="mr-1" />
+                Clear All
+              </Button>
+            )}
           </div>
         </div>
       )}
