@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Share2, Mail, MessageCircle, Copy, Link2, Facebook, Twitter } from 'lucide-react';
+import { Share2, Mail, MessageCircle, Copy, Facebook, Twitter } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +39,7 @@ const ShareButton = ({ meetingLink, meetingTitle = "Join my meeting" }: ShareBut
       icon: Mail,
       action: () => {
         const subject = encodeURIComponent(meetingTitle);
-        const body = encodeURIComponent(`You're invited to join my meeting!\n\nMeeting Link: ${meetingLink}\n\nJoin now to start the conversation.`);
+        const body = encodeURIComponent(`You&apos;re invited to join my meeting!\n\nMeeting Link: ${meetingLink}\n\nJoin now to start the conversation.`);
         window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
         setIsOpen(false);
       },
@@ -117,7 +117,7 @@ const ShareButton = ({ meetingLink, meetingTitle = "Join my meeting" }: ShareBut
           <div className="text-sm font-semibold text-white/90 mb-2 px-2">Share Meeting</div>
           
           {/* Native Share (mobile) */}
-          {navigator.share && (
+          {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
             <>
               <DropdownMenuItem
                 onClick={handleNativeShare}

@@ -47,9 +47,7 @@ const AdvancedRecordingControls = () => {
 
     setIsLoading(true);
     try {
-      await call.startRecording({
-        recording_external_storage: null, // Use Stream's storage
-      });
+      await call.startRecording();
       
       toast({
         title: '🔴 Recording Started',
@@ -72,7 +70,6 @@ const AdvancedRecordingControls = () => {
       // Get the entire screen with audio
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
-          mediaSource: 'screen',
           width: { ideal: 1920 },
           height: { ideal: 1080 },
           frameRate: { ideal: 30 }

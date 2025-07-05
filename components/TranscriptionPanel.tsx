@@ -17,7 +17,7 @@ interface TranscriptEntry {
 }
 
 interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
+  results: any;
   resultIndex: number;
 }
 
@@ -48,7 +48,7 @@ const TranscriptionPanel = () => {
   // Get speaker name from participant ID
   const getSpeakerName = (participantId: string) => {
     const participant = participants.find(p => p.userId === participantId);
-    return participant?.name || participant?.user?.name || `User ${participantId.slice(-4)}`;
+    return participant?.name || `User ${participantId.slice(-4)}`;
   };
 
   // Initialize speech recognition
@@ -228,11 +228,11 @@ const TranscriptionPanel = () => {
     setIsGeneratingPDF(true);
 
     try {
-      const pdf = new jsPDF();
+      const pdf = new (jsPDF as any)();
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
       const margin = 20;
-      const lineHeight = 8;
+      // const lineHeight = 8;
       let yPosition = margin;
 
       // Professional Header with Logo Area
