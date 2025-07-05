@@ -1,6 +1,7 @@
 'use client';
 import { Github, Linkedin, Instagram } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const socialLinks = [
@@ -55,9 +56,15 @@ const Footer = () => {
             {' '}
             <div className="mb-6 flex items-center gap-2">
               {' '}
-              <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 p-1">
                 {' '}
-                <span className="text-lg font-bold text-white">N</span>{' '}
+                <Image
+                  src="/icons/logo.jpeg"
+                  width={32}
+                  height={32}
+                  alt="nexus meet logo"
+                  className="rounded-lg"
+                />{' '}
               </div>{' '}
               <h3 className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-xl font-bold text-transparent">
                 {' '}

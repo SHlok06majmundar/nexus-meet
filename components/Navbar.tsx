@@ -7,17 +7,17 @@ import MobileNav from './MobileNav';
 const Navbar = () => {
   return (
     <nav className="flex-between fixed z-50 w-full bg-gradient-to-r from-dark-1/95 to-dark-2/95 backdrop-blur-lg px-6 py-4 lg:px-10 border-b border-white/10">
-      <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform duration-300">
-        <div className="bg-gradient-to-br from-blue-1 to-purple-1 p-2 rounded-xl">
+      <Link href="/" className="flex items-center gap-3 transition-transform duration-300 hover:scale-105">
+        <div className="rounded-xl bg-gradient-to-br from-blue-1 to-purple-1 p-2">
           <Image
-            src="/icons/logo.svg"
-            width={28}
-            height={28}
+            src="/icons/logo.jpeg"
+            width={32}
+            height={32}
             alt="nexus meet logo"
-            className="max-sm:size-8 filter brightness-0 invert"
+            className="max-sm:size-8 rounded-md"
           />
         </div>
-        <p className="text-[28px] font-extrabold bg-gradient-to-r from-blue-3 to-purple-3 bg-clip-text text-transparent max-sm:hidden">
+        <p className="bg-gradient-to-r from-blue-3 to-purple-3 bg-clip-text text-[28px] font-extrabold text-transparent max-sm:hidden">
           NEXUS MEET
         </p>
       </Link>

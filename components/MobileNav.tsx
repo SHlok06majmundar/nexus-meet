@@ -26,17 +26,17 @@ const MobileNav = () => {
           </div>
         </SheetTrigger>
         <SheetContent side="left" className="border-none bg-gradient-to-b from-dark-1 to-dark-2 backdrop-blur-lg">
-          <Link href="/" className="flex items-center gap-3 mb-8">
-            <div className="bg-gradient-to-br from-blue-1 to-purple-1 p-2 rounded-xl">
+          <Link href="/" className="mb-8 flex items-center gap-3">
+            <div className="rounded-xl bg-gradient-to-br from-blue-1 to-purple-1 p-2">
               <Image
-                src="/icons/logo.svg"
-                width={24}
-                height={24}
+                src="/icons/logo.jpeg"
+                width={28}
+                height={28}
                 alt="nexus meet logo"
-                className="filter brightness-0 invert"
+                className="rounded-md"
               />
             </div>
-            <p className="text-[24px] font-extrabold bg-gradient-to-r from-blue-3 to-purple-3 bg-clip-text text-transparent">NEXUS MEET</p>
+            <p className="bg-gradient-to-r from-blue-3 to-purple-3 bg-clip-text text-[24px] font-extrabold text-transparent">NEXUS MEET</p>
           </Link>
           <div className="flex h-[calc(100vh-120px)] flex-col justify-between overflow-y-auto">
             <SheetClose asChild>

@@ -11,10 +11,12 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "nexus-meet",
-  description: "Video calling App",
+  title: "Nexus Meet - Professional Video Conferencing",
+  description: "Professional video conferencing platform with AI-powered transcription, real-time chat, and seamless collaboration tools.",
   icons: {
-    icon: "/icons/logo.svg",
+    icon: "/icons/logo.jpeg",
+    shortcut: "/icons/logo.jpeg",
+    apple: "/icons/logo.jpeg",
   },
 };
 
@@ -27,7 +29,7 @@ export default function RootLayout({
         appearance={{
           layout: {
             socialButtonsVariant: "iconButton",
-            logoImageUrl: "/icons/nexus-meet-logo.svg",
+            logoImageUrl: "/icons/logo.jpeg",
           },
           variables: {
             colorText: "#fff",
