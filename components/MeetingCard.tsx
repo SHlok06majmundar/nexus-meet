@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { avatarImages } from "@/constants";
 import { useToast } from "./ui/use-toast";
+import ShareButton from "./ShareButton";
 
 interface MeetingCardProps {
   title: string;
@@ -61,7 +62,7 @@ const MeetingCard = ({
           </div>
         </div>
         {!isPreviousMeeting && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap meeting-card-buttons">
             <Button onClick={handleClick} className="rounded-xl bg-gradient-to-r from-blue-1 to-purple-1 hover:from-blue-2 hover:to-purple-2 px-6 py-3 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl">
               {buttonIcon1 && (
                 <Image src={buttonIcon1} alt="feature" width={20} height={20} className="filter brightness-0 invert" />
@@ -69,6 +70,12 @@ const MeetingCard = ({
               {buttonIcon1 && <span className="w-2" />}
               {buttonText}
             </Button>
+            
+            <ShareButton 
+              meetingLink={link}
+              meetingTitle={title}
+            />
+            
             <Button
               onClick={() => {
                 navigator.clipboard.writeText(link);

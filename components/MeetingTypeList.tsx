@@ -13,6 +13,7 @@ import { Textarea } from './ui/textarea';
 import ReactDatePicker from 'react-datepicker';
 import { useToast } from './ui/use-toast';
 import { Input } from './ui/input';
+import ShareButton from './ShareButton';
 
 const initialValues = {
   dateTime: new Date(),
@@ -134,16 +135,30 @@ const MeetingTypeList = () => {
         <MeetingModal
           isOpen={meetingState === 'isScheduleMeeting'}
           onClose={() => setMeetingState(undefined)}
-          title="Meeting Created"
+          title="Meeting Created Successfully!"
+          className="text-center"
+          buttonText="Copy Meeting Link"
           handleClick={() => {
             navigator.clipboard.writeText(meetingLink);
             toast({ title: 'Link Copied' });
           }}
           image={'/icons/checked.svg'}
           buttonIcon="/icons/copy.svg"
-          className="text-center"
-          buttonText="Copy Meeting Link"
-        />
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-white/80">Your meeting has been scheduled successfully!</p>
+            <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+              <p className="text-sm text-white/70 mb-2">Meeting Link:</p>
+              <p className="text-white font-mono text-sm break-all">{meetingLink}</p>
+            </div>
+            <div className="flex justify-center">
+              <ShareButton 
+                meetingLink={meetingLink}
+                meetingTitle={values.description || 'Scheduled Meeting'}
+              />
+            </div>
+          </div>
+        </MeetingModal>
       )}
 
       <MeetingModal

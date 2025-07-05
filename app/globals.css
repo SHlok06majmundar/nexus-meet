@@ -36,6 +36,15 @@ body {
   backdrop-filter: blur(10px);
   border-radius: 8px;
   padding: 4px 8px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.str-video__participant-details .str-video__participant-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .str-video__menu-container {
@@ -65,17 +74,24 @@ body {
 }
 
 .str-video__call-controls__button {
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  height: 48px !important;
+  width: 48px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease !important;
+  margin: 0 4px !important;
 }
 
 .str-video__call-controls__button:hover {
-  background: rgba(59, 130, 246, 0.8);
-  transform: scale(1.05);
+  background: rgba(59, 130, 246, 0.8) !important;
+  transform: scale(1.05) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+.str-video__call-controls__button svg {
+  color: white !important;
 }
 
 .glassmorphism {
@@ -132,28 +148,39 @@ body {
     @apply flex justify-between items-center;
   }
 
-  /* Custom scrollbar */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(59, 130, 246, 0.5) transparent;
+  /* Responsive classes */
+@media (max-width: 640px) {
+  .meeting-controls {
+    gap: 8px;
+    padding: 0 12px;
   }
+  
+  .meeting-controls button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .share-dropdown {
+    position: fixed !important;
+    bottom: 80px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 90vw !important;
+    max-width: 320px !important;
+  }
+}
 
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
+@media (max-width: 480px) {
+  .meeting-card-buttons {
+    flex-direction: column;
+    gap: 12px;
   }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+  
+  .meeting-card-buttons button {
+    width: 100%;
+    justify-content: center;
   }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(59, 130, 246, 0.5);
-    border-radius: 3px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(59, 130, 246, 0.7);
-  }
+}
 }
 
 /* animation */
@@ -163,6 +190,139 @@ body {
   max-width: 350px;
   display: block;
   animation: show 0.7s forwards linear;
+}
+
+/* Responsive meeting room styles */
+@media (max-width: 768px) {
+  .show-block {
+    max-width: 280px;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 50;
+    height: auto;
+    max-height: 60vh;
+  }
+}
+
+/* Meeting setup responsive styles */
+@media (max-width: 640px) {
+  .str-video__video-preview {
+    min-height: 250px !important;
+  }
+}
+
+/* Mobile meeting controls */
+@media (max-width: 768px) {
+  .meeting-controls-mobile {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .meeting-controls-mobile > div {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Meeting Room Specific Styles */
+.str-video__call-controls {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-radius: 16px !important;
+  padding: 8px 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+.str-video__call-controls__button--active {
+  background: rgba(59, 130, 246, 0.9) !important;
+  border-color: rgba(59, 130, 246, 0.7) !important;
+}
+
+.str-video__call-controls__button--leave {
+  background: rgba(239, 68, 68, 0.9) !important;
+  border-color: rgba(239, 68, 68, 0.7) !important;
+}
+
+.str-video__call-controls__button--leave:hover {
+  background: rgba(220, 38, 38, 1) !important;
+}
+
+/* Ensure controls are always visible */
+.str-video {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Custom button overrides */
+button[data-testid="call-controls-button"] {
+  height: 48px !important;
+  width: 48px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Enhanced participant name styling */
+.str-video__participant-details {
+  color: white;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.str-video__participant-details .str-video__participant-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.str-video__participant-list .str-video__participant-name {
+  color: white;
+  font-weight: 600;
+}
+
+/* Custom participant name styling for video placeholders */
+.str-video__video-placeholder {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.str-video__video-placeholder .str-video__participant-name {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: white !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Ensure user names are displayed properly */
+.str-video__participant-view .str-video__participant-name,
+.str-video__video-placeholder .str-video__participant-name {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Override any hidden name styles */
+.str-video__participant-name {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: white !important;
+  font-weight: 600 !important;
 }
 
 @keyframes show {
