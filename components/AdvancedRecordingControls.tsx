@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
-import { Circle, Square, Download, Video, Loader2, VolumeX } from 'lucide-react';
+import { Circle, Square, Download, Video, Loader2, VolumeX, RotateCcw } from 'lucide-react';
 
 const AdvancedRecordingControls = () => {
   const call = useCall();
@@ -247,17 +247,42 @@ const AdvancedRecordingControls = () => {
     });
   };
 
+  const resetRecordings = () => {
+    // Clear local recording URL
+    if (localRecordingUrl) {
+      URL.revokeObjectURL(localRecordingUrl);
+      setLocalRecordingUrl(null);
+    }
+    
+    // Clear recordings array to hide download buttons
+    setRecordings([]);
+    
+    // Reset chunks
+    chunksRef.current = [];
+    
+    // Clear any media recorder reference
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current = null;
+    }
+
+    toast({
+      title: '🔄 Reset Complete',
+      description: 'Ready for new recording session',
+    });
+  };
+
   const isRecording = isStreamRecording || isLocalRecording;
   const latestStreamRecording = recordings[recordings.length - 1];
+  const hasRecordings = latestStreamRecording || localRecordingUrl;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 max-sm:gap-1 flex-wrap">
       {/* Main Recording Button */}
       <Button
         onClick={isRecording ? stopRecording : startStreamRecording}
         disabled={isLoading}
         className={`
-          rounded-2xl px-4 py-3 font-semibold transition-all duration-300 border shadow-lg hover:shadow-xl
+          rounded-2xl px-4 py-3 max-sm:px-3 max-sm:py-2 font-semibold transition-all duration-300 border shadow-lg hover:shadow-xl
           ${isRecording
             ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-red-400'
             : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 border-gray-500'
@@ -266,11 +291,11 @@ const AdvancedRecordingControls = () => {
         title={isRecording ? 'Stop Recording' : 'Start Stream Recording'}
       >
         {isLoading ? (
-          <Loader2 size={20} className="text-white animate-spin" />
+          <Loader2 size={20} className="text-white animate-spin max-sm:w-4 max-sm:h-4" />
         ) : isRecording ? (
-          <Square size={20} className="text-white fill-white" />
+          <Square size={20} className="text-white fill-white max-sm:w-4 max-sm:h-4" />
         ) : (
-          <Circle size={20} className="text-white" />
+          <Circle size={20} className="text-white max-sm:w-4 max-sm:h-4" />
         )}
       </Button>
 
@@ -278,10 +303,10 @@ const AdvancedRecordingControls = () => {
       {!isRecording && (
         <Button
           onClick={startLocalRecording}
-          className="rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 px-4 py-3 font-semibold transition-all duration-300 border border-purple-400 shadow-lg hover:shadow-xl"
+          className="rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 px-4 py-3 max-sm:px-3 max-sm:py-2 font-semibold transition-all duration-300 border border-purple-400 shadow-lg hover:shadow-xl"
           title="Start Local Screen Recording"
         >
-          <VolumeX size={20} className="text-white" />
+          <VolumeX size={20} className="text-white max-sm:w-4 max-sm:h-4" />
         </Button>
       )}
 
@@ -290,13 +315,13 @@ const AdvancedRecordingControls = () => {
         <Button
           onClick={() => downloadStreamRecording(latestStreamRecording)}
           disabled={isDownloading}
-          className="rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 px-4 py-3 font-semibold transition-all duration-300 border border-blue-400 shadow-lg hover:shadow-xl"
+          className="rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 px-4 py-3 max-sm:px-3 max-sm:py-2 font-semibold transition-all duration-300 border border-blue-400 shadow-lg hover:shadow-xl"
           title="Download Stream Recording"
         >
           {isDownloading ? (
-            <Loader2 size={20} className="text-white animate-spin" />
+            <Loader2 size={20} className="text-white animate-spin max-sm:w-4 max-sm:h-4" />
           ) : (
-            <Video size={20} className="text-white" />
+            <Video size={20} className="text-white max-sm:w-4 max-sm:h-4" />
           )}
         </Button>
       )}
@@ -305,18 +330,29 @@ const AdvancedRecordingControls = () => {
       {localRecordingUrl && !isLocalRecording && (
         <Button
           onClick={downloadLocalRecording}
-          className="rounded-2xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 px-4 py-3 font-semibold transition-all duration-300 border border-green-400 shadow-lg hover:shadow-xl"
+          className="rounded-2xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 px-4 py-3 max-sm:px-3 max-sm:py-2 font-semibold transition-all duration-300 border border-green-400 shadow-lg hover:shadow-xl"
           title="Download Local Recording"
         >
-          <Download size={20} className="text-white" />
+          <Download size={20} className="text-white max-sm:w-4 max-sm:h-4" />
+        </Button>
+      )}
+
+      {/* Reset Button - Only show when there are recordings and not currently recording */}
+      {hasRecordings && !isRecording && (
+        <Button
+          onClick={resetRecordings}
+          className="rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-4 py-3 max-sm:px-3 max-sm:py-2 font-semibold transition-all duration-300 border border-orange-400 shadow-lg hover:shadow-xl"
+          title="Reset for New Recording"
+        >
+          <RotateCcw size={20} className="text-white max-sm:w-4 max-sm:h-4" />
         </Button>
       )}
 
       {/* Recording Status Indicator */}
       {isRecording && (
-        <div className="flex items-center gap-1 px-3 py-2 bg-red-500/20 rounded-xl border border-red-400/30">
-          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-          <span className="text-xs text-white/80">
+        <div className="flex items-center gap-1 px-3 py-2 max-sm:px-2 max-sm:py-1 bg-red-500/20 rounded-xl border border-red-400/30">
+          <div className="w-2 h-2 max-sm:w-1.5 max-sm:h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="text-xs max-sm:text-[10px] text-white/80 font-medium">
             {isStreamRecording ? 'Stream REC' : 'Local REC'}
           </span>
         </div>
