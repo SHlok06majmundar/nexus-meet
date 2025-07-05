@@ -25,6 +25,9 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
         image: user?.imageUrl,
       },
       tokenProvider,
+      options: {
+        logLevel: 'warn',
+      },
     });
 
     setVideoClient(client);

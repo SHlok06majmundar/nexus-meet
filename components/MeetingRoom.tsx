@@ -22,7 +22,7 @@ import {
 import Loader from './Loader';
 import EndCallButton from './EndCallButton';
 import ShareButton from './ShareButton';
-import RecordingButton from './RecordingButton';
+import AdvancedRecordingControls from './AdvancedRecordingControls';
 import { cn } from '@/lib/utils';
 
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
@@ -76,6 +76,9 @@ const MeetingRoom = () => {
           {/* Main Call Controls */}
           <CallControls onLeave={() => router.push(`/`)} />
 
+          {/* Recording Controls */}
+          <AdvancedRecordingControls />
+
           {/* Share Meeting Button */}
           <ShareButton 
             meetingLink={meetingLink}
@@ -105,9 +108,6 @@ const MeetingRoom = () => {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Recording Button */}
-          <RecordingButton />
 
           {/* Participants Toggle */}
           <button 
