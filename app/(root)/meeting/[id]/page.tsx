@@ -29,7 +29,7 @@ const MeetingPage = () => {
           </h1>
         </div>
         <p className="text-white/80 text-lg mb-6">
-          The meeting you&apos;re looking for doesn&apos;t exist or has ended.
+          The meeting you're looking for doesn't exist or has ended.
         </p>
         <a 
           href="/"

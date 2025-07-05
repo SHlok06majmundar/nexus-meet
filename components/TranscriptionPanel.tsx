@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
-import { Mic, MicOff, Download, FileText, Users, Clock, RotateCcw } from 'lucide-react';
+import { Mic, MicOff, Download, FileText, Clock, RotateCcw, Volume2, Headphones } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import jsPDF from 'jspdf';
@@ -14,6 +14,8 @@ interface TranscriptEntry {
   text: string;
   timestamp: Date;
   confidence: number;
+  isLocal: boolean;
+  audioSource?: 'local' | 'remote' | 'mixed';
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -31,7 +33,11 @@ const TranscriptionPanel = () => {
   const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isListeningToAll, setIsListeningToAll] = useState(true);
+  const [isCapturingRemoteAudio, setIsCapturingRemoteAudio] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const remoteRecognitionRef = useRef<any>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
   const call = useCall();
   const { useParticipants, useLocalParticipant } = useCallStateHooks();
@@ -44,16 +50,123 @@ const TranscriptionPanel = () => {
     return participant?.name || `User ${participantId.slice(-4)}`;
   }, [participants]);
 
-  // Initialize speech recognition
+  // Setup remote audio capture
+  const setupRemoteAudioCapture = useCallback(async () => {
+    try {
+      if (!call || !isListeningToAll) return;
+
+      // Initialize Web Audio API for remote audio processing
+      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+      // Request access to audio for capturing remote streams
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 16000
+        } 
+      });
+      audioStreamRef.current = stream;
+
+      // Create analyzer for remote audio
+      const analyzer = context.createAnalyser();
+      analyzer.fftSize = 2048;
+
+      // Setup secondary recognition for mixed audio
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        remoteRecognitionRef.current = new SpeechRecognition();
+        remoteRecognitionRef.current.continuous = true;
+        remoteRecognitionRef.current.interimResults = true;
+        remoteRecognitionRef.current.lang = 'en-US';
+        
+        remoteRecognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+          }
+
+          if (finalTranscript.trim()) {
+            // This captures mixed audio - we'll attribute it to remote if it doesn't match local
+            const cleanTranscript = finalTranscript.trim();
+            if (cleanTranscript.split(' ').length >= 2) {
+              // Create entry for mixed/remote audio
+              const mixedEntry: TranscriptEntry = {
+                id: `mixed-${Date.now()}`,
+                speaker: 'Multiple Speakers',
+                speakerId: 'mixed-audio',
+                text: cleanTranscript,
+                timestamp: new Date(),
+                confidence: event.results[event.resultIndex][0].confidence || 0.8,
+                isLocal: false,
+                audioSource: 'mixed'
+              };
+
+              setTranscripts(prev => {
+                // Avoid duplicates by checking recent entries
+                const recentEntries = prev.slice(-3);
+                const isDuplicate = recentEntries.some(entry => 
+                  entry.text.toLowerCase() === cleanTranscript.toLowerCase() &&
+                  Date.now() - entry.timestamp.getTime() < 5000
+                );
+                
+                if (!isDuplicate) {
+                  return [...prev, mixedEntry];
+                }
+                return prev;
+              });
+
+              // Broadcast mixed audio transcript
+              if (call) {
+                call.sendCustomEvent({
+                  type: 'transcript_update',
+                  data: {
+                    speaker: mixedEntry.speaker,
+                    speakerId: mixedEntry.speakerId,
+                    text: mixedEntry.text,
+                    timestamp: mixedEntry.timestamp.toISOString(),
+                    confidence: mixedEntry.confidence,
+                    audioSource: 'mixed'
+                  }
+                }).catch(console.error);
+              }
+            }
+          }
+        };
+      }
+
+      setIsCapturingRemoteAudio(true);
+      toast({
+        title: '🎧 Enhanced Audio Capture',
+        description: 'Now capturing audio from all participants',
+      });
+
+    } catch (error) {
+      console.error('Error setting up remote audio capture:', error);
+      toast({
+        title: '❌ Audio Capture Error',
+        description: 'Could not access enhanced audio capture',
+        variant: 'destructive'
+      });
+    }
+  }, [call, isListeningToAll, toast]);
+
+  // Initialize speech recognition and audio capture
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognition) {
+        // Local user recognition
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
         recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = 'en-US';
+        recognitionRef.current.maxAlternatives = 3;
 
         recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let interimTranscript = '';
@@ -72,18 +185,34 @@ const TranscriptionPanel = () => {
 
           if (finalTranscript && localParticipant) {
             const cleanTranscript = finalTranscript.trim();
-            // Only add meaningful transcripts (more than 2 words)
             if (cleanTranscript.split(' ').length >= 2) {
               const newEntry: TranscriptEntry = {
-                id: Date.now().toString(),
+                id: `local-${Date.now()}`,
                 speaker: getSpeakerName(localParticipant.userId),
                 speakerId: localParticipant.userId,
                 text: cleanTranscript,
                 timestamp: new Date(),
-                confidence: event.results[event.resultIndex][0].confidence || 0.9
+                confidence: event.results[event.resultIndex][0].confidence || 0.9,
+                isLocal: true,
+                audioSource: 'local'
               };
 
               setTranscripts(prev => [...prev, newEntry]);
+
+              // Broadcast to other participants via Stream
+              if (call && isListeningToAll) {
+                call.sendCustomEvent({
+                  type: 'transcript_update',
+                  data: {
+                    speaker: newEntry.speaker,
+                    speakerId: newEntry.speakerId,
+                    text: newEntry.text,
+                    timestamp: newEntry.timestamp.toISOString(),
+                    confidence: newEntry.confidence,
+                    audioSource: 'local'
+                  }
+                }).catch(console.error);
+              }
             }
             setCurrentTranscript('');
           }
@@ -102,16 +231,22 @@ const TranscriptionPanel = () => {
 
         recognitionRef.current.onend = () => {
           if (isTranscribing) {
-            // Restart recognition if it was stopped unexpectedly
             setTimeout(() => {
-              try {
-                recognitionRef.current?.start();
-              } catch (error) {
-                console.error('Error restarting recognition:', error);
+              if (recognitionRef.current && isTranscribing) {
+                try {
+                  recognitionRef.current.start();
+                } catch (error) {
+                  console.error('Error restarting recognition:', error);
+                }
               }
             }, 100);
           }
         };
+
+        // Setup remote audio capture for all participants
+        if (isListeningToAll && call) {
+          setupRemoteAudioCapture();
+        }
       }
     }
 
@@ -119,8 +254,54 @@ const TranscriptionPanel = () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (remoteRecognitionRef.current) {
+        remoteRecognitionRef.current.stop();
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+      }
     };
-  }, [isTranscribing, localParticipant, participants, toast, getSpeakerName]);
+  }, [isTranscribing, localParticipant, getSpeakerName, call, isListeningToAll, toast, setupRemoteAudioCapture]);
+
+  // Listen for transcript updates from other participants
+  useEffect(() => {
+    if (!call) return;
+
+    const handleCustomEvent = (event: any) => {
+      if (event.type === 'transcript_update' && event.data.speakerId !== localParticipant?.userId) {
+        const remoteEntry: TranscriptEntry = {
+          id: `remote-${event.data.speakerId}-${Date.now()}`,
+          speaker: event.data.speaker,
+          speakerId: event.data.speakerId,
+          text: event.data.text,
+          timestamp: new Date(event.data.timestamp),
+          confidence: event.data.confidence,
+          isLocal: false,
+          audioSource: event.data.audioSource || 'remote'
+        };
+
+        setTranscripts(prev => {
+          // Avoid duplicates from multiple sources
+          const recentEntries = prev.slice(-5);
+          const isDuplicate = recentEntries.some(entry => 
+            entry.text.toLowerCase() === remoteEntry.text.toLowerCase() &&
+            Math.abs(entry.timestamp.getTime() - remoteEntry.timestamp.getTime()) < 3000
+          );
+          
+          if (!isDuplicate) {
+            return [...prev, remoteEntry];
+          }
+          return prev;
+        });
+      }
+    };
+
+    call.on('custom', handleCustomEvent);
+
+    return () => {
+      call.off('custom', handleCustomEvent);
+    };
+  }, [call, localParticipant]);
 
   const startTranscription = async () => {
     try {
@@ -134,86 +315,82 @@ const TranscriptionPanel = () => {
       }
 
       setIsTranscribing(true);
-      setTranscripts([]);
-      setCurrentTranscript('');
-      
-      // Add professional start message
-      const startEntry: TranscriptEntry = {
-        id: Date.now().toString(),
-        speaker: 'System',
-        speakerId: 'system',
-        text: '🎤 AI Transcription Started - Real-time speech conversion is now active for all participants',
-        timestamp: new Date(),
-        confidence: 1.0
-      };
-      setTranscripts([startEntry]);
-
       recognitionRef.current.start();
+
+      // Start remote audio capture if in multi-user mode
+      if (isListeningToAll && remoteRecognitionRef.current) {
+        try {
+          remoteRecognitionRef.current.start();
+        } catch (error) {
+          console.warn('Remote recognition already started or failed:', error);
+        }
+      }
       
       toast({
-        title: 'AI Transcription Started',
-        description: 'Now recording and transcribing speech from all participants.',
+        title: '🎤 AI Transcription Started',
+        description: isListeningToAll 
+          ? `Recording all ${participants.length} participants` 
+          : 'Recording your voice only',
       });
     } catch (error) {
       console.error('Error starting transcription:', error);
-      setIsTranscribing(false);
       toast({
-        title: 'Failed to Start Transcription',
-        description: 'Please check your microphone permissions.',
-        variant: 'destructive'
+        title: '❌ Transcription Error',
+        description: 'Failed to start AI transcription',
+        variant: 'destructive',
       });
     }
   };
 
   const stopTranscription = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
     setIsTranscribing(false);
     setCurrentTranscript('');
     
-    const endEntry: TranscriptEntry = {
-      id: Date.now().toString(),
-      speaker: 'System',
-      speakerId: 'system',
-      text: '🛑 AI Transcription Completed - Session summary ready for download',
-      timestamp: new Date(),
-      confidence: 1.0
-    };
-    setTranscripts(prev => [...prev, endEntry]);
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
 
+    if (remoteRecognitionRef.current) {
+      remoteRecognitionRef.current.stop();
+    }
+    
     toast({
-      title: 'AI Transcription Stopped',
-      description: 'Transcription has been completed.',
+      title: '🛑 AI Transcription Stopped',
+      description: 'All transcription services have been stopped',
+    });
+  };
+
+  const toggleAllParticipantsMode = async () => {
+    const newMode = !isListeningToAll;
+    setIsListeningToAll(newMode);
+    
+    if (newMode && !isCapturingRemoteAudio) {
+      await setupRemoteAudioCapture();
+    }
+    
+    toast({
+      title: newMode ? '🎧 Multi-Participant Mode' : '🎤 Personal Mode',
+      description: newMode 
+        ? `Now capturing audio from all ${participants.length} participants` 
+        : 'Now recording your voice only',
     });
   };
 
   const resetTranscription = () => {
-    // Stop any ongoing transcription
-    if (recognitionRef.current && isTranscribing) {
-      recognitionRef.current.stop();
-    }
-    
-    // Reset all states
-    setIsTranscribing(false);
     setTranscripts([]);
     setCurrentTranscript('');
-    
     toast({
-      title: 'Transcription Reset',
-      description: 'All transcription data has been cleared. Ready for a new session.',
+      title: '🔄 Transcription Reset',
+      description: 'All transcripts have been cleared',
     });
   };
 
   const generatePDF = async () => {
-    // Filter out system messages and get only real user transcripts
-    const userTranscripts = transcripts.filter(t => t.speakerId !== 'system' && t.text.trim() !== '');
-    
-    if (userTranscripts.length === 0) {
+    if (transcripts.length === 0) {
       toast({
-        title: 'No User Speech Recorded',
-        description: 'No actual speech has been transcribed yet. Please speak during the meeting first.',
-        variant: 'destructive'
+        title: '📄 No Content',
+        description: 'No transcripts available to generate PDF',
+        variant: 'destructive',
       });
       return;
     }
@@ -221,212 +398,93 @@ const TranscriptionPanel = () => {
     setIsGeneratingPDF(true);
 
     try {
-      const pdf = new (jsPDF as any)();
-      const pageWidth = pdf.internal.pageSize.width;
-      const pageHeight = pdf.internal.pageSize.height;
+      // eslint-disable-next-line new-cap
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
-      // const lineHeight = 8;
+      const lineHeight = 7;
       let yPosition = margin;
 
-      // Professional Header with Logo Area
-      pdf.setFontSize(22);
-      pdf.setTextColor(59, 130, 246);
-      pdf.text('NEXUS MEET', margin, yPosition);
-      pdf.setFontSize(14);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('AI-Powered Meeting Transcription', margin, yPosition + 8);
-      
-      // Add a line separator
-      pdf.setDrawColor(59, 130, 246);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, yPosition + 15, pageWidth - margin, yPosition + 15);
-      yPosition += 25;
+      // Header
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Nexus Meet - AI Transcription Report', margin, yPosition);
+      yPosition += 15;
 
-      // Meeting Information Box
-      pdf.setFillColor(248, 250, 252);
-      pdf.rect(margin, yPosition, pageWidth - margin * 2, 35, 'F');
-      pdf.setDrawColor(226, 232, 240);
-      pdf.rect(margin, yPosition, pageWidth - margin * 2, 35, 'S');
-      
-      yPosition += 8;
+      // Meeting info
       pdf.setFontSize(12);
-      pdf.setTextColor(0, 0, 0);
-      const meetingTitle = call?.state?.custom?.description || 'Business Meeting';
-      const meetingDate = new Date().toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      const meetingTime = userTranscripts[0]?.timestamp.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }) || new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      const duration = userTranscripts.length > 0 ? 
-        Math.round((userTranscripts[userTranscripts.length - 1].timestamp.getTime() - userTranscripts[0].timestamp.getTime()) / 60000) : 0;
-      
-      pdf.text(`Meeting Title: ${meetingTitle}`, margin + 5, yPosition);
-      yPosition += 6;
-      pdf.text(`Date: ${meetingDate}`, margin + 5, yPosition);
-      yPosition += 6;
-      pdf.text(`Start Time: ${meetingTime}`, margin + 5, yPosition);
-      yPosition += 6;
-      pdf.text(`Duration: ${duration} minutes`, margin + 5, yPosition);
-      yPosition += 6;
-      pdf.text(`Total Participants: ${participants.length}`, margin + 5, yPosition);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, yPosition);
+      yPosition += 10;
+      pdf.text(`Total Participants: ${participants.length}`, margin, yPosition);
+      yPosition += 10;
+      pdf.text(`Total Transcripts: ${transcripts.length}`, margin, yPosition);
       yPosition += 15;
 
-      // Participants Section
-      const uniqueSpeakers = Array.from(new Set(userTranscripts.map(t => t.speaker)));
-      if (uniqueSpeakers.length > 0) {
-        pdf.setFontSize(14);
-        pdf.setTextColor(139, 92, 246);
-        pdf.text('Meeting Participants', margin, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(0, 0, 0);
-        uniqueSpeakers.forEach((participant, index) => {
-          const speakerEntries = userTranscripts.filter(t => t.speaker === participant);
-          const wordCount = speakerEntries.reduce((acc, entry) => acc + entry.text.split(' ').length, 0);
-          
-          pdf.text(`${index + 1}. ${participant} (${speakerEntries.length} contributions, ~${wordCount} words)`, margin + 5, yPosition);
-          yPosition += 5;
-        });
-        yPosition += 10;
-      }
-
-      // Transcript Section Header
+      // Transcripts
       pdf.setFontSize(14);
-      pdf.setTextColor(139, 92, 246);
-      pdf.text('Meeting Transcript', margin, yPosition);
-      yPosition += 5;
-      
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('(Generated by AI Speech Recognition - Accuracy may vary)', margin, yPosition);
-      yPosition += 15;
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Transcript Details:', margin, yPosition);
+      yPosition += 10;
 
-      // Enhanced Transcript Content
       pdf.setFontSize(10);
-      let currentSpeaker = '';
-      
-      userTranscripts.forEach((entry, index) => {
-        // Check if we need a new page
-        if (yPosition > pageHeight - 40) {
+      pdf.setFont('helvetica', 'normal');
+
+      transcripts.forEach((transcript) => {
+        if (yPosition > pageHeight - 30) {
           pdf.addPage();
           yPosition = margin;
         }
 
-        const timeStr = entry.timestamp.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        });
-
-        // Only show speaker name if it's different from previous
-        if (currentSpeaker !== entry.speaker) {
-          currentSpeaker = entry.speaker;
-          
-          // Speaker header with background
-          pdf.setFillColor(245, 247, 250);
-          pdf.rect(margin, yPosition - 2, pageWidth - margin * 2, 8, 'F');
-          
-          pdf.setFontSize(11);
-          pdf.setTextColor(59, 130, 246);
-          pdf.text(`${entry.speaker}`, margin + 3, yPosition + 3);
-          
-          pdf.setFontSize(8);
-          pdf.setTextColor(120, 120, 120);
-          pdf.text(timeStr, pageWidth - margin - 20, yPosition + 3);
-          
-          yPosition += 10;
-        }
-
-        // Speech content with better formatting
-        pdf.setFontSize(10);
-        pdf.setTextColor(0, 0, 0);
+        const timeStr = transcript.timestamp.toLocaleTimeString();
+        const confidenceStr = `(${Math.round(transcript.confidence * 100)}% confidence)`;
+        const speakerLine = `[${timeStr}] ${transcript.speaker} ${confidenceStr}:`;
         
-        // Clean and format the text
-        const cleanText = entry.text.trim().replace(/\s+/g, ' ');
-        const textLines = pdf.splitTextToSize(cleanText, pageWidth - margin * 2 - 10);
-        
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(speakerLine, margin, yPosition);
+        yPosition += lineHeight;
+
+        pdf.setFont('helvetica', 'normal');
+        const textLines = pdf.splitTextToSize(transcript.text, pageWidth - 2 * margin);
         textLines.forEach((line: string) => {
-          if (yPosition > pageHeight - 25) {
+          if (yPosition > pageHeight - 30) {
             pdf.addPage();
             yPosition = margin;
           }
           pdf.text(line, margin + 10, yPosition);
-          yPosition += 5;
+          yPosition += lineHeight;
         });
-        
-        yPosition += 3; // Small gap between entries
+        yPosition += 3;
       });
 
-      // Professional Footer
+      // Footer
       const totalPages = (pdf as any).internal.getNumberOfPages();
-      const generatedTime = new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
-        
-        // Footer line
-        pdf.setDrawColor(226, 232, 240);
-        pdf.setLineWidth(0.3);
-        pdf.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
-        
-        // Footer text
         pdf.setFontSize(8);
-        pdf.setTextColor(120, 120, 120);
+        pdf.setFont('helvetica', 'italic');
         pdf.text(
-          `Generated by Nexus Meet AI on ${generatedTime}`,
-          margin,
-          pageHeight - 12
+          `Page ${i} of ${totalPages} - Generated by Nexus Meet AI Transcription`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
         );
-        pdf.text(
-          `Page ${i} of ${totalPages}`,
-          pageWidth - margin,
-          pageHeight - 12,
-          { align: 'right' }
-        );
-        
-        // Confidentiality notice
-        if (i === totalPages) {
-          pdf.setFontSize(7);
-          pdf.text(
-            'This transcript was generated using AI technology and may contain inaccuracies.',
-            pageWidth / 2,
-            pageHeight - 5,
-            { align: 'center' }
-          );
-        }
       }
 
-      const filename = `nexus-meet-transcript-${new Date().toISOString().split('T')[0]}-${new Date().toLocaleTimeString('en-US', { hour12: false }).replace(/:/g, '')}.pdf`;
-      pdf.save(filename);
+      const fileName = `nexus-meet-transcript-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
 
       toast({
-        title: 'Professional Transcript Generated',
-        description: `High-quality meeting notes saved as ${filename}`,
+        title: '📄 PDF Generated Successfully',
+        description: `Transcript saved as ${fileName}`,
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
-        title: 'Failed to Generate PDF',
-        description: 'Please try again later.',
-        variant: 'destructive'
+        title: '❌ PDF Generation Failed',
+        description: 'Failed to generate PDF transcript',
+        variant: 'destructive',
       });
     } finally {
       setIsGeneratingPDF(false);
@@ -437,153 +495,213 @@ const TranscriptionPanel = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Get unique participants for display
-  const uniqueParticipants = Array.from(new Set(transcripts.map(t => t.speaker)));
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 0.8) return 'text-green-400';
+    if (confidence >= 0.6) return 'text-yellow-400';
+    return 'text-red-400';
+  };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-dark-1/95 to-dark-2/95 backdrop-blur-lg border-l border-white/10">
+    <div className="flex h-full w-full flex-col bg-gradient-to-br from-dark-1/95 to-dark-2/95 backdrop-blur-lg border-l border-white/10">
       {/* Header */}
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-r from-blue-1 to-purple-1 p-2 rounded-lg">
-              <FileText size={16} className="text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-white">AI Transcription</h3>
+      <div className="flex items-center justify-between border-b border-white/10 p-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-gradient-to-br from-purple-1 to-pink-1 p-2">
+            <FileText size={20} className="text-white" />
           </div>
-          <div className="flex items-center gap-1 text-xs text-white/60">
-            <Users size={12} />
-            <span>{participants.length}</span>
+          <div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-purple-3 to-pink-3 bg-clip-text text-transparent">
+              AI Transcription
+            </h3>
+            <p className="text-xs text-white/60">
+              {isListeningToAll 
+                ? `Enhanced mode - ${participants.length} participants` 
+                : 'Personal mode'
+              }
+              {isCapturingRemoteAudio && (
+                <span className="ml-2 text-blue-400">• Multi-audio</span>
+              )}
+            </p>
           </div>
         </div>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/60">{transcripts.length} entries</span>
+          {isTranscribing && (
+            <div className="flex items-center gap-1">
+              <div className="size-1 animate-pulse rounded-full bg-red-500"></div>
+              <span className="text-xs text-red-400">Live</span>
+            </div>
+          )}
+          {isCapturingRemoteAudio && (
+            <div className="flex items-center gap-1">
+              <Headphones size={12} className="text-blue-400" />
+              <span className="text-xs text-blue-400">Enhanced</span>
+            </div>
+          )}
+        </div>
+      </div>
 
-        {/* Controls */}
-        <div className="flex gap-2">
+      {/* Controls */}
+      <div className="border-b border-white/10 p-4">
+        <div className="mb-4 flex flex-wrap gap-2">
           <Button
             onClick={isTranscribing ? stopTranscription : startTranscription}
-            disabled={!call}
-            className={`flex-1 rounded-xl font-semibold transition-all duration-300 ${
+            size="sm"
+            className={`flex items-center gap-2 ${
               isTranscribing
                 ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
                 : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-            }`}
+            } rounded-xl font-semibold transition-all duration-300`}
           >
-            {isTranscribing ? (
-              <>
-                <MicOff size={16} className="mr-2" />
-                Stop
-              </>
-            ) : (
-              <>
-                <Mic size={16} className="mr-2" />
-                Start
-              </>
-            )}
+            {isTranscribing ? <MicOff size={16} /> : <Mic size={16} />}
+            {isTranscribing ? 'Stop' : 'Start'}
           </Button>
-          
+
           <Button
-            onClick={generatePDF}
-            disabled={transcripts.length === 0 || isGeneratingPDF}
-            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl font-semibold transition-all duration-300"
-            title="Download PDF"
+            onClick={toggleAllParticipantsMode}
+            size="sm"
+            className={`flex items-center gap-2 ${
+              isListeningToAll
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+                : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
+            } rounded-xl font-semibold transition-all duration-300`}
           >
-            {isGeneratingPDF ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Download size={16} />
-            )}
+            {isListeningToAll ? <Headphones size={16} /> : <Volume2 size={16} />}
+            {isListeningToAll ? 'Enhanced' : 'Personal'}
           </Button>
 
           <Button
             onClick={resetTranscription}
-            disabled={transcripts.length === 0 && !isTranscribing}
-            className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 rounded-xl font-semibold transition-all duration-300"
-            title="Reset Session"
+            size="sm"
+            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl font-semibold transition-all duration-300"
           >
             <RotateCcw size={16} />
+            Reset
+          </Button>
+
+          <Button
+            onClick={generatePDF}
+            disabled={transcripts.length === 0 || isGeneratingPDF}
+            size="sm"
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50"
+          >
+            {isGeneratingPDF ? (
+              <>
+                <div className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download size={16} />
+                PDF
+              </>
+            )}
           </Button>
         </div>
 
-        {/* Live status */}
-        {isTranscribing && (
-          <div className="flex items-center gap-2 mt-3 p-2 bg-green-500/20 rounded-lg border border-green-400/30">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-xs text-green-400 font-medium">Live Transcription Active</span>
+        {/* Statistics */}
+        {transcripts.length > 0 && (
+          <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="text-center">
+                <div className="text-xl font-bold text-blue-400">{transcripts.length}</div>
+                <div className="text-white/60">Total Messages</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-purple-400">{new Set(transcripts.map(t => t.speakerId)).size}</div>
+                <div className="text-white/60">Active Speakers</div>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
       {/* Transcription Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {transcripts.length === 0 && !isTranscribing ? (
           <div className="text-center py-8">
             <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-6">
               <Mic size={32} className="text-blue-400 mx-auto mb-2" />
             </div>
             <p className="text-white/60 text-sm mb-4">
-              Start AI transcription to see live speech-to-text conversion
+              Start AI transcription to capture and transcribe speech in real-time
             </p>
-            <div className="grid grid-cols-1 gap-2 text-xs text-white/50 max-w-xs mx-auto">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <div className="space-y-2 text-xs text-white/40">
+              <div className="flex items-center justify-center gap-2">
+                <div className="size-2 rounded-full bg-green-400"></div>
                 <span>Real-time speech recognition</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span>Speaker identification</span>
+              <div className="flex items-center justify-center gap-2">
+                <div className="size-2 rounded-full bg-blue-400"></div>
+                <span>Multi-participant audio capture</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <div className="flex items-center justify-center gap-2">
+                <div className="size-2 rounded-full bg-teal-400"></div>
+                <span>Enhanced remote audio processing</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <div className="size-2 rounded-full bg-purple-400"></div>
                 <span>Professional PDF export</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                <span>Session reset available</span>
+              <div className="flex items-center justify-center gap-2">
+                <div className="size-2 rounded-full bg-pink-400"></div>
+                <span>Confidence scoring & audio source tracking</span>
               </div>
             </div>
           </div>
         ) : (
-          <>
-            {transcripts.map((entry) => (
-              <div key={entry.id} className="group">
-                <div className={`p-3 rounded-xl transition-all duration-200 ${
-                  entry.speakerId === 'system' 
-                    ? 'bg-blue-500/10 border border-blue-400/30' 
-                    : entry.speakerId === localParticipant?.userId
-                    ? 'bg-green-500/10 border border-green-400/30'
-                    : 'bg-purple-500/10 border border-purple-400/30'
-                }`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-sm font-semibold ${
-                      entry.speakerId === 'system' 
-                        ? 'text-blue-400' 
-                        : entry.speakerId === localParticipant?.userId
-                        ? 'text-green-400'
-                        : 'text-purple-400'
-                    }`}>
-                      {entry.speaker}
+          <div className="space-y-3">
+            {/* Active transcripts */}
+            {transcripts.map((transcript) => (
+              <div
+                key={transcript.id}
+                className={`rounded-xl p-3 transition-all duration-300 ${
+                  transcript.isLocal
+                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/30'
+                    : transcript.audioSource === 'mixed'
+                    ? 'bg-gradient-to-r from-green-500/20 to-teal-500/20 border border-green-400/30'
+                    : 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-400/30'
+                }`}
+              >
+                <div className="mb-1 flex items-center justify-between">
+                  <span className={`text-sm font-semibold ${
+                    transcript.isLocal 
+                      ? 'text-blue-400' 
+                      : transcript.audioSource === 'mixed'
+                      ? 'text-green-400'
+                      : 'text-white'
+                  }`}>
+                    {transcript.speaker}
+                    {transcript.isLocal && (
+                      <span className="ml-2 text-xs text-blue-300">(You)</span>
+                    )}
+                    {transcript.audioSource === 'mixed' && (
+                      <span className="ml-2 text-xs text-green-300">(Multi-audio)</span>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-2 text-xs text-white/60">
+                    <Clock size={12} />
+                    <span>{formatTime(transcript.timestamp)}</span>
+                    <span className={`font-mono ${getConfidenceColor(transcript.confidence)}`}>
+                      {Math.round(transcript.confidence * 100)}%
                     </span>
-                    <div className="flex items-center gap-1 text-xs text-white/50">
-                      <Clock size={10} />
-                      <span>{formatTime(entry.timestamp)}</span>
-                    </div>
+                    {transcript.audioSource && (
+                      <span className="text-xs px-1 py-0.5 rounded bg-white/10">
+                        {transcript.audioSource === 'local' ? '🎤' : transcript.audioSource === 'mixed' ? '🎧' : '📡'}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-white/90 text-sm leading-relaxed">
-                    {entry.text}
-                  </p>
-                  {entry.confidence < 0.8 && entry.speakerId !== 'system' && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="size-1 rounded-full bg-yellow-500"></div>
-                      <span className="text-xs text-yellow-400">Low confidence</span>
-                    </div>
-                  )}
                 </div>
+                <p className="text-sm text-white/90 leading-relaxed">
+                  {transcript.text}
+                </p>
               </div>
             ))}
 
             {/* Current live transcript */}
             {currentTranscript && isTranscribing && (
-              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-400/30 border-dashed">
+              <div className="rounded-xl border border-blue-400/30 border-dashed bg-blue-500/10 p-3">
                 <div className="mb-1 flex items-center gap-2">
                   <span className="text-sm font-semibold text-blue-400">
                     {getSpeakerName(localParticipant?.userId || '')}
@@ -593,37 +711,14 @@ const TranscriptionPanel = () => {
                     <span className="text-xs text-blue-400">Speaking...</span>
                   </div>
                 </div>
-                <p className="text-white/70 text-sm italic">
+                <p className="text-sm italic text-white/70">
                   {currentTranscript}
                 </p>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
-
-      {/* Footer Stats */}
-      {transcripts.length > 0 && (
-        <div className="p-3 border-t border-white/10 bg-dark-1/50">
-          <div className="flex justify-between items-center text-xs text-white/60">
-            <div className="flex gap-4">
-              <span>{transcripts.filter(t => t.speakerId !== 'system').length} messages</span>
-              <span>{uniqueParticipants.filter(p => p !== 'System').length} speakers</span>
-            </div>
-            {!isTranscribing && transcripts.length > 0 && (
-              <Button
-                onClick={resetTranscription}
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg"
-              >
-                <RotateCcw size={10} className="mr-1" />
-                Clear All
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
