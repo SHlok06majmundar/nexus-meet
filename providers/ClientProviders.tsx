@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { SocketProvider } from './SocketProvider';
 
 interface ClientProvidersProps {
@@ -8,6 +8,17 @@ interface ClientProvidersProps {
 }
 
 export default function ClientProviders({ children }: ClientProvidersProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Render without provider during SSR
+  if (!isMounted) {
+    return <>{children}</>;
+  }
+
   return (
     <SocketProvider>
       {children}

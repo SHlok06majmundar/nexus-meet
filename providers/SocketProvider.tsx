@@ -14,7 +14,7 @@ const SocketContext = createContext<SocketContextType>({
 });
 
 export const useSocket = () => {
-  // SSR safety check - return default values if no context or during SSR
+  // Complete SSR safety - return immediately if on server
   if (typeof window === 'undefined') {
     return {
       socket: null,
@@ -22,14 +22,24 @@ export const useSocket = () => {
     };
   }
   
-  const context = useContext(SocketContext);
-  if (!context) {
+  // Try to get context, but with fallback
+  try {
+    const context = useContext(SocketContext);
+    if (!context) {
+      return {
+        socket: null,
+        isConnected: false
+      };
+    }
+    return context;
+  } catch (error) {
+    // If context access fails, return safe defaults
+    console.warn('Socket context access failed:', error);
     return {
       socket: null,
       isConnected: false
     };
   }
-  return context;
 };
 
 interface SocketProviderProps {
@@ -39,10 +49,16 @@ interface SocketProviderProps {
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<any | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Critical SSR safety - don't do anything until mounted
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
+    // Only run on client side after mounting
+    if (!isMounted || typeof window === 'undefined') return;
 
     console.log('Initializing real-time features...');
     
@@ -102,12 +118,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         mockSocket.disconnect();
       }
     };
-  }, []);
+  }, [isMounted]);
 
   const contextValue = {
-    socket,
-    isConnected
+    socket: isMounted ? socket : null,
+    isConnected: isMounted ? isConnected : false
   };
+
+  // Don't render anything until mounted
+  if (!isMounted) {
+    return <>{children}</>;
+  }
 
   return (
     <SocketContext.Provider value={contextValue}>
