@@ -35,6 +35,13 @@ const ChatPanel = () => {
   const params = useParams();
   const meetingId = params?.id as string;
 
+  // SSR safety check
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Auto scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,7 +53,7 @@ const ChatPanel = () => {
 
   // Initialize Socket.IO connection for this meeting
   useEffect(() => {
-    if (!socket || !isConnected || !localParticipant || !meetingId) return;
+    if (!isMounted || !socket || !isConnected || !localParticipant || !meetingId) return;
 
     // Join meeting room
     socket.emit('join-meeting', meetingId, {
@@ -158,6 +165,7 @@ const ChatPanel = () => {
       });
     };
   }, [
+    isMounted,
     socket,
     isConnected,
     localParticipant,

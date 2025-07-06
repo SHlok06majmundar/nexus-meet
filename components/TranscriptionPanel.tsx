@@ -169,8 +169,17 @@ const TranscriptionPanel = () => {
   const params = useParams();
   const meetingId = params?.id as string;
 
+  // SSR safety check
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Check if remote audio capture is supported
   useEffect(() => {
+    if (!isMounted) return;
+    
     const checkSupport = () => {
       try {
         // Check if getDisplayMedia with audio is supported
@@ -186,11 +195,11 @@ const TranscriptionPanel = () => {
       }
     };
     checkSupport();
-  }, []);
+  }, [isMounted]);
 
   // Listen for shared transcripts from other users
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    if (!isMounted || !socket || !isConnected) return;
 
     socket.on('new-transcript', (transcript: TranscriptEntry) => {
       setTranscripts((prev) => {
@@ -203,7 +212,7 @@ const TranscriptionPanel = () => {
     return () => {
       socket.off('new-transcript');
     };
-  }, [socket, isConnected]);
+  }, [isMounted, socket, isConnected]);
 
   // Get speaker name from participant ID
   const getSpeakerName = useCallback(
@@ -235,9 +244,11 @@ const TranscriptionPanel = () => {
       };
 
       // Share transcript with other participants
-      socket.emit('send-transcript', transcript);
+      if (isMounted && socket && isConnected) {
+        socket.emit('send-transcript', transcript);
+      }
     },
-    [socket, isConnected, meetingId, getSpeakerName]
+    [isMounted, socket, isConnected, meetingId, getSpeakerName]
   );
 
   // Setup enhanced remote audio capture
@@ -310,7 +321,9 @@ const TranscriptionPanel = () => {
             };
 
             // Share transcript with other participants
-            socket.emit('send-transcript', transcript);
+            if (isMounted && socket && isConnected) {
+              socket.emit('send-transcript', transcript);
+            }
           }
           setCurrentTranscript('');
         }
@@ -347,6 +360,7 @@ const TranscriptionPanel = () => {
       throw error;
     }
   }, [
+    isMounted,
     recognitionRef,
     localParticipant,
     getSpeakerName,
@@ -359,6 +373,9 @@ const TranscriptionPanel = () => {
 
   // Initialize speech recognition with better error handling
   useEffect(() => {
+    // Capture ref values at the start of the effect
+    const currentAudioStream = audioStreamRef.current;
+    
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
         (window as any).SpeechRecognition ||
@@ -428,11 +445,11 @@ const TranscriptionPanel = () => {
       if (remoteAudioCaptureRef.current) {
         remoteAudioCaptureRef.current.stop();
       }
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      if (currentAudioStream) {
+        currentAudioStream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [isTranscribing, toast]);
 
   const startTranscription = async () => {
     try {

@@ -14,7 +14,21 @@ const SocketContext = createContext<SocketContextType>({
 });
 
 export const useSocket = () => {
+  // SSR safety check - return default values if no context or during SSR
+  if (typeof window === 'undefined') {
+    return {
+      socket: null,
+      isConnected: false
+    };
+  }
+  
   const context = useContext(SocketContext);
+  if (!context) {
+    return {
+      socket: null,
+      isConnected: false
+    };
+  }
   return context;
 };
 
