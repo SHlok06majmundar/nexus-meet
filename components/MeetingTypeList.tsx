@@ -77,21 +77,21 @@ const MeetingTypeList = () => {
           img="/icons/add-meeting.svg"
           title="Instant Meeting"
           description="Start a meeting right now"
-          className="bg-gradient-to-br from-blue-1 to-blue-2 hover:from-blue-2 hover:to-blue-1 transform hover:scale-105 transition-all duration-300"
+          className="transform bg-gradient-to-br from-blue-1 to-blue-2 transition-all duration-300 hover:scale-105 hover:from-blue-2 hover:to-blue-1"
           handleClick={() => setMeetingState('isInstantMeeting')}
         />
         <HomeCard
           img="/icons/schedule.svg"
           title="Schedule Meeting"
           description="Plan your meeting ahead"
-          className="bg-gradient-to-br from-purple-1 to-purple-2 hover:from-purple-2 hover:to-purple-1 transform hover:scale-105 transition-all duration-300"
+          className="transform bg-gradient-to-br from-purple-1 to-purple-2 transition-all duration-300 hover:scale-105 hover:from-purple-2 hover:to-purple-1"
           handleClick={() => setMeetingState('isScheduleMeeting')}
         />
         <HomeCard
           img="/icons/join-meeting.svg"
           title="Join Meeting"
           description="Enter via invitation link"
-          className="bg-gradient-to-br from-green-1 to-green-2 hover:from-green-2 hover:to-green-1 transform hover:scale-105 transition-all duration-300"
+          className="transform bg-gradient-to-br from-green-1 to-green-2 transition-all duration-300 hover:scale-105 hover:from-green-2 hover:to-green-1"
           handleClick={() => setMeetingState('isJoiningMeeting')}
         />
       </section>
@@ -108,7 +108,7 @@ const MeetingTypeList = () => {
               Add a description
             </label>
             <Textarea
-              className="border border-white/20 bg-dark-3/50 backdrop-blur-md focus-visible:ring-2 focus-visible:ring-blue-1 focus-visible:ring-offset-0 text-white placeholder:text-white/60 rounded-xl"
+              className="rounded-xl border border-white/20 bg-dark-3/50 text-white backdrop-blur-md placeholder:text-white/60 focus-visible:ring-2 focus-visible:ring-blue-1 focus-visible:ring-offset-0"
               placeholder="What's this meeting about?"
               onChange={(e) =>
                 setValues({ ...values, description: e.target.value })
@@ -127,7 +127,7 @@ const MeetingTypeList = () => {
               timeIntervals={15}
               timeCaption="time"
               dateFormat="MMMM d, yyyy h:mm aa"
-              className="w-full rounded-xl bg-dark-3/50 backdrop-blur-md border border-white/20 p-3 focus:outline-none focus:ring-2 focus:ring-blue-1 text-white"
+              className="w-full rounded-xl border border-white/20 bg-dark-3/50 p-3 text-white backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-1"
             />
           </div>
         </MeetingModal>
@@ -146,13 +146,17 @@ const MeetingTypeList = () => {
           buttonIcon="/icons/copy.svg"
         >
           <div className="flex flex-col gap-4">
-            <p className="text-white/80">Your meeting has been scheduled successfully!</p>
-            <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-              <p className="text-sm text-white/70 mb-2">Meeting Link:</p>
-              <p className="text-white font-mono text-sm break-all">{meetingLink}</p>
+            <p className="text-white/80">
+              Your meeting has been scheduled successfully!
+            </p>
+            <div className="rounded-xl border border-white/20 bg-white/10 p-4">
+              <p className="mb-2 text-sm text-white/70">Meeting Link:</p>
+              <p className="break-all font-mono text-sm text-white">
+                {meetingLink}
+              </p>
             </div>
             <div className="flex justify-center">
-              <ShareButton 
+              <ShareButton
                 meetingLink={meetingLink}
                 meetingTitle={values.description || 'Scheduled Meeting'}
               />
@@ -172,7 +176,7 @@ const MeetingTypeList = () => {
         <Input
           placeholder="Meeting link"
           onChange={(e) => setValues({ ...values, link: e.target.value })}
-          className="border border-white/20 bg-dark-3/50 backdrop-blur-md focus-visible:ring-2 focus-visible:ring-blue-1 focus-visible:ring-offset-0 text-white placeholder:text-white/60 rounded-xl"
+          className="rounded-xl border border-white/20 bg-dark-3/50 text-white backdrop-blur-md placeholder:text-white/60 focus-visible:ring-2 focus-visible:ring-blue-1 focus-visible:ring-offset-0"
         />
       </MeetingModal>
 

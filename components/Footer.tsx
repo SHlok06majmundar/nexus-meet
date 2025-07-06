@@ -74,7 +74,8 @@ const Footer = () => {
             <p className="mb-6 text-sm leading-relaxed text-white/70">
               {' '}
               Professional video conferencing platform with AI-powered
-              transcription, real-time chat, and seamless collaboration tools.{' '}
+              transcription, real-time chat, and seamless collaboration
+              tools.{' '}
             </p>{' '}
             {/* Social Links */}{' '}
             <div className="flex gap-4">
@@ -225,8 +226,7 @@ const Footer = () => {
             {' '}
             <p className="flex items-center gap-1">
               {' '}
-              © {currentYear} Nexus Meet. Made{' '}
-               by Shlok Majmundar{' '}
+              © {currentYear} Nexus Meet. Made by Shlok Majmundar{' '}
             </p>{' '}
           </div>{' '}
         </div>{' '}

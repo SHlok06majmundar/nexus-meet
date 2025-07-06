@@ -27,7 +27,7 @@ const MeetingSetup = ({
 
   if (!call) {
     throw new Error(
-      'useStreamCall must be used within a StreamCall component.',
+      'useStreamCall must be used within a StreamCall component.'
     );
   }
 
@@ -60,24 +60,26 @@ const MeetingSetup = ({
     );
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center gap-8 text-white bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 p-6">
-      <div className="w-full max-w-4xl mx-auto">
+    <div className="flex h-screen w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 p-6 text-white">
+      <div className="mx-auto w-full max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
+        <div className="mb-8 text-center">
+          <h1 className="mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
             Ready to Join?
           </h1>
-          <p className="text-xl text-white/80">Set up your camera and microphone before joining the meeting</p>
+          <p className="text-xl text-white/80">
+            Set up your camera and microphone before joining the meeting
+          </p>
         </div>
 
         {/* Video Preview Container */}
         <div className="relative mb-8">
-          <div className="bg-gradient-to-br from-dark-1/80 to-dark-2/80 backdrop-blur-lg border border-white/20 rounded-3xl p-6 shadow-2xl">
-            <div className="relative overflow-hidden rounded-2xl bg-dark-3/50 min-h-[400px] flex items-center justify-center">
+          <div className="rounded-3xl border border-white/20 bg-gradient-to-br from-dark-1/80 to-dark-2/80 p-6 shadow-2xl backdrop-blur-lg">
+            <div className="relative flex min-h-[400px] items-center justify-center overflow-hidden rounded-2xl bg-dark-3/50">
               <VideoPreview />
-              <div className="absolute top-4 left-4">
-                <div className="bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute left-4 top-4">
+                <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 text-sm font-semibold">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-white"></div>
                   Camera Preview
                 </div>
               </div>
@@ -86,9 +88,8 @@ const MeetingSetup = ({
         </div>
 
         {/* Controls Section */}
-        <div className="bg-gradient-to-br from-dark-1/80 to-dark-2/80 backdrop-blur-lg border border-white/20 rounded-3xl p-8 shadow-2xl">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-            
+        <div className="rounded-3xl border border-white/20 bg-gradient-to-br from-dark-1/80 to-dark-2/80 p-8 shadow-2xl backdrop-blur-lg">
+          <div className="flex flex-col items-center justify-between gap-6 lg:flex-row">
             {/* Mic/Camera Toggle */}
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -101,23 +102,27 @@ const MeetingSetup = ({
                 />
                 <label
                   htmlFor="micCamToggle"
-                  className={`flex items-center gap-3 px-6 py-4 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
+                  className={`flex cursor-pointer items-center gap-3 rounded-2xl border-2 px-6 py-4 transition-all duration-300 ${
                     isMicCamToggled
-                      ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-400/50'
-                      : 'bg-gradient-to-r from-green-500/20 to-green-600/20 border-green-400/50'
+                      ? 'border-red-400/50 bg-gradient-to-r from-red-500/20 to-red-600/20'
+                      : 'border-green-400/50 bg-gradient-to-r from-green-500/20 to-green-600/20'
                   }`}
                 >
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                    isMicCamToggled
-                      ? 'border-red-400 bg-red-500'
-                      : 'border-green-400 bg-transparent'
-                  }`}>
+                  <div
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                      isMicCamToggled
+                        ? 'border-red-400 bg-red-500'
+                        : 'border-green-400 bg-transparent'
+                    }`}
+                  >
                     {isMicCamToggled && (
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <div className="h-3 w-3 rounded-full bg-white"></div>
                     )}
                   </div>
                   <span className="text-lg font-semibold text-white">
-                    {isMicCamToggled ? '🔇 Join with mic and camera off' : '🎤 Join with mic and camera on'}
+                    {isMicCamToggled
+                      ? '🔇 Join with mic and camera off'
+                      : '🎤 Join with mic and camera on'}
                   </span>
                 </label>
               </div>
@@ -125,7 +130,7 @@ const MeetingSetup = ({
 
             {/* Device Settings */}
             <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/50 rounded-2xl p-1">
+              <div className="rounded-2xl border border-blue-400/50 bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-1">
                 <DeviceSettings />
               </div>
             </div>
@@ -134,7 +139,7 @@ const MeetingSetup = ({
           {/* Join Button */}
           <div className="mt-8 text-center">
             <Button
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-12 rounded-2xl text-lg shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-blue-400/50"
+              className="transform rounded-2xl border border-blue-400/50 bg-gradient-to-r from-blue-500 to-purple-600 px-12 py-4 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-purple-700 hover:shadow-2xl"
               onClick={() => {
                 call.join();
                 setIsSetupComplete(true);
@@ -144,28 +149,28 @@ const MeetingSetup = ({
                 🚀 Join Meeting Now
               </span>
             </Button>
-            <p className="text-white/60 mt-4 text-sm">
+            <p className="mt-4 text-sm text-white/60">
               Click to join the meeting with your current settings
             </p>
           </div>
         </div>
 
         {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-          <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-400/30 rounded-2xl p-4 text-center">
-            <div className="text-2xl mb-2">🎥</div>
-            <h3 className="font-semibold text-white mb-1">HD Video</h3>
-            <p className="text-white/70 text-sm">Crystal clear video quality</p>
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-blue-400/30 bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-4 text-center">
+            <div className="mb-2 text-2xl">🎥</div>
+            <h3 className="mb-1 font-semibold text-white">HD Video</h3>
+            <p className="text-sm text-white/70">Crystal clear video quality</p>
           </div>
-          <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-400/30 rounded-2xl p-4 text-center">
-            <div className="text-2xl mb-2">🔒</div>
-            <h3 className="font-semibold text-white mb-1">Secure</h3>
-            <p className="text-white/70 text-sm">End-to-end encryption</p>
+          <div className="rounded-2xl border border-green-400/30 bg-gradient-to-br from-green-500/20 to-green-600/20 p-4 text-center">
+            <div className="mb-2 text-2xl">🔒</div>
+            <h3 className="mb-1 font-semibold text-white">Secure</h3>
+            <p className="text-sm text-white/70">End-to-end encryption</p>
           </div>
-          <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-400/30 rounded-2xl p-4 text-center">
-            <div className="text-2xl mb-2">⚡</div>
-            <h3 className="font-semibold text-white mb-1">Fast</h3>
-            <p className="text-white/70 text-sm">Low latency connection</p>
+          <div className="rounded-2xl border border-purple-400/30 bg-gradient-to-br from-purple-500/20 to-purple-600/20 p-4 text-center">
+            <div className="mb-2 text-2xl">⚡</div>
+            <h3 className="mb-1 font-semibold text-white">Fast</h3>
+            <p className="text-sm text-white/70">Low latency connection</p>
           </div>
         </div>
       </div>

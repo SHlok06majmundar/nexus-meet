@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation';
 
 const CallList = ({ type }: { type: 'upcoming' | 'recordings' | 'ended' }) => {
   const router = useRouter();
-  const { endedCalls, upcomingCalls, callRecordings, isLoading } = useGetCalls();
+  const { endedCalls, upcomingCalls, callRecordings, isLoading } =
+    useGetCalls();
   const [recordings, setRecordings] = useState<CallRecording[]>([]);
 
   const getCalls = () => {
@@ -43,7 +44,7 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' | 'ended' }) => {
     const fetchRecordings = async () => {
       try {
         const callData = await Promise.all(
-          callRecordings?.map((meeting) => meeting.queryRecordings()) ?? [],
+          callRecordings?.map((meeting) => meeting.queryRecordings()) ?? []
         );
 
         const recordings = callData
@@ -76,8 +77,8 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' | 'ended' }) => {
               type === 'ended'
                 ? '/icons/previous.svg'
                 : type === 'upcoming'
-                ? '/icons/upcoming.svg'
-                : '/icons/recordings.svg'
+                  ? '/icons/upcoming.svg'
+                  : '/icons/recordings.svg'
             }
             title={
               (meeting as Call).state?.custom?.description ||
@@ -107,9 +108,17 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' | 'ended' }) => {
                 ? async () => {
                     try {
                       // Implement recording deletion
-                      console.log('Deleting recording:', (meeting as CallRecording).filename);
+                      console.log(
+                        'Deleting recording:',
+                        (meeting as CallRecording).filename
+                      );
                       // Remove from local state
-                      setRecordings(prev => prev.filter(rec => rec.filename !== (meeting as CallRecording).filename));
+                      setRecordings((prev) =>
+                        prev.filter(
+                          (rec) =>
+                            rec.filename !== (meeting as CallRecording).filename
+                        )
+                      );
                     } catch (error) {
                       console.error('Error deleting recording:', error);
                     }
@@ -119,7 +128,7 @@ const CallList = ({ type }: { type: 'upcoming' | 'recordings' | 'ended' }) => {
           />
         ))
       ) : (
-        <div className="flex items-center justify-center h-60">
+        <div className="flex h-60 items-center justify-center">
           <h1 className="text-2xl font-bold text-white">{noCallsMessage}</h1>
         </div>
       )}

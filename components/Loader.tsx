@@ -13,18 +13,20 @@ const Loader = () => {
             <div className="size-2 animate-pulse rounded-full bg-gradient-to-r from-blue-400 to-purple-400"></div>
           </div>
         </div>
-        
+
         {/* Loading Text */}
-        <div className="text-center space-y-2">
+        <div className="space-y-2 text-center">
           <div className="flex items-center justify-center gap-1">
-            <span className="text-white/90 text-lg font-medium">Loading</span>
+            <span className="text-lg font-medium text-white/90">Loading</span>
             <div className="flex gap-1">
               <div className="size-1 animate-bounce rounded-full bg-blue-400 [animation-delay:0ms]"></div>
               <div className="size-1 animate-bounce rounded-full bg-purple-400 [animation-delay:150ms]"></div>
               <div className="size-1 animate-bounce rounded-full bg-pink-400 [animation-delay:300ms]"></div>
             </div>
           </div>
-          <p className="text-sm text-white/60">Please wait while we prepare your experience</p>
+          <p className="text-sm text-white/60">
+            Please wait while we prepare your experience
+          </p>
         </div>
       </div>
     </div>

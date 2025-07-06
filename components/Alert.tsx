@@ -19,7 +19,13 @@ const Alert = ({ title, iconUrl }: PermissionCardProps) => {
               {iconUrl && (
                 <div className="flex-center">
                   <div className="rounded-full border border-orange-400/30 bg-gradient-to-br from-orange-500/20 to-red-500/20 p-6">
-                    <Image src={iconUrl} width={72} height={72} alt="icon" className="brightness-110" />
+                    <Image
+                      src={iconUrl}
+                      width={72}
+                      height={72}
+                      alt="icon"
+                      className="brightness-110"
+                    />
                   </div>
                 </div>
               )}
@@ -34,8 +40,8 @@ const Alert = ({ title, iconUrl }: PermissionCardProps) => {
             </div>
 
             <div className="flex justify-center">
-              <Button 
-                asChild 
+              <Button
+                asChild
                 className="rounded-2xl border border-blue-400/50 bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-purple-700 hover:shadow-2xl"
               >
                 <Link href="/">

@@ -14,10 +14,12 @@ const LocalRecordingControls = () => {
 
   // Local recording states
   const [isLocalRecording, setIsLocalRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
+    null
+  );
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Refs for canvas composition
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -38,7 +40,8 @@ const LocalRecordingControls = () => {
 
     // Create audio context for mixing audio
     audioContextRef.current = new AudioContext();
-    mixedAudioRef.current = audioContextRef.current.createMediaStreamDestination();
+    mixedAudioRef.current =
+      audioContextRef.current.createMediaStreamDestination();
 
     // Get video streams from all participants
     const videoElements: HTMLVideoElement[] = [];
@@ -60,8 +63,14 @@ const LocalRecordingControls = () => {
         }
 
         // Get participant's audio stream for mixing
-        if (participant.audioStream && audioContextRef.current && mixedAudioRef.current) {
-          const audioSource = audioContextRef.current.createMediaStreamSource(participant.audioStream);
+        if (
+          participant.audioStream &&
+          audioContextRef.current &&
+          mixedAudioRef.current
+        ) {
+          const audioSource = audioContextRef.current.createMediaStreamSource(
+            participant.audioStream
+          );
           audioSource.connect(mixedAudioRef.current);
           audioSources.push(audioSource);
         }
@@ -96,22 +105,23 @@ const LocalRecordingControls = () => {
 
       // Draw each participant video
       videoElements.forEach((video, index) => {
-        if (video.readyState >= 2) { // HAVE_CURRENT_DATA
+        if (video.readyState >= 2) {
+          // HAVE_CURRENT_DATA
           const col = index % cols;
           const row = Math.floor(index / cols);
-          
+
           const x = col * cellWidth;
           const y = row * cellHeight;
-          
+
           // Maintain aspect ratio
           const videoAspect = video.videoWidth / video.videoHeight;
           const cellAspect = cellWidth / cellHeight;
-          
+
           let drawWidth = cellWidth;
           let drawHeight = cellHeight;
           let offsetX = 0;
           let offsetY = 0;
-          
+
           if (videoAspect > cellAspect) {
             drawHeight = cellWidth / videoAspect;
             offsetY = (cellHeight - drawHeight) / 2;
@@ -119,26 +129,19 @@ const LocalRecordingControls = () => {
             drawWidth = cellHeight * videoAspect;
             offsetX = (cellWidth - drawWidth) / 2;
           }
-          
-          ctx.drawImage(
-            video,
-            x + offsetX,
-            y + offsetY,
-            drawWidth,
-            drawHeight
-          );
+
+          ctx.drawImage(video, x + offsetX, y + offsetY, drawWidth, drawHeight);
 
           // Draw participant name
-          const participantName = participants[index]?.name || participants[index]?.userId || 'Unknown';
+          const participantName =
+            participants[index]?.name ||
+            participants[index]?.userId ||
+            'Unknown';
           ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
           ctx.fillRect(x + 10, y + cellHeight - 40, 200, 30);
           ctx.fillStyle = '#ffffff';
           ctx.font = '16px Inter, sans-serif';
-          ctx.fillText(
-            participantName,
-            x + 15,
-            y + cellHeight - 20
-          );
+          ctx.fillText(participantName, x + 15, y + cellHeight - 20);
         }
       });
     };
@@ -149,7 +152,7 @@ const LocalRecordingControls = () => {
     // Create final composite stream
     const canvasStream = canvas.captureStream(30);
     const videoTrack = canvasStream.getVideoTracks()[0];
-    
+
     // Combine video and mixed audio
     const compositeStream = new MediaStream([videoTrack]);
     if (mixedAudioRef.current) {
@@ -161,15 +164,15 @@ const LocalRecordingControls = () => {
 
     // Store references for cleanup
     compositeStreamRef.current = compositeStream;
-    
+
     // Store cleanup function
     (compositeStream as any).cleanup = () => {
       clearInterval(drawInterval);
-      videoElements.forEach(video => {
+      videoElements.forEach((video) => {
         video.pause();
         video.srcObject = null;
       });
-      audioSources.forEach(source => source.disconnect());
+      audioSources.forEach((source) => source.disconnect());
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
@@ -181,7 +184,7 @@ const LocalRecordingControls = () => {
   const startLocalRecording = async () => {
     try {
       setIsLoading(true);
-      
+
       // Create composite stream
       const stream = await createCompositeStream();
       if (!stream) {
@@ -190,7 +193,7 @@ const LocalRecordingControls = () => {
 
       // Create MediaRecorder
       const recorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9,opus'
+        mimeType: 'video/webm;codecs=vp9,opus',
       });
 
       const chunks: Blob[] = [];
@@ -204,9 +207,12 @@ const LocalRecordingControls = () => {
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         setRecordedChunks([blob]);
-        
+
         // Cleanup
-        if (compositeStreamRef.current && (compositeStreamRef.current as any).cleanup) {
+        if (
+          compositeStreamRef.current &&
+          (compositeStreamRef.current as any).cleanup
+        ) {
           (compositeStreamRef.current as any).cleanup();
         }
 
@@ -227,12 +233,12 @@ const LocalRecordingControls = () => {
       recorder.start(1000); // Collect data every second
       setMediaRecorder(recorder);
       setIsLocalRecording(true);
-      
+
       toast({
         title: '🔴 Recording Started',
-        description: 'Local recording has started with audio and video from all participants.',
+        description:
+          'Local recording has started with audio and video from all participants.',
       });
-
     } catch (error) {
       console.error('Failed to start recording:', error);
       toast({
@@ -249,7 +255,7 @@ const LocalRecordingControls = () => {
       mediaRecorder.stop();
       setMediaRecorder(null);
       setIsLocalRecording(false);
-      
+
       toast({
         title: '⏹️ Recording Stopped',
         description: 'Processing your recording...',
@@ -282,7 +288,10 @@ const LocalRecordingControls = () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
       }
-      if (compositeStreamRef.current && (compositeStreamRef.current as any).cleanup) {
+      if (
+        compositeStreamRef.current &&
+        (compositeStreamRef.current as any).cleanup
+      ) {
         (compositeStreamRef.current as any).cleanup();
       }
       if (audioContextRef.current) {
@@ -296,19 +305,14 @@ const LocalRecordingControls = () => {
   return (
     <div className="flex items-center gap-2">
       {/* Hidden canvas for video composition */}
-      <canvas 
-        ref={canvasRef}
-        className="hidden"
-        width={1920}
-        height={1080}
-      />
-      
+      <canvas ref={canvasRef} className="hidden" width={1920} height={1080} />
+
       {/* Recording Button */}
       {!isLocalRecording ? (
         <Button
           onClick={startLocalRecording}
           disabled={isLoading || participants.length === 0}
-          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-4 py-3 rounded-2xl border border-red-400 shadow-lg hover:shadow-xl transition-all duration-300"
+          className="rounded-2xl border border-red-400 bg-gradient-to-r from-red-500 to-red-600 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:from-red-600 hover:to-red-700 hover:shadow-xl"
           title="Start Local Recording"
         >
           {isLoading ? (
@@ -320,7 +324,7 @@ const LocalRecordingControls = () => {
       ) : (
         <Button
           onClick={stopLocalRecording}
-          className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold px-4 py-3 rounded-2xl border border-red-500 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
+          className="animate-pulse rounded-2xl border border-red-500 bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:from-red-700 hover:to-red-800 hover:shadow-xl"
           title="Stop Recording"
         >
           <Square size={20} className="text-white" />
@@ -331,7 +335,7 @@ const LocalRecordingControls = () => {
       {recordedChunks.length > 0 && (
         <Button
           onClick={downloadRecording}
-          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold px-4 py-3 rounded-2xl border border-green-400 shadow-lg hover:shadow-xl transition-all duration-300"
+          className="rounded-2xl border border-green-400 bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-600 hover:to-green-700 hover:shadow-xl"
           title="Download Recording"
         >
           <Download size={20} className="text-white" />

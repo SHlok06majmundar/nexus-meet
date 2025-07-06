@@ -1,10 +1,21 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
-import { Mic, MicOff, Download, FileText, Clock, RotateCcw, Volume2, Headphones } from 'lucide-react';
+import { useCallStateHooks } from '@stream-io/video-react-sdk';
+import {
+  Mic,
+  MicOff,
+  Download,
+  FileText,
+  Clock,
+  RotateCcw,
+  Volume2,
+  Headphones,
+} from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
+import { useSocket } from '@/providers/SocketProvider';
+import { useParams } from 'next/navigation';
 import jsPDF from 'jspdf';
 
 interface TranscriptEntry {
@@ -16,6 +27,7 @@ interface TranscriptEntry {
   confidence: number;
   isLocal: boolean;
   audioSource?: 'local' | 'remote' | 'mixed';
+  meeting_id: string;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -28,6 +40,115 @@ interface SpeechRecognitionErrorEvent extends Event {
   message: string;
 }
 
+// Enhanced audio capture class for remote streams
+class RemoteAudioCapture {
+  private audioContext: AudioContext | null = null;
+  private processor: ScriptProcessorNode | null = null;
+  private recognition: any = null;
+  private isActive = false;
+  private onTranscript: (text: string, speakerId: string) => void;
+
+  constructor(onTranscript: (text: string, speakerId: string) => void) {
+    this.onTranscript = onTranscript;
+  }
+
+  async start(remoteStream?: MediaStream) {
+    if (this.isActive) return;
+
+    try {
+      // Initialize Audio Context
+      this.audioContext = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
+
+      let sourceNode;
+
+      if (remoteStream) {
+        // Use provided remote stream
+        sourceNode = this.audioContext.createMediaStreamSource(remoteStream);
+      } else {
+        // Capture system audio (requires user permission)
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            sampleRate: 16000,
+          },
+          video: false,
+        });
+        sourceNode = this.audioContext.createMediaStreamSource(displayStream);
+      }
+
+      // Create processor for audio analysis
+      this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+      // Create a destination stream for speech recognition
+      const destination = this.audioContext.createMediaStreamDestination();
+
+      sourceNode.connect(this.processor);
+      this.processor.connect(destination);
+
+      // Setup speech recognition on the processed audio
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = false;
+        this.recognition.lang = 'en-US';
+
+        this.recognition.onresult = (event: SpeechRecognitionEvent) => {
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              const transcript = event.results[i][0].transcript.trim();
+              if (transcript) {
+                this.onTranscript(transcript, 'remote-user');
+              }
+            }
+          }
+        };
+
+        this.recognition.start();
+      }
+
+      this.isActive = true;
+    } catch (error) {
+      console.error('Failed to start remote audio capture:', error);
+      throw error;
+    }
+  }
+
+  stop() {
+    if (!this.isActive) return;
+
+    try {
+      if (this.recognition) {
+        this.recognition.stop();
+        this.recognition = null;
+      }
+
+      if (this.processor) {
+        this.processor.disconnect();
+        this.processor = null;
+      }
+
+      if (this.audioContext) {
+        this.audioContext.close();
+        this.audioContext = null;
+      }
+
+      this.isActive = false;
+    } catch (error) {
+      console.error('Error stopping remote audio capture:', error);
+    }
+  }
+
+  get active() {
+    return this.isActive;
+  }
+}
+
 const TranscriptionPanel = () => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
@@ -35,218 +156,219 @@ const TranscriptionPanel = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isListeningToAll, setIsListeningToAll] = useState(true);
   const [isCapturingRemoteAudio, setIsCapturingRemoteAudio] = useState(false);
+  const [remoteAudioSupported, setRemoteAudioSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const remoteRecognitionRef = useRef<any>(null);
+  const remoteAudioCaptureRef = useRef<RemoteAudioCapture | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
-  const call = useCall();
   const { useParticipants, useLocalParticipant } = useCallStateHooks();
   const participants = useParticipants();
   const localParticipant = useLocalParticipant();
+  const { socket, isConnected } = useSocket();
+  const params = useParams();
+  const meetingId = params?.id as string;
+
+  // Check if remote audio capture is supported
+  useEffect(() => {
+    const checkSupport = () => {
+      try {
+        // Check if getDisplayMedia with audio is supported
+        if (
+          navigator.mediaDevices &&
+          typeof navigator.mediaDevices.getDisplayMedia === 'function'
+        ) {
+          setRemoteAudioSupported(true);
+        }
+      } catch (error) {
+        console.log('Remote audio capture not supported:', error);
+        setRemoteAudioSupported(false);
+      }
+    };
+    checkSupport();
+  }, []);
+
+  // Listen for shared transcripts from other users
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    socket.on('new-transcript', (transcript: TranscriptEntry) => {
+      setTranscripts((prev) => {
+        // Prevent duplicate transcripts
+        if (prev.some((t) => t.id === transcript.id)) return prev;
+        return [...prev, transcript];
+      });
+    });
+
+    return () => {
+      socket.off('new-transcript');
+    };
+  }, [socket, isConnected]);
 
   // Get speaker name from participant ID
-  const getSpeakerName = useCallback((participantId: string) => {
-    const participant = participants.find(p => p.userId === participantId);
-    return participant?.name || `User ${participantId.slice(-4)}`;
-  }, [participants]);
+  const getSpeakerName = useCallback(
+    (participantId: string) => {
+      if (participantId === 'remote-user') return 'Remote Participant';
+      if (participantId === 'mixed-audio') return 'Multiple Speakers';
 
-  // Setup remote audio capture
+      const participant = participants.find((p) => p.userId === participantId);
+      return participant?.name || `User ${participantId.slice(-4)}`;
+    },
+    [participants]
+  );
+
+  // Handle remote audio transcript
+  const handleRemoteTranscript = useCallback(
+    (text: string, speakerId: string) => {
+      if (!text.trim() || !socket || !isConnected || !meetingId) return;
+
+      const transcript: Omit<TranscriptEntry, 'id' | 'timestamp'> & {
+        meeting_id: string;
+      } = {
+        speaker: getSpeakerName(speakerId),
+        speakerId,
+        text: text.trim(),
+        confidence: 0.8, // Estimated confidence for remote audio
+        isLocal: false,
+        audioSource: 'remote',
+        meeting_id: meetingId,
+      };
+
+      // Share transcript with other participants
+      socket.emit('send-transcript', transcript);
+    },
+    [socket, isConnected, meetingId, getSpeakerName]
+  );
+
+  // Setup enhanced remote audio capture
   const setupRemoteAudioCapture = useCallback(async () => {
+    if (!remoteAudioSupported || !isListeningToAll) return;
+
     try {
-      if (!call || !isListeningToAll) return;
-
-      // Initialize Web Audio API for remote audio processing
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
-
-      // Request access to audio for capturing remote streams
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 16000
-        } 
-      });
-      audioStreamRef.current = stream;
-
-      // Create analyzer for remote audio
-      const analyzer = context.createAnalyser();
-      analyzer.fftSize = 2048;
-
-      // Setup secondary recognition for mixed audio
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        remoteRecognitionRef.current = new SpeechRecognition();
-        remoteRecognitionRef.current.continuous = true;
-        remoteRecognitionRef.current.interimResults = true;
-        remoteRecognitionRef.current.lang = 'en-US';
-        
-        remoteRecognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-          let finalTranscript = '';
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-              finalTranscript += event.results[i][0].transcript;
-            }
-          }
-
-          if (finalTranscript.trim()) {
-            // This captures mixed audio - we'll attribute it to remote if it doesn't match local
-            const cleanTranscript = finalTranscript.trim();
-            if (cleanTranscript.split(' ').length >= 2) {
-              // Create entry for mixed/remote audio
-              const mixedEntry: TranscriptEntry = {
-                id: `mixed-${Date.now()}`,
-                speaker: 'Multiple Speakers',
-                speakerId: 'mixed-audio',
-                text: cleanTranscript,
-                timestamp: new Date(),
-                confidence: event.results[event.resultIndex][0].confidence || 0.8,
-                isLocal: false,
-                audioSource: 'mixed'
-              };
-
-              setTranscripts(prev => {
-                // Avoid duplicates by checking recent entries
-                const recentEntries = prev.slice(-3);
-                const isDuplicate = recentEntries.some(entry => 
-                  entry.text.toLowerCase() === cleanTranscript.toLowerCase() &&
-                  Date.now() - entry.timestamp.getTime() < 5000
-                );
-                
-                if (!isDuplicate) {
-                  return [...prev, mixedEntry];
-                }
-                return prev;
-              });
-
-              // Broadcast mixed audio transcript
-              if (call) {
-                call.sendCustomEvent({
-                  type: 'transcript_update',
-                  data: {
-                    speaker: mixedEntry.speaker,
-                    speakerId: mixedEntry.speakerId,
-                    text: mixedEntry.text,
-                    timestamp: mixedEntry.timestamp.toISOString(),
-                    confidence: mixedEntry.confidence,
-                    audioSource: 'mixed'
-                  }
-                }).catch(console.error);
-              }
-            }
-          }
-        };
-      }
-
       setIsCapturingRemoteAudio(true);
-      toast({
-        title: '🎧 Enhanced Audio Capture',
-        description: 'Now capturing audio from all participants',
-      });
 
-    } catch (error) {
-      console.error('Error setting up remote audio capture:', error);
+      // Initialize remote audio capture
+      remoteAudioCaptureRef.current = new RemoteAudioCapture(
+        handleRemoteTranscript
+      );
+
+      // Try to capture system audio for all participants
+      await remoteAudioCaptureRef.current.start();
+
       toast({
-        title: '❌ Audio Capture Error',
-        description: 'Could not access enhanced audio capture',
-        variant: 'destructive'
+        title: 'Enhanced Audio Capture',
+        description: 'Now capturing audio from all participants',
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Failed to setup remote audio capture:', error);
+      setIsCapturingRemoteAudio(false);
+
+      toast({
+        title: 'Audio Capture Limited',
+        description:
+          'Only local audio will be transcribed. Grant screen sharing permission for full capture.',
+        variant: 'destructive',
+        duration: 5000,
       });
     }
-  }, [call, isListeningToAll, toast]);
+  }, [remoteAudioSupported, isListeningToAll, handleRemoteTranscript, toast]);
 
-  // Initialize speech recognition and audio capture
+  // Start local transcription
+  const startLocalTranscription = useCallback(async () => {
+    if (!recognitionRef.current || !localParticipant) return;
+
+    try {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        setCurrentTranscript(interimTranscript);
+
+        if (finalTranscript.trim() && socket && isConnected && meetingId) {
+          const cleanTranscript = finalTranscript.trim();
+          if (cleanTranscript.split(' ').length >= 2) {
+            const transcript: Omit<TranscriptEntry, 'id' | 'timestamp'> & {
+              meeting_id: string;
+            } = {
+              speaker: getSpeakerName(localParticipant.userId),
+              speakerId: localParticipant.userId,
+              text: cleanTranscript,
+              confidence: event.results[event.resultIndex][0].confidence || 0.9,
+              isLocal: true,
+              audioSource: 'local',
+              meeting_id: meetingId,
+            };
+
+            // Share transcript with other participants
+            socket.emit('send-transcript', transcript);
+          }
+          setCurrentTranscript('');
+        }
+      };
+
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          toast({
+            title: 'Microphone Access Denied',
+            description: 'Please allow microphone access to use transcription.',
+            variant: 'destructive',
+          });
+        }
+      };
+
+      recognitionRef.current.onend = () => {
+        if (isTranscribing) {
+          setTimeout(() => {
+            if (recognitionRef.current && isTranscribing) {
+              try {
+                recognitionRef.current.start();
+              } catch (error) {
+                console.error('Error restarting recognition:', error);
+              }
+            }
+          }, 100);
+        }
+      };
+
+      recognitionRef.current.start();
+    } catch (error) {
+      console.error('Error starting local transcription:', error);
+      throw error;
+    }
+  }, [
+    recognitionRef,
+    localParticipant,
+    getSpeakerName,
+    socket,
+    isConnected,
+    meetingId,
+    isTranscribing,
+    toast,
+  ]);
+
+  // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+
       if (SpeechRecognition) {
-        // Local user recognition
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
         recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = 'en-US';
         recognitionRef.current.maxAlternatives = 3;
-
-        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-          let interimTranscript = '';
-          let finalTranscript = '';
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcript;
-            } else {
-              interimTranscript += transcript;
-            }
-          }
-
-          setCurrentTranscript(interimTranscript);
-
-          if (finalTranscript && localParticipant) {
-            const cleanTranscript = finalTranscript.trim();
-            if (cleanTranscript.split(' ').length >= 2) {
-              const newEntry: TranscriptEntry = {
-                id: `local-${Date.now()}`,
-                speaker: getSpeakerName(localParticipant.userId),
-                speakerId: localParticipant.userId,
-                text: cleanTranscript,
-                timestamp: new Date(),
-                confidence: event.results[event.resultIndex][0].confidence || 0.9,
-                isLocal: true,
-                audioSource: 'local'
-              };
-
-              setTranscripts(prev => [...prev, newEntry]);
-
-              // Broadcast to other participants via Stream
-              if (call && isListeningToAll) {
-                call.sendCustomEvent({
-                  type: 'transcript_update',
-                  data: {
-                    speaker: newEntry.speaker,
-                    speakerId: newEntry.speakerId,
-                    text: newEntry.text,
-                    timestamp: newEntry.timestamp.toISOString(),
-                    confidence: newEntry.confidence,
-                    audioSource: 'local'
-                  }
-                }).catch(console.error);
-              }
-            }
-            setCurrentTranscript('');
-          }
-        };
-
-        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error('Speech recognition error:', event.error);
-          if (event.error === 'not-allowed') {
-            toast({
-              title: 'Microphone Access Denied',
-              description: 'Please allow microphone access to use transcription.',
-              variant: 'destructive'
-            });
-          }
-        };
-
-        recognitionRef.current.onend = () => {
-          if (isTranscribing) {
-            setTimeout(() => {
-              if (recognitionRef.current && isTranscribing) {
-                try {
-                  recognitionRef.current.start();
-                } catch (error) {
-                  console.error('Error restarting recognition:', error);
-                }
-              }
-            }, 100);
-          }
-        };
-
-        // Setup remote audio capture for all participants
-        if (isListeningToAll && call) {
-          setupRemoteAudioCapture();
-        }
       }
     }
 
@@ -254,54 +376,14 @@ const TranscriptionPanel = () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (remoteRecognitionRef.current) {
-        remoteRecognitionRef.current.stop();
+      if (remoteAudioCaptureRef.current) {
+        remoteAudioCaptureRef.current.stop();
       }
       if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [isTranscribing, localParticipant, getSpeakerName, call, isListeningToAll, toast, setupRemoteAudioCapture]);
-
-  // Listen for transcript updates from other participants
-  useEffect(() => {
-    if (!call) return;
-
-    const handleCustomEvent = (event: any) => {
-      if (event.type === 'transcript_update' && event.data.speakerId !== localParticipant?.userId) {
-        const remoteEntry: TranscriptEntry = {
-          id: `remote-${event.data.speakerId}-${Date.now()}`,
-          speaker: event.data.speaker,
-          speakerId: event.data.speakerId,
-          text: event.data.text,
-          timestamp: new Date(event.data.timestamp),
-          confidence: event.data.confidence,
-          isLocal: false,
-          audioSource: event.data.audioSource || 'remote'
-        };
-
-        setTranscripts(prev => {
-          // Avoid duplicates from multiple sources
-          const recentEntries = prev.slice(-5);
-          const isDuplicate = recentEntries.some(entry => 
-            entry.text.toLowerCase() === remoteEntry.text.toLowerCase() &&
-            Math.abs(entry.timestamp.getTime() - remoteEntry.timestamp.getTime()) < 3000
-          );
-          
-          if (!isDuplicate) {
-            return [...prev, remoteEntry];
-          }
-          return prev;
-        });
-      }
-    };
-
-    call.on('custom', handleCustomEvent);
-
-    return () => {
-      call.off('custom', handleCustomEvent);
-    };
-  }, [call, localParticipant]);
+  }, []);
 
   const startTranscription = async () => {
     try {
@@ -309,31 +391,30 @@ const TranscriptionPanel = () => {
         toast({
           title: 'Speech Recognition Not Supported',
           description: 'Your browser does not support speech recognition.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         return;
       }
 
       setIsTranscribing(true);
-      recognitionRef.current.start();
 
-      // Start remote audio capture if in multi-user mode
-      if (isListeningToAll && remoteRecognitionRef.current) {
-        try {
-          remoteRecognitionRef.current.start();
-        } catch (error) {
-          console.warn('Remote recognition already started or failed:', error);
-        }
+      // Start local transcription
+      await startLocalTranscription();
+
+      // Start remote audio capture if enabled
+      if (isListeningToAll && remoteAudioSupported) {
+        await setupRemoteAudioCapture();
       }
-      
+
       toast({
         title: '🎤 AI Transcription Started',
-        description: isListeningToAll 
-          ? `Recording all ${participants.length} participants` 
+        description: isListeningToAll
+          ? `Recording all ${participants.length} participants`
           : 'Recording your voice only',
       });
     } catch (error) {
       console.error('Error starting transcription:', error);
+      setIsTranscribing(false);
       toast({
         title: '❌ Transcription Error',
         description: 'Failed to start AI transcription',
@@ -345,34 +426,33 @@ const TranscriptionPanel = () => {
   const stopTranscription = () => {
     setIsTranscribing(false);
     setCurrentTranscript('');
-    
+
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
 
-    if (remoteRecognitionRef.current) {
-      remoteRecognitionRef.current.stop();
+    if (remoteAudioCaptureRef.current) {
+      remoteAudioCaptureRef.current.stop();
+      setIsCapturingRemoteAudio(false);
     }
-    
+
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+    }
+
     toast({
-      title: '🛑 AI Transcription Stopped',
-      description: 'All transcription services have been stopped',
+      title: '⏹️ Transcription Stopped',
+      description: 'AI transcription has been stopped',
     });
   };
 
-  const toggleAllParticipantsMode = async () => {
-    const newMode = !isListeningToAll;
-    setIsListeningToAll(newMode);
-    
-    if (newMode && !isCapturingRemoteAudio) {
-      await setupRemoteAudioCapture();
-    }
-    
+  const toggleAllParticipantsMode = () => {
+    setIsListeningToAll(!isListeningToAll);
     toast({
-      title: newMode ? '🎧 Multi-Participant Mode' : '🎤 Personal Mode',
-      description: newMode 
-        ? `Now capturing audio from all ${participants.length} participants` 
-        : 'Now recording your voice only',
+      title: isListeningToAll ? '🎤 Personal Mode' : '🎧 Enhanced Mode',
+      description: isListeningToAll
+        ? 'Now recording your voice only'
+        : 'Now attempting to record all participants',
     });
   };
 
@@ -437,16 +517,18 @@ const TranscriptionPanel = () => {
           yPosition = margin;
         }
 
-        const timeStr = transcript.timestamp.toLocaleTimeString();
-        const confidenceStr = `(${Math.round(transcript.confidence * 100)}% confidence)`;
-        const speakerLine = `[${timeStr}] ${transcript.speaker} ${confidenceStr}:`;
-        
+        // Speaker and timestamp
+        const header = `[${transcript.timestamp.toLocaleTimeString()}] ${transcript.speaker} (${Math.round(transcript.confidence * 100)}%):`;
         pdf.setFont('helvetica', 'bold');
-        pdf.text(speakerLine, margin, yPosition);
+        pdf.text(header, margin, yPosition);
         yPosition += lineHeight;
 
+        // Transcript text (wrapped)
         pdf.setFont('helvetica', 'normal');
-        const textLines = pdf.splitTextToSize(transcript.text, pageWidth - 2 * margin);
+        const textLines = pdf.splitTextToSize(
+          transcript.text,
+          pageWidth - margin * 2 - 10
+        );
         textLines.forEach((line: string) => {
           if (yPosition > pageHeight - 30) {
             pdf.addPage();
@@ -502,7 +584,7 @@ const TranscriptionPanel = () => {
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-br from-dark-1/95 to-dark-2/95 backdrop-blur-lg border-l border-white/10">
+    <div className="flex h-full w-full flex-col border-l border-white/10 bg-gradient-to-br from-dark-1/95 to-dark-2/95 backdrop-blur-lg">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 p-4">
         <div className="flex items-center gap-3">
@@ -510,23 +592,24 @@ const TranscriptionPanel = () => {
             <FileText size={20} className="text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold bg-gradient-to-r from-purple-3 to-pink-3 bg-clip-text text-transparent">
+            <h3 className="bg-gradient-to-r from-purple-3 to-pink-3 bg-clip-text text-lg font-bold text-transparent">
               AI Transcription
             </h3>
             <p className="text-xs text-white/60">
-              {isListeningToAll 
-                ? `Enhanced mode - ${participants.length} participants` 
-                : 'Personal mode'
-              }
+              {isListeningToAll
+                ? `Enhanced mode - ${participants.length} participants`
+                : 'Personal mode'}
               {isCapturingRemoteAudio && (
                 <span className="ml-2 text-blue-400">• Multi-audio</span>
               )}
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/60">{transcripts.length} entries</span>
+          <span className="text-xs text-white/60">
+            {transcripts.length} entries
+          </span>
           {isTranscribing && (
             <div className="flex items-center gap-1">
               <div className="size-1 animate-pulse rounded-full bg-red-500"></div>
@@ -567,14 +650,18 @@ const TranscriptionPanel = () => {
                 : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
             } rounded-xl font-semibold transition-all duration-300`}
           >
-            {isListeningToAll ? <Headphones size={16} /> : <Volume2 size={16} />}
+            {isListeningToAll ? (
+              <Headphones size={16} />
+            ) : (
+              <Volume2 size={16} />
+            )}
             {isListeningToAll ? 'Enhanced' : 'Personal'}
           </Button>
 
           <Button
             onClick={resetTranscription}
             size="sm"
-            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl font-semibold transition-all duration-300"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 font-semibold transition-all duration-300 hover:from-orange-600 hover:to-orange-700"
           >
             <RotateCcw size={16} />
             Reset
@@ -584,7 +671,7 @@ const TranscriptionPanel = () => {
             onClick={generatePDF}
             disabled={transcripts.length === 0 || isGeneratingPDF}
             size="sm"
-            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 font-semibold transition-all duration-300 hover:from-purple-600 hover:to-purple-700 disabled:opacity-50"
           >
             {isGeneratingPDF ? (
               <>
@@ -605,11 +692,15 @@ const TranscriptionPanel = () => {
           <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="text-center">
-                <div className="text-xl font-bold text-blue-400">{transcripts.length}</div>
+                <div className="text-xl font-bold text-blue-400">
+                  {transcripts.length}
+                </div>
                 <div className="text-white/60">Total Messages</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-purple-400">{new Set(transcripts.map(t => t.speakerId)).size}</div>
+                <div className="text-xl font-bold text-purple-400">
+                  {new Set(transcripts.map((t) => t.speakerId)).size}
+                </div>
                 <div className="text-white/60">Active Speakers</div>
               </div>
             </div>
@@ -618,14 +709,15 @@ const TranscriptionPanel = () => {
       </div>
 
       {/* Transcription Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {transcripts.length === 0 && !isTranscribing ? (
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-1/20 to-purple-1/20 p-6">
-              <Mic size={32} className="text-blue-400 mx-auto mb-2" />
+              <Mic size={32} className="mx-auto mb-2 text-blue-400" />
             </div>
-            <p className="text-white/60 text-sm mb-4">
-              Start AI transcription to capture and transcribe speech in real-time
+            <p className="mb-4 text-sm text-white/60">
+              Start AI transcription to capture and transcribe speech in
+              real-time
             </p>
             <div className="space-y-2 text-xs text-white/40">
               <div className="flex items-center justify-center gap-2">
@@ -658,42 +750,52 @@ const TranscriptionPanel = () => {
                 key={transcript.id}
                 className={`rounded-xl p-3 transition-all duration-300 ${
                   transcript.isLocal
-                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/30'
+                    ? 'border border-blue-400/30 bg-gradient-to-r from-blue-500/20 to-purple-500/20'
                     : transcript.audioSource === 'mixed'
-                    ? 'bg-gradient-to-r from-green-500/20 to-teal-500/20 border border-green-400/30'
-                    : 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-400/30'
+                      ? 'border border-green-400/30 bg-gradient-to-r from-green-500/20 to-teal-500/20'
+                      : 'border border-gray-400/30 bg-gradient-to-r from-gray-500/20 to-slate-500/20'
                 }`}
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <span className={`text-sm font-semibold ${
-                    transcript.isLocal 
-                      ? 'text-blue-400' 
-                      : transcript.audioSource === 'mixed'
-                      ? 'text-green-400'
-                      : 'text-white'
-                  }`}>
+                  <span
+                    className={`text-sm font-semibold ${
+                      transcript.isLocal
+                        ? 'text-blue-400'
+                        : transcript.audioSource === 'mixed'
+                          ? 'text-green-400'
+                          : 'text-white'
+                    }`}
+                  >
                     {transcript.speaker}
                     {transcript.isLocal && (
                       <span className="ml-2 text-xs text-blue-300">(You)</span>
                     )}
                     {transcript.audioSource === 'mixed' && (
-                      <span className="ml-2 text-xs text-green-300">(Multi-audio)</span>
+                      <span className="ml-2 text-xs text-green-300">
+                        (Multi-audio)
+                      </span>
                     )}
                   </span>
                   <div className="flex items-center gap-2 text-xs text-white/60">
                     <Clock size={12} />
                     <span>{formatTime(transcript.timestamp)}</span>
-                    <span className={`font-mono ${getConfidenceColor(transcript.confidence)}`}>
+                    <span
+                      className={`font-mono ${getConfidenceColor(transcript.confidence)}`}
+                    >
                       {Math.round(transcript.confidence * 100)}%
                     </span>
                     {transcript.audioSource && (
-                      <span className="text-xs px-1 py-0.5 rounded bg-white/10">
-                        {transcript.audioSource === 'local' ? '🎤' : transcript.audioSource === 'mixed' ? '🎧' : '📡'}
+                      <span className="rounded bg-white/10 px-1 py-0.5 text-xs">
+                        {transcript.audioSource === 'local'
+                          ? '🎤'
+                          : transcript.audioSource === 'mixed'
+                            ? '🎧'
+                            : '📡'}
                       </span>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-white/90 leading-relaxed">
+                <p className="text-sm leading-relaxed text-white/90">
                   {transcript.text}
                 </p>
               </div>
@@ -701,7 +803,7 @@ const TranscriptionPanel = () => {
 
             {/* Current live transcript */}
             {currentTranscript && isTranscribing && (
-              <div className="rounded-xl border border-blue-400/30 border-dashed bg-blue-500/10 p-3">
+              <div className="rounded-xl border border-dashed border-blue-400/30 bg-blue-500/10 p-3">
                 <div className="mb-1 flex items-center gap-2">
                   <span className="text-sm font-semibold text-blue-400">
                     {getSpeakerName(localParticipant?.userId || '')}

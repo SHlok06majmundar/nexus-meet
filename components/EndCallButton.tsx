@@ -11,7 +11,7 @@ const EndCallButton = () => {
 
   if (!call)
     throw new Error(
-      'useStreamCall must be used within a StreamCall component.',
+      'useStreamCall must be used within a StreamCall component.'
     );
 
   // https://getstream.io/video/docs/react/guides/call-and-participant-state/#participant-state-3
@@ -31,9 +31,9 @@ const EndCallButton = () => {
   };
 
   return (
-    <Button 
-      onClick={endCall} 
-      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-red-400 shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
+    <Button
+      onClick={endCall}
+      className="rounded-xl border border-red-400 bg-gradient-to-r from-red-500 to-red-600 px-3 py-2 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-red-600 hover:to-red-700 hover:shadow-xl sm:rounded-2xl sm:px-6 sm:py-3 sm:text-base"
     >
       <span className="flex items-center gap-1 sm:gap-2">
         <span className="text-sm sm:text-base">📞</span>

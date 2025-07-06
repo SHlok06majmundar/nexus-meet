@@ -4,8 +4,13 @@ import QuickNavCard from '@/components/QuickNavCard';
 const Dashboard = () => {
   const now = new Date();
 
-  const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  const date = (new Intl.DateTimeFormat('en-US', { dateStyle: 'full' })).format(now);
+  const time = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const date = new Intl.DateTimeFormat('en-US', { dateStyle: 'full' }).format(
+    now
+  );
 
   return (
     <section className="flex size-full flex-col gap-10 text-white">
@@ -20,7 +25,9 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="text-right">
-          <div className="mb-1 text-3xl font-bold text-white lg:text-4xl">{time}</div>
+          <div className="mb-1 text-3xl font-bold text-white lg:text-4xl">
+            {time}
+          </div>
           <div className="text-sm text-white/70">{date}</div>
         </div>
       </div>
@@ -47,9 +54,7 @@ const Dashboard = () => {
 
       {/* Meeting Actions */}
       <div>
-        <h2 className="mb-6 text-2xl font-bold text-white">
-          Meeting Actions
-        </h2>
+        <h2 className="mb-6 text-2xl font-bold text-white">Meeting Actions</h2>
         <MeetingTypeList />
       </div>
 
@@ -78,22 +83,30 @@ const Dashboard = () => {
 
       {/* Features Section */}
       <div className="mt-8">
-        <h3 className="mb-4 text-xl font-semibold text-white">Platform Features</h3>
+        <h3 className="mb-4 text-xl font-semibold text-white">
+          Platform Features
+        </h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
             <div className="mb-2 text-xl text-blue-400">🔒</div>
             <h4 className="mb-1 font-semibold text-white">Secure & Private</h4>
-            <p className="text-sm text-white/70">End-to-end encryption for all meetings</p>
+            <p className="text-sm text-white/70">
+              End-to-end encryption for all meetings
+            </p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
             <div className="mb-2 text-xl text-green-400">🎥</div>
             <h4 className="mb-1 font-semibold text-white">HD Video Quality</h4>
-            <p className="text-sm text-white/70">Crystal clear video and audio</p>
+            <p className="text-sm text-white/70">
+              Crystal clear video and audio
+            </p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
             <div className="mb-2 text-xl text-purple-400">📱</div>
             <h4 className="mb-1 font-semibold text-white">Cross Platform</h4>
-            <p className="text-sm text-white/70">Works on all devices seamlessly</p>
+            <p className="text-sm text-white/70">
+              Works on all devices seamlessly
+            </p>
           </div>
         </div>
       </div>

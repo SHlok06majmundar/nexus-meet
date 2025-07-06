@@ -11,50 +11,50 @@ const Sidebar = () => {
 
   return (
     <section className="sticky left-0 top-0 flex h-screen w-fit flex-col justify-between border-r border-white/10 bg-gradient-to-b from-dark-1 to-dark-2 p-6 pt-28 text-white backdrop-blur-lg max-sm:hidden lg:w-[280px]">
-      
       <div className="flex flex-1 flex-col gap-6">
         {sidebarLinks.map((item) => {
-          const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
-          
+          const isActive =
+            pathname === item.route ||
+            (pathname && pathname.startsWith(`${item.route}/`));
+
           return (
             <Link
               href={item.route}
               key={item.label}
               className={cn(
-                'flex gap-4 items-center p-4 rounded-2xl justify-start transition-all duration-300 hover:bg-white/10',
+                'flex items-center justify-start gap-4 rounded-2xl p-4 transition-all duration-300 hover:bg-white/10',
                 {
-                  'bg-gradient-to-r from-blue-1 to-purple-1 shadow-lg': isActive,
+                  'bg-gradient-to-r from-blue-1 to-purple-1 shadow-lg':
+                    isActive,
                 }
               )}
             >
-              <div className={cn(
-                'p-2 rounded-xl transition-all duration-300',
-                {
+              <div
+                className={cn('rounded-xl p-2 transition-all duration-300', {
                   'bg-white/20': isActive,
                   'bg-white/10': !isActive,
-                }
-              )}>
+                })}
+              >
                 <Image
                   src={item.imgURL}
                   alt={item.label}
                   width={24}
                   height={24}
-                  className={cn(
-                    'transition-all duration-300',
-                    {
-                      'filter brightness-0 invert': isActive,
-                      'filter brightness-0 invert opacity-70': !isActive,
-                    }
-                  )}
+                  className={cn('transition-all duration-300', {
+                    'brightness-0 invert filter': isActive,
+                    'opacity-70 brightness-0 invert filter': !isActive,
+                  })}
                 />
               </div>
-              <p className={cn(
-                'text-lg font-semibold max-lg:hidden transition-all duration-300',
-                {
-                  'text-white': isActive,
-                  'text-white/80': !isActive,
-                }
-              )}>
+              <p
+                className={cn(
+                  'text-lg font-semibold transition-all duration-300 max-lg:hidden',
+                  {
+                    'text-white': isActive,
+                    'text-white/80': !isActive,
+                  }
+                )}
+              >
                 {item.label}
               </p>
             </Link>
