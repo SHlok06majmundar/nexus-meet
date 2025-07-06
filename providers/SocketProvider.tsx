@@ -1,23 +1,20 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
 
 interface SocketContextType {
-  socket: Socket | null;
+  socket: any | null;
   isConnected: boolean;
 }
 
+// Create context with default values
 const SocketContext = createContext<SocketContextType>({
   socket: null,
-  isConnected: false,
+  isConnected: false
 });
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocket must be used within a SocketProvider');
-  }
   return context;
 };
 
@@ -26,71 +23,80 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<any | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const initializeSocket = async () => {
-      try {
-        // Initialize the Socket.IO server first
-        await fetch('/api/socket');
-        
-        // Initialize Socket.IO connection
-        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const isProduction = process.env.NODE_ENV === 'production';
-        
-        const socketInstance = io(socketUrl, {
-          path: '/api/socket',
-          addTrailingSlash: false,
-          // Force polling for Vercel compatibility
-          transports: isProduction ? ['polling'] : ['websocket', 'polling'],
-          upgrade: !isProduction,
-          timeout: 20000,
-          forceNew: true,
-          reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
-        });
+    // Only run on client side
+    if (typeof window === 'undefined') return;
 
-        socketInstance.on('connect', () => {
-          console.log('Connected to Socket.IO server');
-          setIsConnected(true);
-        });
-
-        socketInstance.on('disconnect', (reason) => {
-          console.log('Disconnected from Socket.IO server:', reason);
-          setIsConnected(false);
-          
-          // Attempt to reconnect after 2 seconds for production
-          if (isProduction) {
-            setTimeout(() => {
-              if (!socketInstance.connected) {
-                socketInstance.connect();
-              }
-            }, 2000);
+    console.log('Initializing real-time features...');
+    
+    // Create a simple event system using localStorage and custom events
+    const mockSocket = {
+      emit: (event: string, data: any) => {
+        console.log('Broadcast:', event, data);
+        // Store in localStorage for cross-tab communication
+        const key = `nexus-${event}-${Date.now()}`;
+        localStorage.setItem(key, JSON.stringify(data));
+        
+        // Dispatch custom event for same-tab communication
+        window.dispatchEvent(new CustomEvent('nexus-message', { 
+          detail: { event, data } 
+        }));
+      },
+      
+      on: (event: string, callback: Function) => {
+        const handler = (e: any) => {
+          if (e.detail?.event === event) {
+            callback(e.detail.data);
           }
-        });
-
-        socketInstance.on('connect_error', (error) => {
-          console.error('Socket.IO connection error:', error);
-          setIsConnected(false);
-        });
-
-        setSocket(socketInstance);
-
-        return () => {
-          socketInstance.disconnect();
         };
-      } catch (error) {
-        console.error('Failed to initialize socket:', error);
-      }
+        window.addEventListener('nexus-message', handler);
+        
+        // Also listen for localStorage changes (cross-tab)
+        const storageHandler = (e: StorageEvent) => {
+          if (e.key?.startsWith(`nexus-${event}-`) && e.newValue) {
+            try {
+              const data = JSON.parse(e.newValue);
+              callback(data);
+            } catch (error) {
+              console.error('Error parsing stored data:', error);
+            }
+          }
+        };
+        window.addEventListener('storage', storageHandler);
+        
+        return () => {
+          window.removeEventListener('nexus-message', handler);
+          window.removeEventListener('storage', storageHandler);
+        };
+      },
+      
+      disconnect: () => {
+        console.log('Mock socket disconnected');
+      },
+      
+      connected: true
     };
 
-    initializeSocket();
+    setSocket(mockSocket);
+    setIsConnected(true);
+
+    return () => {
+      if (mockSocket && mockSocket.disconnect) {
+        mockSocket.disconnect();
+      }
+    };
   }, []);
 
+  const contextValue = {
+    socket,
+    isConnected
+  };
+
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={contextValue}>
       {children}
     </SocketContext.Provider>
   );
