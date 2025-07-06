@@ -1,64 +1,33 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface SocketContextType {
   socket: any | null;
   isConnected: boolean;
 }
 
-// Create context with default values
-const SocketContext = createContext<SocketContextType>({
-  socket: null,
-  isConnected: false
-});
-
-export const useSocket = () => {
-  // Complete SSR safety - return immediately if on server
+// Completely avoid context during SSR by using a simple hook
+export const useSocket = (): SocketContextType => {
+  // Always return safe defaults during SSR
   if (typeof window === 'undefined') {
     return {
       socket: null,
       isConnected: false
     };
   }
-  
-  // Try to get context, but with fallback
-  try {
-    const context = useContext(SocketContext);
-    if (!context) {
-      return {
-        socket: null,
-        isConnected: false
-      };
-    }
-    return context;
-  } catch (error) {
-    // If context access fails, return safe defaults
-    console.warn('Socket context access failed:', error);
-    return {
-      socket: null,
-      isConnected: false
-    };
-  }
-};
 
-interface SocketProviderProps {
-  children: React.ReactNode;
-}
-
-export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<any | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Critical SSR safety - don't do anything until mounted
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
-    // Only run on client side after mounting
-    if (!isMounted || typeof window === 'undefined') return;
+    // Only run after mounting on client side
+    if (!isMounted) return;
 
     console.log('Initializing real-time features...');
     
@@ -103,6 +72,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         };
       },
       
+      off: (event: string) => {
+        // Remove event listeners (simplified)
+        console.log('Removing listeners for:', event);
+      },
+      
       disconnect: () => {
         console.log('Mock socket disconnected');
       },
@@ -120,19 +94,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     };
   }, [isMounted]);
 
-  const contextValue = {
+  return {
     socket: isMounted ? socket : null,
     isConnected: isMounted ? isConnected : false
   };
+};
 
-  // Don't render anything until mounted
-  if (!isMounted) {
-    return <>{children}</>;
-  }
+interface SocketProviderProps {
+  children: React.ReactNode;
+}
 
-  return (
-    <SocketContext.Provider value={contextValue}>
-      {children}
-    </SocketContext.Provider>
-  );
+// Dummy provider that just renders children - no context needed
+export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
+  return <>{children}</>;
 };
