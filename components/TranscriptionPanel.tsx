@@ -157,6 +157,7 @@ const TranscriptionPanel = () => {
   const [isListeningToAll, setIsListeningToAll] = useState(true);
   const [isCapturingRemoteAudio, setIsCapturingRemoteAudio] = useState(false);
   const [remoteAudioSupported, setRemoteAudioSupported] = useState(false);
+  const [speechRecognitionSupported, setSpeechRecognitionSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
   const remoteAudioCaptureRef = useRef<RemoteAudioCapture | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
@@ -356,7 +357,7 @@ const TranscriptionPanel = () => {
     toast,
   ]);
 
-  // Initialize speech recognition
+  // Initialize speech recognition with better error handling
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
@@ -364,11 +365,59 @@ const TranscriptionPanel = () => {
         (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true;
-        recognitionRef.current.interimResults = true;
-        recognitionRef.current.lang = 'en-US';
-        recognitionRef.current.maxAlternatives = 3;
+        try {
+          recognitionRef.current = new SpeechRecognition();
+          recognitionRef.current.continuous = true;
+          recognitionRef.current.interimResults = true;
+          recognitionRef.current.lang = 'en-US';
+          recognitionRef.current.maxAlternatives = 3;
+          
+          // Add error handling
+          recognitionRef.current.onerror = (event: any) => {
+            console.error('Speech recognition error:', event.error);
+            setIsTranscribing(false);
+            
+            if (event.error === 'not-allowed') {
+              toast({
+                title: 'Microphone Permission Denied',
+                description: 'Please allow microphone access and try again.',
+                variant: 'destructive',
+                duration: 5000,
+              });
+            } else if (event.error === 'no-speech') {
+              // Restart recognition automatically
+              setTimeout(() => {
+                if (isTranscribing && recognitionRef.current) {
+                  recognitionRef.current.start();
+                }
+              }, 1000);
+            }
+          };
+          
+          recognitionRef.current.onend = () => {
+            // Auto-restart if still transcribing
+            if (isTranscribing && recognitionRef.current) {
+              setTimeout(() => {
+                if (isTranscribing) {
+                  recognitionRef.current.start();
+                }
+              }, 100);
+            }
+          };
+          
+          setSpeechRecognitionSupported(true);
+        } catch (error) {
+          console.error('Failed to initialize speech recognition:', error);
+          setSpeechRecognitionSupported(false);
+        }
+      } else {
+        setSpeechRecognitionSupported(false);
+        toast({
+          title: 'Speech Recognition Not Supported',
+          description: 'Please use Chrome, Edge, or Safari for AI transcription.',
+          variant: 'destructive',
+          duration: 5000,
+        });
       }
     }
 
@@ -392,6 +441,20 @@ const TranscriptionPanel = () => {
           title: 'Speech Recognition Not Supported',
           description: 'Your browser does not support speech recognition.',
           variant: 'destructive',
+        });
+        return;
+      }
+
+      // Request microphone permission explicitly
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop immediately after getting permission
+      } catch (error) {
+        toast({
+          title: 'Microphone Permission Required',
+          description: 'Please allow microphone access to use AI transcription.',
+          variant: 'destructive',
+          duration: 5000,
         });
         return;
       }
@@ -630,9 +693,12 @@ const TranscriptionPanel = () => {
         <div className="mb-4 flex flex-wrap gap-2">
           <Button
             onClick={isTranscribing ? stopTranscription : startTranscription}
+            disabled={!speechRecognitionSupported}
             size="sm"
             className={`flex items-center gap-2 ${
-              isTranscribing
+              !speechRecognitionSupported
+                ? 'bg-gray-400 cursor-not-allowed'
+                : isTranscribing
                 ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
                 : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
             } rounded-xl font-semibold transition-all duration-300`}

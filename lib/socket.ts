@@ -48,11 +48,13 @@ export const initSocket = (res: NextApiResponseServerIO) => {
       path: '/api/socket',
       addTrailingSlash: false,
       cors: {
-        origin: isProduction ? corsOrigin : "*",
+        origin: isProduction ? [corsOrigin, "https://nexus-meet-rho.vercel.app"] : "*",
         methods: ["GET", "POST"],
         credentials: true
       },
-      transports: ['websocket', 'polling']
+      // Force polling for Vercel compatibility
+      transports: isProduction ? ['polling'] : ['websocket', 'polling'],
+      allowEIO3: true
     });
 
     io.on('connection', (socket) => {
