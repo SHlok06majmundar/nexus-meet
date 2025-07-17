@@ -1,446 +1,182 @@
-<div align="center">
-  <br />
-    <a href="https://youtu.be/R8CIO1DZ2b8" target="_blank">
-      <img src="https://github.com/adrianhajdin/zoom-clone/assets/67959015/f09a8421-67d3-45ce-b9bc-a791cdc2774b" alt="Project Banner">
-    </a>
-  
-  <br />
+# Nexus Meet
 
-  <div>
-    <img src="https://img.shields.io/badge/-TypeScript-black?style=for-the-badge&logoColor=white&logo=typescript&color=3178C6" alt="typescript" />
-    <img src="https://img.shields.io/badge/-Next_JS-black?style=for-the-badge&logoColor=white&logo=nextdotjs&color=000000" alt="nextdotjs" />
-    <img src="https://img.shields.io/badge/-Tailwind_CSS-black?style=for-the-badge&logoColor=white&logo=tailwindcss&color=06B6D4" alt="tailwindcss" />
-  </div>
+**Professional Video Conferencing Platform**
 
-  <h3 align="center">A Zoom Clone</h3>
+Nexus Meet is a modern, professional video conferencing solution designed to make virtual meetings seamless and engaging. Built with cutting-edge web technologies, it provides a frictionless experience for video, voice, chat, and content sharing across all devices.
 
-   <div align="center">
-     Build this project step by step with our detailed tutorial on <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a> YouTube. Join the JSM family!
-    </div>
-</div>
+![Nexus Meet](/screenshot/nexus-meet.png)
 
-## 📋 <a name="table">Table of Contents</a>
+## ✨ Features
 
-1. 🤖 [Introduction](#introduction)
-2. ⚙️ [Tech Stack](#tech-stack)
-3. 🔋 [Features](#features)
-4. 🤸 [Quick Start](#quick-start)
-5. 🕸️ [Assets & Code](#snippets)
-6. 🚀 [More](#more)
+- 🎥 **HD Video Conferencing** - Crystal clear video and audio quality
+- 💬 **Real-time Chat** - Instant messaging during meetings
+- 🔗 **Easy Sharing** - QR codes and direct links for quick joining
+- 🎨 **Modern UI** - Professional, responsive design with dark theme
+- 🔒 **Secure** - Google authentication and encrypted connections
+- 📱 **Cross-platform** - Works on desktop, tablet, and mobile devices
+- ⚡ **Fast** - Built with React and optimized for performance
 
-## 🚨 Tutorial
+## 🚀 Live Demo
 
-This repository contains the code corresponding to an in-depth tutorial available on our YouTube channel, <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a>. 
+https://nexus-meet.netlify.app/
 
-If you prefer visual learning, this is the perfect resource for you. Follow our tutorial to learn how to build projects like these step-by-step in a beginner-friendly manner!
+## 📱 Screenshots
 
-<a href="https://youtu.be/R8CIO1DZ2b8" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/1736fca5-a031-4854-8c09-bc110e3bc16d" /></a>
+### Home Page
+![Home](/screenshot/home.png)
 
-## <a name="introduction">🤖 Introduction</a>
+### Meeting Room
+![Meeting Room](/screenshot/room.png)
 
-Built with the latest Next.js and TypeScript, this project replicates Zoom, a widely used video conferencing tool. It enables users to securely log in, create meetings and access various meeting functionalities such as recording, screen sharing, and managing participants.
+## 🛠️ Tech Stack
 
-If you're getting started and need assistance or face any bugs, join our active Discord community with over 30 thousand members. It's a place where people help each other out.
-
-<a href="https://discord.com/invite/n6EdbFJ" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/618f4872-1e10-42da-8213-1d69e486d02e" /></a>
-
-## <a name="tech-stack">⚙️ Tech Stack</a>
-
-- Next.js
-- TypeScript
-- Clerk
-- getstream
-- shadcn
+**Frontend:**
+- React 17
 - Tailwind CSS
+- Framer Motion
+- Socket.io Client
+- Simple Peer (WebRTC)
 
-## <a name="features">🔋 Features</a>
+**Backend:**
+- Node.js
+- Express.js
+- Socket.io
+- CORS
 
+**Authentication:**
+- Firebase Auth (Google OAuth)
 
-👉 **Authentication**: Implements authentication and authorization features using Clerk, allowing users to securely log in via social sign-on or traditional email and password methods, while ensuring appropriate access levels and permissions within the platform.
+## 🏃‍♂️ Quick Start
 
-👉 **New Meeting**: Quickly start a new meeting, configuring camera and microphone settings before joining.
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
+- Firebase account
 
-👉 **Meeting Controls**: Participants have full control over meeting aspects, including recording, emoji reactions, screen sharing, muting/unmuting, sound adjustments, grid layout, participant list view, and individual participant management (pinning, muting, unmuting, blocking, allowing video share).
+### Installation
 
-👉 **Exit Meeting**: Participants can leave a meeting, or creators can end it for all attendees.
-
-👉 **Schedule Future Meetings**: Input meeting details (date, time) to schedule future meetings, accessible on the 'Upcoming Meetings' page for sharing the link or immediate start.
-
-👉 **View Recorded Meetings**: Access recordings of past meetings for review or reference.
-
-👉 **Professional Dashboard**: Clean, modern dashboard with quick stats, meeting actions, and easy navigation to all features.
-
-👉 **Modern UI Design**: Beautiful, colorful, and professional interface with gradient backgrounds, glassmorphism effects, and smooth animations.
-
-👉 **Join Meetings via Link**: Easily join meetings created by others by providing a link.
-
-👉 **Secure Real-time Functionality**: All interactions within the platform are secure and occur in real-time, maintaining user privacy and data integrity.
-
-👉 **Fully Responsive Design**: Optimized for all screen sizes with modern responsive design principles, ensuring optimal user experience across desktop, tablet, and mobile devices.
-
-and many more, including code architecture and reusability. 
-
-## <a name="quick-start">🤸 Quick Start</a>
-
-Follow these steps to set up the project locally on your machine.
-
-**Prerequisites**
-
-Make sure you have the following installed on your machine:
-
-- [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/en)
-- [npm](https://www.npmjs.com/) (Node Package Manager)
-
-**Cloning the Repository**
-
+1. **Clone the repository**
 ```bash
-git clone https://github.com/adrianhajdin/zoom-clone.git
-cd zoom-clone
+git clone https://github.com/theviralboy/nexus-meet
+cd nexus-meet
 ```
 
-**Installation**
-
-Install the project dependencies using npm:
-
+2. **Install dependencies**
 ```bash
+# Install client dependencies
+cd client
+npm install
+
+# Install server dependencies
+cd ../backend
 npm install
 ```
 
-**Set Up Environment Variables**
+3. **Firebase Setup**
 
-Create a new file named `.env` in the root of your project and add the following content:
+- Go to [Firebase Console](https://console.firebase.google.com/)
+- Create a new project
+- Enable **Authentication** (Google Sign-in method)
+- Enable **Firestore Database**
+- Go to Project Settings and copy your config credentials
+- Update the Firebase configuration in `/client/src/firebase/config.js`
 
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-
-NEXT_PUBLIC_STREAM_API_KEY=
-STREAM_SECRET_KEY=
+```javascript
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
 ```
 
-Replace the placeholder values with your actual Clerk & getstream credentials. You can obtain these credentials by signing up on the [Clerk website](https://clerk.com/) and [getstream website](https://getstream.io/)
+4. **Start the application**
+```bash
+# Start the backend server (from backend directory)
+npm run dev
 
-**Running the Project**
+# Start the frontend (from client directory)
+npm start
+```
+
+The application will be available at:
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:5000`
+
+## 🎯 Usage
+
+1. **Join a Meeting**
+   - Open the application
+   - Sign in with your Google account
+   - Click "New Meeting" to start instantly
+   - Share the meeting link or QR code with participants
+
+2. **Meeting Controls**
+   - Toggle camera/microphone
+   - Chat with participants
+   - Pin/unpin video feeds
+   - Leave meeting
+
+## 🤝 Contributing
+
+We welcome contributions! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
+
+**Sahil Verma**
+- GitHub: [@theviralboy](https://github.com/theviralboy)
+- LinkedIn: [Sahil Verma](https://linkedin.com/in/sahilverma-dev)
+
+## 🙏 Acknowledgments
+
+- Built with React and modern web technologies
+- Inspired by the need for better video conferencing experiences
+- Thanks to the open-source community for amazing tools and libraries
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by Sahil Verma</p>
+  <p>⭐ Star this repo if you find it helpful!</p>
+</div>
+  projectId: "xxxxxxx-xxxxxxxxx-xxxxxx",
+  storageBucket: "xxxxxxx-xxxxxxxxx-xxxxxx",
+  messagingSenderId: "xxxxxxx-xxxxxxxxx-xxxxxx",
+  appId: "xxxxxxx-xxxxxxxxx-xxxxxx",
+};
+```
+
+Start the client server
 
 ```bash
-npm run dev
+  npm run start # on client folder and it will run on localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the project.
+Start the backend server
 
-## <a name="snippets">🕸️ Snippets</a>
-
-<details>
-<summary><code>app/globals.css</code></summary>
-
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* ======== stream css overrides ======== */
-.str-video__call-stats {
-  max-width: 500px;
-  position: relative;
-}
-
-.str-video__speaker-layout__wrapper {
-  max-height: 700px;
-}
-
-.str-video__participant-details {
-  color: white;
-}
-
-.str-video__menu-container {
-  color: white;
-}
-
-.str-video__notification {
-  color: white;
-}
-
-.str-video__participant-list {
-  background-color: #1c1f2e;
-  padding: 10px;
-  border-radius: 10px;
-  color: white;
-  height: 100%;
-}
-
-.str-video__call-controls__button {
-  height: 40px;
-}
-
-.glassmorphism {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-.glassmorphism2 {
-  background: rgba(18, 17, 17, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* ==== clerk class override ===== */
-
-.cl-userButtonPopoverActionButtonIcon {
-  color: white;
-}
-
-.cl-logoBox {
-  height: 40px;
-}
-.cl-dividerLine {
-  background: #252a41;
-  height: 2px;
-}
-
-.cl-socialButtonsIconButton {
-  border: 3px solid #565761;
-}
-
-.cl-internal-wkkub3 {
-  color: white;
-}
-.cl-userButtonPopoverActionButton {
-  color: white;
-}
-
-/* =============================== */
-
-@layer utilities {
-  .flex-center {
-    @apply flex justify-center items-center;
-  }
-
-  .flex-between {
-    @apply flex justify-between items-center;
-  }
-}
-
-/* animation */
-
-.show-block {
-  width: 100%;
-  max-width: 350px;
-  display: block;
-  animation: show 0.7s forwards linear;
-}
-
-@keyframes show {
-  0% {
-    animation-timing-function: ease-in;
-    width: 0%;
-  }
-
-  100% {
-    animation-timing-function: ease-in;
-    width: 100%;
-  }
-}
+```bash
+  npm run start # on backend folder and it will run a server on localhost:5000
+  npm run dev # on backend folder and it will run a development server on localhost:5000
 ```
 
-</details>
+And you are ready to go!
 
-<details>
-<summary><code>tailwind.config.ts</code></summary>
+## Tech Stack
 
-```typescript
-import type { Config } from 'tailwindcss';
+React, Firebase 9, TailwindCSS 3, simple-peer, Node JS, Socket IO
 
-const config = {
-  darkMode: ['class'],
-  content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-  ],
-  prefix: '',
-  theme: {
-    container: {
-      center: true,
-      padding: '2rem',
-      screens: {
-        '2xl': '1400px',
-      },
-    },
-    extend: {
-      colors: {
-        dark: {
-          1: '#1C1F2E',
-          2: '#161925',
-          3: '#252A41',
-          4: '#1E2757',
-        },
-        blue: {
-          1: '#0E78F9',
-        },
-        sky: {
-          1: '#C9DDFF',
-          2: '#ECF0FF',
-          3: '#F5FCFF',
-        },
-        orange: {
-          1: '#FF742E',
-        },
-        purple: {
-          1: '#830EF9',
-        },
-        yellow: {
-          1: '#F9A90E',
-        },
-      },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
-      backgroundImage: {
-        hero: "url('/images/hero-background.png')",
-      },
-    },
-  },
-  plugins: [require('tailwindcss-animate')],
-} satisfies Config;
+## Feedback
 
-export default config;
-```
-
-</details>
-
-<details>
-<summary><code>components/MeetingCard.tsx</code></summary>
-
-```typescript
-"use client";
-
-import Image from "next/image";
-
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
-import { avatarImages } from "@/constants";
-import { useToast } from "./ui/use-toast";
-
-interface MeetingCardProps {
-  title: string;
-  date: string;
-  icon: string;
-  isPreviousMeeting?: boolean;
-  buttonIcon1?: string;
-  buttonText?: string;
-  handleClick: () => void;
-  link: string;
-}
-
-const MeetingCard = ({
-  icon,
-  title,
-  date,
-  isPreviousMeeting,
-  buttonIcon1,
-  handleClick,
-  link,
-  buttonText,
-}: MeetingCardProps) => {
-  const { toast } = useToast();
-
-  return (
-    <section className="flex min-h-[258px] w-full flex-col justify-between rounded-[14px] bg-dark-1 px-5 py-8 xl:max-w-[568px]">
-      <article className="flex flex-col gap-5">
-        <Image src={icon} alt="upcoming" width={28} height={28} />
-        <div className="flex justify-between">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-bold">{title}</h1>
-            <p className="text-base font-normal">{date}</p>
-          </div>
-        </div>
-      </article>
-      <article className={cn("flex justify-center relative", {})}>
-        <div className="relative flex w-full max-sm:hidden">
-          {avatarImages.map((img, index) => (
-            <Image
-              key={index}
-              src={img}
-              alt="attendees"
-              width={40}
-              height={40}
-              className={cn("rounded-full", { absolute: index > 0 })}
-              style={{ top: 0, left: index * 28 }}
-            />
-          ))}
-          <div className="flex-center absolute left-[136px] size-10 rounded-full border-[5px] border-dark-3 bg-dark-4">
-            +5
-          </div>
-        </div>
-        {!isPreviousMeeting && (
-          <div className="flex gap-2">
-            <Button onClick={handleClick} className="rounded bg-blue-1 px-6">
-              {buttonIcon1 && (
-                <Image src={buttonIcon1} alt="feature" width={20} height={20} />
-              )}
-              &nbsp; {buttonText}
-            </Button>
-            <Button
-              onClick={() => {
-                navigator.clipboard.writeText(link);
-                toast({
-                  title: "Link Copied",
-                });
-              }}
-              className="bg-dark-4 px-6"
-            >
-              <Image
-                src="/icons/copy.svg"
-                alt="feature"
-                width={20}
-                height={20}
-              />
-              &nbsp; Copy Link
-            </Button>
-          </div>
-        )}
-      </article>
-    </section>
-  );
-};
-
-export default MeetingCard;
-```
-
-</details>
-
-## <a name="links">🔗 Links</a>
-
-Public assets used in the project can be found [here](https://drive.google.com/file/d/1ofTpWii_sCIdJ14uQ431xWVXpYgjtQ8Q/view?usp=sharing)
-
-## <a name="more">🚀 More</a>
-
-**Advance your skills with Next.js Pro Course**
-
-Enjoyed creating this project? Dive deeper into our PRO courses for a richer learning experience. They're packed with detailed explanations, cool features, and exercises to boost your skills. Give it a go!
-
-<a href="https://www.jsmastery.pro/ultimate-next-course" target="_blank">
-<img src="https://i.ibb.co/804sPK6/Image-720.png" alt="Project Banner">
-</a>
+If you have any feedback, please reach out to us at sahilverma.webdev@gmail.com
