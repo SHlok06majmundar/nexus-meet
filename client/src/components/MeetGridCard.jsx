@@ -60,6 +60,7 @@ const MeetGridCard = ({ user, micActive, peer }) => {
         ref={videoRef}
         autoPlay
         controls={false}
+        data-peer-video="true"
         className="h-full w-full object-cover rounded-2xl"
       />
       

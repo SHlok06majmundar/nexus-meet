@@ -115,3 +115,46 @@ body {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
+
+/* Recording specific styles */
+.recording-pulse {
+  animation: recordingPulse 2s infinite;
+}
+
+@keyframes recordingPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.recording-indicator {
+  animation: recordingBlink 1s infinite;
+}
+
+@keyframes recordingBlink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0.3;
+  }
+}
+
+/* Enhanced shadows for recording buttons */
+.shadow-recording {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.shadow-download {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.shadow-record-again {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}

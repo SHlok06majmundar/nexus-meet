@@ -133,12 +133,6 @@ We welcome contributions! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
-
-**Sahil Verma**
-- GitHub: [@theviralboy](https://github.com/theviralboy)
-- LinkedIn: [Sahil Verma](https://linkedin.com/in/sahilverma-dev)
-
 ## 🙏 Acknowledgments
 
 - Built with React and modern web technologies
@@ -148,7 +142,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  <p>Made with ❤️ by Sahil Verma</p>
+  <p>Made with ❤️ by Shlok Majmundar</p>
   <p>⭐ Star this repo if you find it helpful!</p>
 </div>
   projectId: "xxxxxxx-xxxxxxxxx-xxxxxx",

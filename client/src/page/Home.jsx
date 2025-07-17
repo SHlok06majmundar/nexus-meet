@@ -122,12 +122,12 @@ const Home = () => {
               <p className="text-neutral-400 text-sm">
                 Crafted with ❤️ by{" "}
                 <a
-                  href="https://github.com/theviralboy"
+                  href="https://github.com/SHlok06majmundar"
                   target="_blank"
                   rel="noreferrer"
                   className="text-primary-400 hover:text-primary-300 font-medium transition-colors duration-200"
                 >
-                  Sahil Verma
+                  Shlok Majmundar
                 </a>
               </p>
             </div>
