@@ -26,6 +26,13 @@ import { MdStop as StopRecordIcon } from "react-icons/md";
 import { MdDownload as DownloadIcon } from "react-icons/md";
 import { RiRecordCircleFill as RecordingIcon } from "react-icons/ri";
 import { MdExitToApp as LeaveIcon } from "react-icons/md";
+import { FaRobot as AIIcon } from "react-icons/fa";
+import { BsFillMicFill as TranscribeIcon } from "react-icons/bs";
+import { MdTranslate as TranslateIcon } from "react-icons/md";
+import { FaFilePdf as PDFIcon } from "react-icons/fa";
+import { IoMdMic as MicActiveIcon } from "react-icons/io";
+import { HiSparkles as SparklesIcon } from "react-icons/hi";
+import { MdLanguage as LanguageIcon } from "react-icons/md";
 
 import { QRCode } from "react-qrcode-logo";
 import MeetGridCard from "../components/MeetGridCard";
@@ -63,6 +70,22 @@ const Room = () => {
   const recordingIntervalRef = useRef(null);
   const canvasRef = useRef(null);
   const [recordedBlob, setRecordedBlob] = useState(null);
+  
+  // AI Transcription states
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptions, setTranscriptions] = useState([]);
+  const [currentSpeaker, setCurrentSpeaker] = useState(null);
+  const [speechRecognition, setSpeechRecognition] = useState(null);
+  const [transcriptionLanguage, setTranscriptionLanguage] = useState('en-US');
+  const [showTranscription, setShowTranscription] = useState(false);
+  const [aiFeatureActive, setAiFeatureActive] = useState(false);
+  const [voiceActivityDetection, setVoiceActivityDetection] = useState(null);
+  const transcriptionScrollRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const [activeSpeakers, setActiveSpeakers] = useState(new Set());
+  const [sidebarTab, setSidebarTab] = useState('chat'); // 'chat' or 'transcription'
+  
   const chatScroll = useRef();
   const [pin, setPin] = useState(false);
   const [peers, setPeers] = useState([]);
@@ -371,12 +394,18 @@ const Room = () => {
         }
       }
       
-      // Add peer audio
+      // Add peer audio - this will record all participants' audio
       peers.forEach(peer => {
         if (peer.peer && peer.peer.remoteStream && peer.peer.remoteStream.getAudioTracks().length > 0) {
           try {
             const peerAudioSource = audioContext.createMediaStreamSource(peer.peer.remoteStream);
-            peerAudioSource.connect(destination);
+            // Create gain node to control volume if needed
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 1.0; // Full volume for peer audio
+            peerAudioSource.connect(gainNode);
+            gainNode.connect(destination);
+            
+            console.log(`Added peer audio: ${peer.user?.name || 'Unknown'}`);
           } catch (error) {
             console.warn('Could not add peer audio:', error);
           }
@@ -777,8 +806,436 @@ const Room = () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
       }
+      if (speechRecognition) {
+        speechRecognition.stop();
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
-  }, [mediaRecorder]);
+  }, [mediaRecorder, speechRecognition]);
+
+  // AI Transcription Functions
+  const initializeAudioAnalysis = async () => {
+    try {
+      if (!localStream) return;
+
+      // Create audio context for voice activity detection
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyserRef.current = analyser;
+      
+      // Connect local stream to analyser
+      const source = audioContext.createMediaStreamSource(localStream);
+      source.connect(analyser);
+      
+      // Start voice activity detection
+      startVoiceActivityDetection();
+      
+    } catch (error) {
+      console.error('Error initializing audio analysis:', error);
+    }
+  };
+
+  const startVoiceActivityDetection = () => {
+    if (!analyserRef.current) return;
+    
+    const analyser = analyserRef.current;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    
+    const detectVoiceActivity = () => {
+      if (!isTranscribing) return;
+      
+      analyser.getByteFrequencyData(dataArray);
+      
+      // Calculate average volume
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+      
+      // Voice activity threshold
+      const threshold = 30;
+      const isSpeaking = average > threshold;
+      
+      if (isSpeaking && !activeSpeakers.has(user?.uid)) {
+        setActiveSpeakers(prev => new Set([...prev, user?.uid]));
+        setCurrentSpeaker({
+          id: user?.uid,
+          name: user?.displayName,
+          photoURL: user?.photoURL
+        });
+      } else if (!isSpeaking && activeSpeakers.has(user?.uid)) {
+        setActiveSpeakers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(user?.uid);
+          return newSet;
+        });
+        if (currentSpeaker?.id === user?.uid) {
+          setCurrentSpeaker(null);
+        }
+      }
+      
+      requestAnimationFrame(detectVoiceActivity);
+    };
+    
+    detectVoiceActivity();
+  };
+
+  const initializeSpeechRecognition = () => {
+    // Check if browser supports speech recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      return null;
+    }
+    
+    const recognition = new SpeechRecognition();
+    
+    // Configure recognition
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = transcriptionLanguage;
+    recognition.maxAlternatives = 1;
+    
+    // Handle recognition results
+    recognition.onresult = (event) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      
+      if (finalTranscript) {
+        addTranscription({
+          id: Date.now(),
+          speaker: currentSpeaker || {
+            id: user?.uid,
+            name: user?.displayName,
+            photoURL: user?.photoURL
+          },
+          text: finalTranscript.trim(),
+          timestamp: new Date(),
+          confidence: event.results[event.results.length - 1][0].confidence || 0.8,
+          language: transcriptionLanguage,
+          isInterim: false
+        });
+      }
+      
+      // Update interim transcript for real-time display
+      if (interimTranscript && currentSpeaker) {
+        updateInterimTranscript(interimTranscript, currentSpeaker);
+      }
+    };
+    
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      
+      if (event.error === 'network') {
+        console.log('Network error, attempting to restart...');
+        setTimeout(() => {
+          if (isTranscribing) {
+            recognition.start();
+          }
+        }, 1000);
+      }
+    };
+    
+    recognition.onend = () => {
+      console.log('Speech recognition ended');
+      // Restart if still transcribing
+      if (isTranscribing) {
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (error) {
+            console.warn('Error restarting speech recognition:', error);
+          }
+        }, 100);
+      }
+    };
+    
+    return recognition;
+  };
+
+  const addTranscription = (transcription) => {
+    setTranscriptions(prev => {
+      // Remove any interim transcriptions from the same speaker
+      const filtered = prev.filter(t => !(t.isInterim && t.speaker.id === transcription.speaker.id));
+      
+      // Add the new transcription
+      const updated = [...filtered, transcription].slice(-100); // Keep last 100 transcriptions
+      
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        if (transcriptionScrollRef.current) {
+          transcriptionScrollRef.current.scrollTop = transcriptionScrollRef.current.scrollHeight;
+        }
+      }, 100);
+      
+      return updated;
+    });
+  };
+
+  const updateInterimTranscript = (text, speaker) => {
+    setTranscriptions(prev => {
+      const filtered = prev.filter(t => !(t.isInterim && t.speaker.id === speaker.id));
+      
+      if (text.trim()) {
+        return [...filtered, {
+          id: `interim-${speaker.id}`,
+          speaker,
+          text: text.trim(),
+          timestamp: new Date(),
+          confidence: 0.5,
+          language: transcriptionLanguage,
+          isInterim: true
+        }];
+      }
+      
+      return filtered;
+    });
+  };
+
+  const startAITranscription = async () => {
+    try {
+      if (!localStream) {
+        alert('Please enable your microphone to use AI transcription.');
+        return;
+      }
+      
+      // Initialize audio analysis
+      await initializeAudioAnalysis();
+      
+      // Initialize speech recognition
+      const recognition = initializeSpeechRecognition();
+      if (!recognition) return;
+      
+      setSpeechRecognition(recognition);
+      
+      // Start recognition
+      recognition.start();
+      console.log('Speech recognition started');
+      
+      setIsTranscribing(true);
+      setAiFeatureActive(true);
+      setShowTranscription(true);
+      
+      // Add initial system message
+      addTranscription({
+        id: Date.now(),
+        speaker: {
+          id: 'system',
+          name: 'AI Assistant',
+          photoURL: null
+        },
+        text: 'AI transcription started. All participants\' speech will be converted to text in real-time.',
+        timestamp: new Date(),
+        confidence: 1.0,
+        language: transcriptionLanguage,
+        isInterim: false,
+        isSystem: true
+      });
+      
+    } catch (error) {
+      console.error('Error starting AI transcription:', error);
+      alert('Failed to start AI transcription: ' + error.message);
+    }
+  };
+
+  const stopAITranscription = () => {
+    if (speechRecognition) {
+      speechRecognition.stop();
+      setSpeechRecognition(null);
+    }
+    
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    setIsTranscribing(false);
+    setAiFeatureActive(false);
+    setCurrentSpeaker(null);
+    setActiveSpeakers(new Set());
+    
+    // Add final system message
+    addTranscription({
+      id: Date.now(),
+      speaker: {
+        id: 'system',
+        name: 'AI Assistant',
+        photoURL: null
+      },
+      text: 'AI transcription stopped.',
+      timestamp: new Date(),
+      confidence: 1.0,
+      language: transcriptionLanguage,
+      isInterim: false,
+      isSystem: true
+    });
+    
+    console.log('AI transcription stopped');
+  };
+
+  const downloadTranscription = () => {
+    const transcriptText = transcriptions
+      .filter(t => !t.isInterim && !t.isSystem)
+      .map(t => {
+        const time = t.timestamp.toLocaleTimeString();
+        return `[${time}] ${t.speaker.name}: ${t.text}`;
+      })
+      .join('\n');
+    
+    const blob = new Blob([transcriptText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nexus-meeting-transcript-${roomID}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadTranscriptionAsPDF = async () => {
+    // Install jsPDF: npm install jspdf
+    try {
+      // Dynamic import for jsPDF to reduce bundle size
+      const { jsPDF } = await import('jspdf');
+      
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const lineHeight = 7;
+      let yPos = margin;
+      
+      // Header
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('Nexus Meet - Meeting Transcript', margin, yPos);
+      yPos += lineHeight * 2;
+      
+      // Meeting info
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Room ID: ${roomID}`, margin, yPos);
+      yPos += lineHeight;
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, margin, yPos);
+      yPos += lineHeight;
+      doc.text(`Time: ${new Date().toLocaleTimeString()}`, margin, yPos);
+      yPos += lineHeight * 2;
+      
+      // Participants
+      doc.setFont(undefined, 'bold');
+      doc.text('Participants:', margin, yPos);
+      yPos += lineHeight;
+      doc.setFont(undefined, 'normal');
+      
+      const participants = new Set();
+      transcriptions.forEach(t => {
+        if (!t.isSystem && t.speaker.name) {
+          participants.add(t.speaker.name);
+        }
+      });
+      
+      participants.forEach(name => {
+        doc.text(`• ${name}`, margin + 5, yPos);
+        yPos += lineHeight;
+      });
+      yPos += lineHeight;
+      
+      // Transcription content
+      doc.setFont(undefined, 'bold');
+      doc.text('Transcript:', margin, yPos);
+      yPos += lineHeight * 1.5;
+      doc.setFont(undefined, 'normal');
+      
+      const filteredTranscriptions = transcriptions.filter(t => !t.isInterim && !t.isSystem);
+      
+      filteredTranscriptions.forEach((transcription, index) => {
+        if (yPos > pageHeight - margin) {
+          doc.addPage();
+          yPos = margin;
+        }
+        
+        const time = transcription.timestamp.toLocaleTimeString();
+        const speaker = transcription.speaker.name || 'Unknown';
+        const text = transcription.text || '';
+        
+        // Speaker and time
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(9);
+        const speakerText = `[${time}] ${speaker}:`;
+        doc.text(speakerText, margin, yPos);
+        yPos += lineHeight;
+        
+        // Message text with word wrapping
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8);
+        const maxWidth = pageWidth - (margin * 2);
+        const lines = doc.splitTextToSize(text, maxWidth);
+        
+        lines.forEach(line => {
+          if (yPos > pageHeight - margin) {
+            doc.addPage();
+            yPos = margin;
+          }
+          doc.text(line, margin + 5, yPos);
+          yPos += lineHeight;
+        });
+        
+        yPos += lineHeight * 0.5; // Space between messages
+      });
+      
+      // Footer
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin - 20, pageHeight - 10);
+        doc.text('Generated by Nexus Meet', margin, pageHeight - 10);
+      }
+      
+      // Save the PDF
+      const fileName = `nexus-meeting-transcript-${roomID}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+      doc.save(fileName);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try downloading as text instead.');
+    }
+  };
+
+  const clearTranscription = () => {
+    setTranscriptions([]);
+  };
+
+  // Language options for transcription
+  const languageOptions = [
+    { code: 'en-US', name: 'English (US)', flag: '🇺🇸' },
+    { code: 'en-GB', name: 'English (UK)', flag: '🇬🇧' },
+    { code: 'es-ES', name: 'Spanish', flag: '🇪🇸' },
+    { code: 'fr-FR', name: 'French', flag: '🇫🇷' },
+    { code: 'de-DE', name: 'German', flag: '🇩🇪' },
+    { code: 'it-IT', name: 'Italian', flag: '🇮🇹' },
+    { code: 'pt-BR', name: 'Portuguese', flag: '🇧🇷' },
+    { code: 'ja-JP', name: 'Japanese', flag: '🇯🇵' },
+    { code: 'ko-KR', name: 'Korean', flag: '🇰🇷' },
+    { code: 'zh-CN', name: 'Chinese', flag: '🇨🇳' },
+    { code: 'hi-IN', name: 'Hindi', flag: '🇮🇳' },
+    { code: 'ar-SA', name: 'Arabic', flag: '🇸🇦' }
+  ];
 
   return (
     <>
@@ -813,8 +1270,37 @@ const Room = () => {
                           <RecordingIcon className="text-white text-lg animate-pulse" />
                           <span className="text-white font-medium">Recording in Progress</span>
                         </div>
-                        <div className="text-white/80 text-sm">
-                          {formatTime(recordingTime)}
+                        <div className="text-white/80 text-sm flex items-center gap-2">
+                          <span>{formatTime(recordingTime)}</span>
+                          <span>•</span>
+                          <span>{peers.length + 1} participants</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* AI Transcription Status Indicator */}
+                  {isTranscribing && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-purple-600/90 backdrop-blur-sm border border-purple-500/50 mx-4 mb-4 rounded-xl p-3"
+                    >
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <SparklesIcon className="text-white text-lg animate-pulse" />
+                          <span className="text-white font-medium">AI Transcription Active</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {currentSpeaker && (
+                            <>
+                              <MicActiveIcon className="text-white text-sm animate-pulse" />
+                              <span className="text-white/80 text-sm">{currentSpeaker.name}</span>
+                            </>
+                          )}
+                          <div className="text-white/60 text-xs">
+                            {languageOptions.find(l => l.code === transcriptionLanguage)?.flag}
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -994,6 +1480,27 @@ const Room = () => {
                             </button>
                           </div>
                         )}
+
+                        {/* AI Transcription Controls */}
+                        {!isTranscribing && (
+                          <button
+                            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 border-2 border-purple-500 p-3 cursor-pointer rounded-xl text-white text-xl transition-all duration-200 hover:scale-105 shadow-glow"
+                            onClick={startAITranscription}
+                            title="Start AI transcription"
+                          >
+                            <AIIcon />
+                          </button>
+                        )}
+
+                        {isTranscribing && (
+                          <button
+                            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 border-2 border-purple-500 p-3 cursor-pointer rounded-xl text-white text-xl transition-all duration-200 hover:scale-105 shadow-glow animate-pulse"
+                            onClick={stopAITranscription}
+                            title="Stop AI transcription"
+                          >
+                            <TranscribeIcon />
+                          </button>
+                        )}
                       </div>
 
                       {/* Center Controls - End Call */}
@@ -1005,6 +1512,10 @@ const Room = () => {
                             if (isRecording) {
                               stopRecording();
                             }
+                            // Stop AI transcription if active
+                            if (isTranscribing) {
+                              stopAITranscription();
+                            }
                             navigate("/");
                             window.location.reload();
                           }}
@@ -1012,10 +1523,17 @@ const Room = () => {
                           <LeaveIcon size={24} />
                           <span className="text-lg">Leave Meeting</span>
                         </button>
-                        {isRecording && (
+                        {(isRecording || isTranscribing) && (
                           <div className="text-xs text-red-400 flex items-center gap-1">
                             <RecordingIcon className="animate-pulse" />
-                            <span>Recording will stop</span>
+                            <span>
+                              {isRecording && isTranscribing 
+                                ? "Recording & AI will stop" 
+                                : isRecording 
+                                ? "Recording will stop"
+                                : "AI transcription will stop"
+                              }
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1147,103 +1665,306 @@ const Room = () => {
                         </motion.div>
                       </div>
 
-                      {/* Chat Section */}
+                      {/* Chat & Transcription Tabs */}
                       <div className="flex flex-col h-full">
-                        <div className="flex items-center p-4 border-b border-neutral-800/50">
-                          <div className="text-lg text-primary-400">
-                            <ChatIcon />
-                          </div>
-                          <div className="ml-3 text-sm font-medium text-white">
-                            Chat
-                          </div>
-                        </div>
-                        
-                        {/* Messages */}
-                        <motion.div
-                          layout
-                          ref={chatScroll}
-                          className="flex-1 p-4 overflow-y-auto space-y-4"
-                          style={{ height: "calc(100% - 120px)" }}
-                        >
-                          {msgs.length === 0 ? (
-                            <div className="text-center text-neutral-400 py-8">
-                              <ChatIcon className="mx-auto text-3xl mb-2 opacity-50" />
-                              <p className="text-sm">No messages yet</p>
-                              <p className="text-xs">Start the conversation!</p>
-                            </div>
-                          ) : (
-                            msgs.map((msg, index) => (
-                              <motion.div
-                                layout
-                                initial={{ 
-                                  x: msg?.user.id === user?.uid ? 50 : -50, 
-                                  opacity: 0,
-                                  scale: 0.95
-                                }}
-                                animate={{ x: 0, opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.3, ease: "easeOut" }}
-                                className={`flex gap-3 ${
-                                  msg?.user.id === user?.uid
-                                    ? "flex-row-reverse"
-                                    : ""
-                                }`}
-                                key={index}
-                              >
-                                <img
-                                  src={msg?.user.profilePic || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"}
-                                  alt={msg?.user.name}
-                                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                                />
-                                <div className={`max-w-[75%] ${msg?.user.id === user?.uid ? 'text-right' : ''}`}>
-                                  <div className={`${
-                                    msg?.user.id === user?.uid
-                                      ? "bg-primary-600 text-white"
-                                      : "glass border border-neutral-800/50 text-neutral-100"
-                                  } px-4 py-2 rounded-2xl text-sm leading-relaxed`}>
-                                    {msg?.message}
-                                  </div>
-                                  <p className="text-xs text-neutral-500 mt-1">
-                                    {msg?.user.name}
-                                  </p>
-                                </div>
-                              </motion.div>
-                            ))
-                          )}
-                        </motion.div>
-                      </div>
-                    </div>
-
-                    {/* Chat Input */}
-                    <div className="p-4 border-t border-neutral-800/50 glass">
-                      <form onSubmit={sendMessage}>
-                        <div className="flex items-center gap-3">
-                          <div className="relative flex-1">
-                            <input
-                              type="text"
-                              value={msgText}
-                              onChange={(e) => setMsgText(e.target.value)}
-                              className="w-full p-3 pr-12 text-sm bg-neutral-800 border border-neutral-700 rounded-xl text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                              placeholder="Type a message..."
-                            />
-                            {msgText && (
-                              <button
-                                type="button"
-                                onClick={() => setMsgText("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors duration-200"
-                              >
-                                <ClearIcon />
-                              </button>
-                            )}
-                          </div>
-                          <button 
-                            type="submit"
-                            disabled={!msgText.trim()}
-                            className="bg-primary-600 hover:bg-primary-700 disabled:bg-neutral-700 disabled:cursor-not-allowed p-3 rounded-xl flex items-center justify-center text-white transition-all duration-200 hover:scale-105"
+                        {/* Tab Headers */}
+                        <div className="flex border-b border-neutral-800/50">
+                          <button
+                            className={`flex-1 flex items-center justify-center p-4 transition-colors duration-200 ${
+                              !showTranscription
+                                ? 'bg-primary-600/20 border-b-2 border-primary-500 text-white'
+                                : 'hover:bg-neutral-800/30 text-neutral-400'
+                            }`}
+                            onClick={() => setShowTranscription(false)}
                           >
-                            <SendIcon />
+                            <ChatIcon className="mr-2" />
+                            <span className="text-sm font-medium">Chat</span>
+                            {msgs.length > 0 && (
+                              <span className="ml-2 bg-primary-600 text-white text-xs rounded-full px-2 py-1">
+                                {msgs.length}
+                              </span>
+                            )}
+                          </button>
+                          <button
+                            className={`flex-1 flex items-center justify-center p-4 transition-colors duration-200 ${
+                              showTranscription
+                                ? 'bg-purple-600/20 border-b-2 border-purple-500 text-white'
+                                : 'hover:bg-neutral-800/30 text-neutral-400'
+                            }`}
+                            onClick={() => setShowTranscription(true)}
+                          >
+                            <TranscribeIcon className="mr-2" />
+                            <span className="text-sm font-medium">Transcript</span>
+                            {isTranscribing && (
+                              <SparklesIcon className="ml-2 text-purple-400 animate-pulse" />
+                            )}
                           </button>
                         </div>
-                      </form>
+
+                        {/* Tab Content */}
+                        {!showTranscription ? (
+                          /* Chat Tab */
+                          <>
+                            {/* Messages */}
+                            <motion.div
+                              layout
+                              ref={chatScroll}
+                              className="flex-1 p-4 overflow-y-auto space-y-4"
+                              style={{ height: "calc(100% - 120px)" }}
+                            >
+                              {msgs.length === 0 ? (
+                                <div className="text-center text-neutral-400 py-8">
+                                  <ChatIcon className="mx-auto text-3xl mb-2 opacity-50" />
+                                  <p className="text-sm">No messages yet</p>
+                                  <p className="text-xs">Start the conversation!</p>
+                                </div>
+                              ) : (
+                                msgs.map((msg, index) => (
+                                  <motion.div
+                                    layout
+                                    initial={{ 
+                                      x: msg?.user.id === user?.uid ? 50 : -50, 
+                                      opacity: 0,
+                                      scale: 0.95
+                                    }}
+                                    animate={{ x: 0, opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                    className={`flex gap-3 ${
+                                      msg?.user.id === user?.uid
+                                        ? "flex-row-reverse"
+                                        : ""
+                                    }`}
+                                    key={index}
+                                  >
+                                    <img
+                                      src={msg?.user.profilePic || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"}
+                                      alt={msg?.user.name}
+                                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                    />
+                                    <div className={`max-w-[75%] ${msg?.user.id === user?.uid ? 'text-right' : ''}`}>
+                                      <div className={`${
+                                        msg?.user.id === user?.uid
+                                          ? "bg-primary-600 text-white"
+                                          : "glass border border-neutral-800/50 text-neutral-100"
+                                      } px-4 py-2 rounded-2xl text-sm leading-relaxed`}>
+                                        {msg?.message}
+                                      </div>
+                                      <p className="text-xs text-neutral-500 mt-1">
+                                        {msg?.user.name}
+                                      </p>
+                                    </div>
+                                  </motion.div>
+                                ))
+                              )}
+                            </motion.div>
+
+                            {/* Chat Input */}
+                            <div className="p-4 border-t border-neutral-800/50 glass">
+                              <form onSubmit={sendMessage}>
+                                <div className="flex items-center gap-3">
+                                  <div className="relative flex-1">
+                                    <input
+                                      type="text"
+                                      value={msgText}
+                                      onChange={(e) => setMsgText(e.target.value)}
+                                      className="w-full p-3 pr-12 text-sm bg-neutral-800 border border-neutral-700 rounded-xl text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                                      placeholder="Type a message..."
+                                    />
+                                    {msgText && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setMsgText("")}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors duration-200"
+                                      >
+                                        <ClearIcon />
+                                      </button>
+                                    )}
+                                  </div>
+                                  <button 
+                                    type="submit"
+                                    disabled={!msgText.trim()}
+                                    className="bg-primary-600 hover:bg-primary-700 disabled:bg-neutral-700 disabled:cursor-not-allowed p-3 rounded-xl flex items-center justify-center text-white transition-all duration-200 hover:scale-105"
+                                  >
+                                    <SendIcon />
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </>
+                        ) : (
+                          /* Transcription Tab */
+                          <>
+                            {/* Transcription Header */}
+                            <div className="p-4 border-b border-neutral-800/50 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <TranscribeIcon className="text-purple-400" />
+                                  <span className="text-sm font-medium text-white">Live Transcription</span>
+                                  {isTranscribing && <span className="text-xs text-green-400">● LIVE</span>}
+                                </div>
+                                <div className="flex gap-2">
+                                  {transcriptions.length > 0 && (
+                                    <>
+                                      <button
+                                        onClick={downloadTranscription}
+                                        className="p-2 hover:bg-neutral-700 rounded-lg transition-colors duration-200 text-neutral-400 hover:text-white"
+                                        title="Download transcript as TXT"
+                                      >
+                                        <DownloadIcon className="text-sm" />
+                                      </button>
+                                      <button
+                                        onClick={downloadTranscriptionAsPDF}
+                                        className="p-2 hover:bg-neutral-700 rounded-lg transition-colors duration-200 text-neutral-400 hover:text-white"
+                                        title="Download transcript as PDF"
+                                      >
+                                        <PDFIcon className="text-sm" />
+                                      </button>
+                                    </>
+                                  )}
+                                  <button
+                                    onClick={clearTranscription}
+                                    className="p-2 hover:bg-neutral-700 rounded-lg transition-colors duration-200 text-neutral-400 hover:text-white"
+                                    title="Clear transcript"
+                                  >
+                                    <ClearIcon className="text-sm" />
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              {/* Language Selector */}
+                              <div className="flex items-center gap-2">
+                                <LanguageIcon className="text-neutral-400 text-sm" />
+                                <select
+                                  value={transcriptionLanguage}
+                                  onChange={(e) => setTranscriptionLanguage(e.target.value)}
+                                  className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                  disabled={isTranscribing}
+                                >
+                                  {languageOptions.map((lang) => (
+                                    <option key={lang.code} value={lang.code}>
+                                      {lang.flag} {lang.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Transcription Content */}
+                            <motion.div
+                              layout
+                              ref={transcriptionScrollRef}
+                              className="flex-1 p-4 overflow-y-auto space-y-3"
+                              style={{ height: "calc(100% - 140px)" }}
+                            >
+                              {transcriptions.length === 0 ? (
+                                <div className="text-center text-neutral-400 py-8">
+                                  <TranscribeIcon className="mx-auto text-3xl mb-2 opacity-50" />
+                                  <p className="text-sm">No transcription yet</p>
+                                  <p className="text-xs">
+                                    {isTranscribing 
+                                      ? "Start speaking to see live transcription..." 
+                                      : "Click the AI button to start transcription"
+                                    }
+                                  </p>
+                                </div>
+                              ) : (
+                                transcriptions.map((transcript) => (
+                                  <motion.div
+                                    layout
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    key={transcript.id}
+                                    className={`p-3 rounded-lg ${
+                                      transcript.isSystem
+                                        ? 'bg-purple-600/20 border border-purple-500/30'
+                                        : transcript.isInterim
+                                        ? 'bg-neutral-800/50 border border-neutral-700/50 opacity-70'
+                                        : 'glass border border-neutral-800/50'
+                                    }`}
+                                  >
+                                    {!transcript.isSystem && (
+                                      <div className="flex items-center gap-2 mb-2">
+                                        {transcript.speaker.photoURL ? (
+                                          <img
+                                            src={transcript.speaker.photoURL}
+                                            alt={transcript.speaker.name}
+                                            className="w-5 h-5 rounded-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                                            <span className="text-white text-xs">
+                                              {transcript.speaker.name?.charAt(0)}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <span className="text-xs font-medium text-neutral-300">
+                                          {transcript.speaker.name}
+                                        </span>
+                                        <span className="text-xs text-neutral-500">
+                                          {transcript.timestamp.toLocaleTimeString()}
+                                        </span>
+                                        {transcript.confidence && (
+                                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                            transcript.confidence > 0.8
+                                              ? 'bg-green-600/20 text-green-400'
+                                              : transcript.confidence > 0.6
+                                              ? 'bg-yellow-600/20 text-yellow-400'
+                                              : 'bg-red-600/20 text-red-400'
+                                          }`}>
+                                            {Math.round(transcript.confidence * 100)}%
+                                          </span>
+                                        )}
+                                        {transcript.isInterim && (
+                                          <span className="text-xs text-purple-400 animate-pulse">
+                                            typing...
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                    <p className={`text-sm leading-relaxed ${
+                                      transcript.isSystem ? 'text-purple-300 italic' : 'text-neutral-100'
+                                    }`}>
+                                      {transcript.text}
+                                    </p>
+                                  </motion.div>
+                                ))
+                              )}
+                            </motion.div>
+
+                            {/* AI Feature Controls */}
+                            <div className="p-4 border-t border-neutral-800/50 glass">
+                              <div className="space-y-3">
+                                {!aiFeatureActive ? (
+                                  <button
+                                    onClick={startAITranscription}
+                                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 px-4 py-3 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 shadow-glow flex items-center justify-center gap-2"
+                                  >
+                                    <SparklesIcon />
+                                    Start AI Transcription
+                                  </button>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <button
+                                      onClick={stopAITranscription}
+                                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 py-3 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 shadow-glow flex items-center justify-center gap-2"
+                                    >
+                                      <TranscribeIcon />
+                                      Stop Transcription
+                                    </button>
+                                    {currentSpeaker && (
+                                      <div className="flex items-center justify-center gap-2 text-sm text-neutral-400">
+                                        <MicActiveIcon className="animate-pulse text-purple-400" />
+                                        <span>{currentSpeaker.name} is speaking</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 )}
