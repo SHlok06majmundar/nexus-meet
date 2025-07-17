@@ -18,35 +18,9 @@ const Home = () => {
   const [date, setDate] = useState(new Date());
   const [roomId] = useState(uuid());
   
-  // Real-time stats state
-  const [stats, setStats] = useState({
-    activeRooms: 0,
-    onlineUsers: 0,
-    totalMeetings: 0
-  });
-
   function refreshClock() {
     setDate(new Date());
   }
-
-  // Simulate real-time stats (in a real app, this would come from your backend)
-  useEffect(() => {
-    const updateStats = () => {
-      setStats({
-        activeRooms: Math.floor(Math.random() * 20) + 5, // 5-25 rooms
-        onlineUsers: Math.floor(Math.random() * 100) + 20, // 20-120 users
-        totalMeetings: Math.floor(Math.random() * 1000) + 500 // 500-1500 meetings
-      });
-    };
-
-    // Update stats immediately
-    updateStats();
-    
-    // Update stats every 10 seconds
-    const statsInterval = setInterval(updateStats, 10000);
-    
-    return () => clearInterval(statsInterval);
-  }, []);
   
   useEffect(() => {
     const timerId = setInterval(refreshClock, 1000);
@@ -173,34 +147,6 @@ const Home = () => {
                       <span>Enjoy HD video calling experience</span>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats Widget - Real-time Data */}
-            <div className="glass rounded-2xl p-6 border border-neutral-800/50">
-              <h3 className="text-lg font-semibold text-white mb-4">Live Meeting Stats</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-400">Active Rooms</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-primary-400 font-semibold">{stats.activeRooms}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-400">Online Users</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-primary-400 font-semibold">{stats.onlineUsers}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-400">Total Meetings Today</span>
-                  <span className="text-primary-400 font-semibold">{stats.totalMeetings}</span>
-                </div>
-                <div className="text-xs text-neutral-500 text-center pt-2 border-t border-neutral-800">
-                  Updates every 10 seconds
                 </div>
               </div>
             </div>

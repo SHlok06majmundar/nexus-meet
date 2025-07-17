@@ -9,7 +9,6 @@ import { VscTriangleDown as DownIcon } from "react-icons/vsc";
 import { FaUsers as UsersIcon } from "react-icons/fa";
 import { FiSend as SendIcon } from "react-icons/fi";
 import { FcGoogle as GoogleIcon } from "react-icons/fc";
-import { MdCallEnd as CallEndIcon } from "react-icons/md";
 import { MdClear as ClearIcon } from "react-icons/md";
 import { AiOutlineLink as LinkIcon } from "react-icons/ai";
 import { MdOutlineContentCopy as CopyToClipboardIcon } from "react-icons/md";
