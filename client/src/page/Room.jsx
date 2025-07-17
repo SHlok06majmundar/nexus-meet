@@ -121,10 +121,20 @@ const Room = () => {
 
   useEffect(() => {
     const unsub = () => {
+      console.log("Connecting to:", process.env.REACT_APP_SOCKET_BACKEND_URL || "http://localhost:5000");
+      console.log("Room ID:", roomID);
       socket.current = io.connect(
-        "http://localhost:5000/"
-        // process.env.SOCKET_BACKEND_URL || "http://localhost:5000"
+        process.env.REACT_APP_SOCKET_BACKEND_URL || "http://localhost:5000"
       );
+      
+      socket.current.on("connect", () => {
+        console.log("Socket connected:", socket.current.id);
+      });
+      
+      socket.current.on("disconnect", () => {
+        console.log("Socket disconnected");
+      });
+      
       socket.current.on("message", (data) => {
         const audio = new Audio(msgSFX);
         if (user?.uid !== data.user.id) {
@@ -161,8 +171,11 @@ const Room = () => {
                 : null,
             });
             socket.current.on("all users", (users) => {
+              console.log("Received all users:", users);
+              console.log("Current room ID:", roomID);
               const peers = [];
               users.forEach((user) => {
+                console.log("Creating peer for user:", user.user?.name);
                 const peer = createPeer(user.userId, socket.current.id, stream);
                 peersRef.current.push({
                   peerID: user.userId,
@@ -175,11 +188,12 @@ const Room = () => {
                   user: user.user,
                 });
               });
+              console.log("Setting peers:", peers.length);
               setPeers(peers);
             });
 
             socket.current.on("user joined", (payload) => {
-              // console.log(payload);
+              console.log("New user joined:", payload.user?.name);
               const peer = addPeer(payload.signal, payload.callerID, stream);
               peersRef.current.push({
                 peerID: payload.callerID,
@@ -194,6 +208,7 @@ const Room = () => {
               };
 
               setPeers((users) => [...users, peerObj]);
+              console.log("Peers updated, total:", peersRef.current.length);
             });
 
             socket.current.on("receiving returned signal", (payload) => {
