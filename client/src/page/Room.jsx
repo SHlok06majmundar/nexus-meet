@@ -102,6 +102,13 @@ const Room = () => {
 
   const [particpentsOpen, setParticpentsOpen] = useState(true);
 
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState({
+    socketConnected: false,
+    socketId: null,
+    error: null
+  });
+
   const sendMessage = (e) => {
     e.preventDefault();
     if (msgText) {

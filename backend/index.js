@@ -10,7 +10,7 @@ app.use(cors());
 
 const io = require("socket.io")(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://nexus-meet.vercel.app"],
+    origin: ["http://localhost:3000", "https://nexus-meet.vercel.app", process.env.FRONTEND_URL || "*"],
     methods: ["GET", "POST"],
     credentials: true
   }
