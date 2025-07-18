@@ -119,13 +119,30 @@ const Room = () => {
     setMsgText("");
   };
 
+  // Test connection function
+  const testConnection = () => {
+    console.log("🧪 Testing connection...");
+    console.log("Backend URL:", process.env.REACT_APP_SOCKET_BACKEND_URL);
+    console.log("Socket connected:", socket.current?.connected);
+    console.log("Socket ID:", socket.current?.id);
+    console.log("Room ID:", roomID);
+    console.log("User:", user?.displayName);
+    console.log("Peers count:", Object.keys(peersRef.current).length);
+    console.log("All peers:", Object.keys(peersRef.current));
+  };
+
   useEffect(() => {
     const unsub = () => {
-      console.log("Connecting to:", process.env.REACT_APP_SOCKET_BACKEND_URL || "http://localhost:5000");
-      console.log("Room ID:", roomID);
-      socket.current = io.connect(
-        process.env.REACT_APP_SOCKET_BACKEND_URL || "http://localhost:5000"
-      );
+      const backendUrl = process.env.REACT_APP_SOCKET_BACKEND_URL || "http://localhost:5000";
+      console.log("🔗 Connecting to backend:", backendUrl);
+      console.log("🏠 Room ID:", roomID);
+      console.log("👤 User:", user?.displayName);
+      
+      socket.current = io.connect(backendUrl, {
+        transports: ['websocket', 'polling'],
+        upgrade: true,
+        rememberUpgrade: true
+      });
       
       socket.current.on("connect", () => {
         console.log("Socket connected:", socket.current.id);
@@ -159,6 +176,35 @@ const Room = () => {
             setLoading(false);
             setLocalStream(stream);
             localVideo.current.srcObject = stream;
+            
+            // Add socket event listeners
+            socket.current.on("connect", () => {
+              console.log("✅ Socket connected successfully");
+              console.log("📡 Socket ID:", socket.current.id);
+              setDebugInfo(prev => ({
+                ...prev,
+                socketConnected: true,
+                socketId: socket.current.id
+              }));
+            });
+
+            socket.current.on("connect_error", (error) => {
+              console.error("❌ Socket connection error:", error);
+              setDebugInfo(prev => ({
+                ...prev,
+                socketConnected: false,
+                error: error.message
+              }));
+            });
+
+            socket.current.on("disconnect", (reason) => {
+              console.log("🔌 Socket disconnected:", reason);
+              setDebugInfo(prev => ({
+                ...prev,
+                socketConnected: false
+              }));
+            });
+            
             socket.current.emit("join room", {
               roomID,
               user: user
@@ -170,6 +216,7 @@ const Room = () => {
                   }
                 : null,
             });
+            console.log("📤 Emitted join room for:", user?.displayName, "in room:", roomID);
             socket.current.on("all users", (users) => {
               console.log("Received all users:", users);
               console.log("Current room ID:", roomID);
@@ -219,13 +266,18 @@ const Room = () => {
             });
 
             socket.current.on("user left", (id) => {
+              console.log("User left:", id);
               const audio = new Audio(leaveSFX);
               audio.play();
               const peerObj = peersRef.current.find((p) => p.peerID === id);
-              if (peerObj) peerObj.peer.destroy();
+              if (peerObj) {
+                console.log("Destroying peer:", id);
+                peerObj.peer.destroy();
+              }
               const peers = peersRef.current.filter((p) => p.peerID !== id);
               peersRef.current = peers;
               setPeers((users) => users.filter((p) => p.peerID !== id));
+              console.log("Remaining peers:", peers.length);
             });
           });
     };
@@ -233,6 +285,7 @@ const Room = () => {
   }, [user, roomID]);
 
   const createPeer = (userToSignal, callerID, stream) => {
+    console.log("Creating peer connection to:", userToSignal);
     const peer = new Peer({
       initiator: true,
       trickle: false,
@@ -240,6 +293,7 @@ const Room = () => {
     });
 
     peer.on("signal", (signal) => {
+      console.log("Sending signal to:", userToSignal);
       socket.current.emit("sending signal", {
         userToSignal,
         callerID,
@@ -255,18 +309,38 @@ const Room = () => {
       });
     });
 
+    peer.on("connect", () => {
+      console.log("Peer connected to:", userToSignal);
+    });
+
+    peer.on("error", (err) => {
+      console.error("Peer error:", err);
+    });
+
     return peer;
   };
 
   const addPeer = (incomingSignal, callerID, stream) => {
+    console.log("Adding peer from:", callerID);
     const peer = new Peer({
       initiator: false,
       trickle: false,
       stream,
     });
+    
     peer.on("signal", (signal) => {
+      console.log("Returning signal to:", callerID);
       socket.current.emit("returning signal", { signal, callerID });
     });
+    
+    peer.on("connect", () => {
+      console.log("Peer connected from:", callerID);
+    });
+
+    peer.on("error", (err) => {
+      console.error("Peer error:", err);
+    });
+    
     joinSound.play();
     peer.signal(incomingSignal);
     return peer;
@@ -1255,6 +1329,33 @@ const Room = () => {
     <>
       {/* Hidden canvas for recording */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
+      
+      {/* Debug Panel - Remove this in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs z-50 max-w-xs">
+          <div className="font-bold mb-2">Debug Info:</div>
+          <div>Room ID: {roomID}</div>
+          <div>Socket Connected: {socket.current?.connected ? '✅' : '❌'}</div>
+          <div>Socket ID: {socket.current?.id || 'None'}</div>
+          <div>Peers Count: {peers.length}</div>
+          <div>User: {user?.displayName || 'Not logged in'}</div>
+          <div>Backend URL: {process.env.REACT_APP_SOCKET_BACKEND_URL || 'localhost:5000'}</div>
+          <button 
+            onClick={testConnection}
+            className="mt-2 bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs"
+          >
+            Test Connection
+          </button>
+          {peers.length > 0 && (
+            <div className="mt-2">
+              <div className="font-semibold">Peers:</div>
+              {peers.map((peer, index) => (
+                <div key={index}>• {peer.user?.name || 'Unknown'}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       
       {user ? (
         <AnimatePresence>
