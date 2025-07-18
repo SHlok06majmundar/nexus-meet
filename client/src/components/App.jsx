@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 // components
 import Header from "./Header";
@@ -13,6 +13,9 @@ import NotFound from "../page/NotFound";
 import NewRoom from "../page/NewRoom";
 
 const App = () => {
+  const location = useLocation();
+  console.log("🌐 Current route:", location.pathname);
+  
   return (
     <div className="flex min-h-screen bg-neutral-950">
       <Sidebar />

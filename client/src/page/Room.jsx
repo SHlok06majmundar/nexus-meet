@@ -60,6 +60,11 @@ const Room = () => {
   const [joinSound] = useState(new Audio(joinSFX));
   const { roomID } = useParams();
   
+  // Debug logging
+  console.log("🔍 Room component loaded");
+  console.log("📍 Room ID from params:", roomID);
+  console.log("🌐 Current URL:", window.location.href);
+  
   // Recording states
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
